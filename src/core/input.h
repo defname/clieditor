@@ -6,13 +6,8 @@
  * 
  * EscapeSequence e = Input_Read()  // read from terminal
  * 
- * if (e != ESC_NONE) {
- *     // esc sequence found
- * }
- * else {
- *     while ((UTF8Char ch = Input_GetChar()).length > 0) {
- *         handleInputChar(ch);
- *     }
+ * while ((UTF8Char ch = Input_GetChar()).length > 0) {
+ *     handleInputChar(ch);
  * }
  */
 #ifndef INPUT_H
@@ -31,7 +26,7 @@ typedef enum {
 } EscapeSequence;
 
 EscapeSequence Input_Read(int fd);  // use UTF8_GetChar() to read input. Return the found escape sequence or ESC_NONE
-UTF8Char Input_GetChar();           // get the next character from buffer
+UTF8Char Input_GetChar();           // get the next character from buffer (0-length character is returned if buffer is empty)
 
 
 #endif
