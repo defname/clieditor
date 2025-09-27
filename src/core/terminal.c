@@ -39,8 +39,8 @@ void Terminal_Init(int fd_in, int fd_out, int fd_error) {
     new_attr.c_cflag &= ~(ICANON | ECHO);  // deactivate canonical mode and echo
     new_attr.c_lflag &= ISIG;  // deactivate ctrl-c and ctrl-z
 
-    new_attr.c_cc[VTIME] = 0;  // don't buffer input
-    new_attr.c_cc[VMIN] = 1;  // ...
+    new_attr.c_cc[VTIME] = 1;  // wait max 0.1s for input
+    new_attr.c_cc[VMIN] = 0;  // ...
 
     if (tcsetattr(fd_in, TCSAFLUSH, &new_attr) == -1) {
         logFatal("Unable to set terminal configuration");

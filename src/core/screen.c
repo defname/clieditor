@@ -115,12 +115,30 @@ void screen_putchar(UTF8Char c) {
     UTF8_PutChar(terminal.fd_out, c);
 }
 
+void underline(bool on) {
+    if (on) {
+        dprintf(terminal.fd_out, "\033[4m");
+    }
+    else {
+        dprintf(terminal.fd_out, "\033[24m");
+    }
+}
+
+
+void bold() {
+    dprintf(terminal.fd_out, "\033[1m");
+}
+
+
+
 void Screen_Draw() {
     for (size_t i=0; i<screen.size; i++) {
         if (!screen.buffer[i].changed) {
             continue;
         }
         cursor_to(i % terminal.cols, i / terminal.cols);
+        underline(screen.buffer[i].style.attributes & STYLE_UNDERLINE);
+        
         screen_putchar(screen.buffer[i].ch);
         screen.buffer[i].changed = false;
     }
