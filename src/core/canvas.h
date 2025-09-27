@@ -16,8 +16,8 @@ typedef struct _Canvas {
     size_t capacity;
     int width;
     int height;
-    int cursor_col;
-    int cursor_row;
+    int cursor_x;
+    int cursor_y;
     Style current_style;
 } Canvas;
 

@@ -20,7 +20,7 @@ extern Screen screen;
 
 void Screen_Init();  // call after Terminal_Init()!!!
 void Screen_Deinit();
-void Screeen_onResize();  // Reallocates memory for the buffer. Need to be called AFTER Terminal_Update()
+void Screen_onResize();  // Reallocates memory for the buffer. Need to be called AFTER Terminal_Update()
 
 void Screen_HideCursor();
 void Screen_ShowCursor();

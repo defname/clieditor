@@ -13,7 +13,7 @@ void Screen_Deinit() {
     Canvas_Deinit(&screen.canvas);
 }
 
-void Screeen_onResize() {
+void Screen_onResize() {
     Canvas_Resize(&screen.canvas, terminal.cols, terminal.rows);
 }
 
@@ -62,4 +62,5 @@ void Screen_Draw() {
         canvas_putchar(screen.canvas.buffer[i].ch);
         screen.canvas.buffer[i].changed = false;
     }
+    underline(false);
 }

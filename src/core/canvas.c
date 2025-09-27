@@ -11,7 +11,7 @@
 
 
 void reallocate_buffers(Canvas *canvas) {
-    size_t new_min_capacity = terminal.cols * terminal.rows;
+    size_t new_min_capacity = canvas->width * canvas->height;
     canvas->size = new_min_capacity;
     if (new_min_capacity <= canvas->capacity) {
         return;
@@ -33,8 +33,8 @@ void Canvas_Init(Canvas *canvas, int width, int height) {
     canvas->buffer = NULL;
     canvas->capacity = 0;
     canvas->size = 0;
-    canvas->cursor_col = 0;
-    canvas->cursor_row = 0;
+    canvas->cursor_x = 0;
+    canvas->cursor_y = 0;
     canvas->current_style = (Style) { .fg = 1, .bg = 0, .attributes = STYLE_NONE };
     Canvas_Resize(canvas, width, height);
 }
@@ -84,13 +84,13 @@ void Canvas_ClipTo(Canvas *canvas, Canvas *target, int x, int y) {
 
 
 void cursor_increment(Canvas *canvas) {
-    canvas->cursor_col++;
-    if (canvas->cursor_col >= terminal.cols) {
-        canvas->cursor_col = 0;
-        canvas->cursor_row++;
+    canvas->cursor_x++;
+    if (canvas->cursor_x >= canvas->width) {
+        canvas->cursor_x = 0;
+        canvas->cursor_y++;
     }
-    if (canvas->cursor_row >= terminal.rows) {
-        canvas->cursor_row = 0;
+    if (canvas->cursor_y >= canvas->height) {
+        canvas->cursor_y = 0;
     }
 }
 
@@ -104,16 +104,16 @@ void Canvas_Clear(Canvas *canvas) {
 }
 
 void Canvas_MoveCursor(Canvas *canvas, int col, int row) {
-    canvas->cursor_col = col;
-    canvas->cursor_row = row;
+    canvas->cursor_x = col;
+    canvas->cursor_y = row;
 }
 
 void Canvas_PutChar(Canvas *canvas, UTF8Char c) {
-    if (canvas->cursor_col >= terminal.cols || canvas->cursor_row >= terminal.rows) {
+    if (canvas->cursor_x >= canvas->width || canvas->cursor_y >= canvas->height) {
         logDebug("Cursor out of bounds.");
         return;
     }
-    int idx = canvas->cursor_col + canvas->cursor_row * terminal.cols;
+    int idx = canvas->cursor_x + canvas->cursor_y * terminal.cols;
     if (!UTF8_Equal(canvas->buffer[idx].ch, c) || memcmp(&canvas->buffer[idx].style, &canvas->current_style, sizeof(Style)) != 0) {
         canvas->buffer[idx].ch = c;
         canvas->buffer[idx].style = canvas->current_style;
