@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+const UTF8Char utf8_space = { .bytes = {' '}, .length = 1 };
 
 // read like read() but retry if the process is interrupted.
 static int robust_read(int fd, void *buf, size_t count) {

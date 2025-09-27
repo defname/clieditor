@@ -26,7 +26,7 @@ typedef struct _Terminal {
 extern Terminal terminal;
 
 void Terminal_Init(int fd_in, int fd_out, int fd_error);
-void Terminal_Finish();
+void Terminal_Deinit();
 void Terminal_Update();  // Updates the dimensions, should be called when signal SIGWINCH arrives
 
 #endif

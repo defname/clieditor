@@ -50,7 +50,7 @@ void Terminal_Init(int fd_in, int fd_out, int fd_error) {
     update_dimensions();
 }
 
-void Terminal_Finish() {
+void Terminal_Deinit() {
     tcsetattr(terminal.fd_in, TCSAFLUSH, &terminal.orig_t);
 }
 

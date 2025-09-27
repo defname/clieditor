@@ -14,6 +14,8 @@ typedef struct _UTF8Char {
     char length;
 } UTF8Char;
 
+extern const UTF8Char utf8_space;
+
 UTF8Char UTF8_GetChar(int fd);                  // Read an UTF8 character from fd (filedescriptor)
 UTF8Char UTF8_GetCharFromString(const char *s); // Read an UTF8 character from a string
 size_t UTF8_FromString(UTF8Char *buf, size_t n, const char *s); // Read an UTF8 string
