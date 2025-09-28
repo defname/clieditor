@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "terminal.h"
-#include "utf8.h"
 #include "utils/logging.h"
 
 
@@ -127,14 +126,11 @@ void Canvas_PutChar(Canvas *canvas, UTF8Char c) {
     canvas->cursor_x++; // Move cursor to the right. Wrapping is handled by the caller or by subsequent calls.
 }
 
-void Canvas_Write(Canvas *canvas, const UTF8Char *s, size_t n) {
-    if (n > canvas->size) {
-        n = canvas->size;
-    }
+void Canvas_Write(Canvas *canvas, const UTF8String *s) {
+    size_t n = s->length <= (size_t)canvas->width ? s->length : (size_t)canvas->width;
+
     for (size_t i=0; i<n; i++) {
-        if (UTF8_EqualToChar(s[i], '\0')) {
-            break;
-        }
-        Canvas_PutChar(canvas, s[i]);
+        
+        Canvas_PutChar(canvas, s->chars[i]);
     }
 }

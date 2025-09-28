@@ -16,8 +16,14 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->children_count = 0;
     widget->children_capacity = 0;
 
+    widget->parent = parent;
+
     if (parent) {
         Widget_AddChild(parent, widget);
+        widget->style = parent->style;
+    }
+    else {
+        widget->style = (Style){ .fg = 15, .bg = 0, .attributes = STYLE_NONE };
     }
 }
 
@@ -106,11 +112,24 @@ void Widget_RemoveChild(Widget *parent, Widget *child) {
     logDebug("Child not found.");
 }
 
+void draw_background(Widget *self, Canvas *canvas) {
+    UTF8String s;
+    UTF8String_Init(&s);
+    // Fill the entire width of the canvas it's drawing on.
+    UTF8String_Spaces(&s, self->width);
+    for (int i=0; i<self->height; i++) {
+        Canvas_Write(canvas, &s);
+    }
+    UTF8String_Deinit(&s);
+}
 void Widget_Draw(Widget *self, Canvas *canvas) {
     if (!self) {
         logDebug("Cannot draw NULL Widget");
         return;
     }
+
+    canvas->current_style = self->style;
+    draw_background(self, canvas);
 
     if (self->ops && self->ops->draw) {
        self->ops->draw(self, canvas);

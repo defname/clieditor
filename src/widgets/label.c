@@ -15,7 +15,7 @@ static void label_draw(Widget *self, Canvas *canvas) {
 
     // Schreibe den Text auf den Canvas
     Canvas_MoveCursor(canvas, 0, 0);
-    Canvas_Write(canvas, data->text.chars, data->text.length);
+    Canvas_Write(canvas, &data->text);
 }
 
 // Die "destroy"-Methode für ein Label (gibt den Text frei)

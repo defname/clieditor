@@ -35,6 +35,10 @@ void UTF8String_Resize(UTF8String *str, size_t new_capacity) {
 }
 
 void UTF8String_IncreaseCapacity(UTF8String *string) {
+    if (string->capacity == 0) {
+         UTF8String_Resize(string, UTF8STRING_INITIAL_CAPACITY);
+         return;
+    }
     UTF8String_Resize(string, string->capacity * UTF8STRING_GROW_FACTOR);
 }
 
@@ -71,6 +75,12 @@ void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length) {
     }
 }
 
+void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
+    UTF8String_Resize(dest, src->length);
+    memcpy(dest->chars, src->chars, sizeof(UTF8Char) * src->length);
+    dest->length = src->length;
+}
+
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     size_t new_length = str1->length + str2->length;
     if (new_length > str1->capacity) {
@@ -79,4 +89,22 @@ void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     for (size_t i=0; i<str2->length; i++) {
         UTF8String_AddChar(str1, str2->chars[i]);
     }
+}
+
+void UTF8String_Repeat(UTF8String *str, size_t n) {
+    size_t new_length = str->length * n;
+    UTF8String orig_string;
+    UTF8String_Init(&orig_string);
+    UTF8String_Copy(&orig_string, str);
+    if (new_length > str->capacity) {
+        UTF8String_Resize(str, new_length);
+    }
+    for (size_t i=0; i<n; i++) {
+        UTF8String_Concat(str, &orig_string);
+    }
+}
+
+void UTF8String_Spaces(UTF8String *str, size_t n) {
+    UTF8String_FromStr(str, " ", 1);
+    UTF8String_Repeat(str, n);
 }

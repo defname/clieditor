@@ -69,23 +69,50 @@ void underline(bool on) {
     }
 }
 
-
 void bold() {
     dprintf(terminal.fd_out, "\033[1m");
 }
 
+void update_style(const Style *current_style, const Style *new_style) {
+    if (!current_style || current_style->fg != new_style->fg) {
+        dprintf(terminal.fd_out, "\e[38;5;%dm", new_style->fg);
+    }
+    if (!current_style || current_style->bg != new_style->bg) {
+        dprintf(terminal.fd_out, "\e[48;5;%dm", new_style->bg);
+    }
+
+}
+
+void reset_style() {
+    dprintf(terminal.fd_out, "\e[0m");
+}
+
 void Screen_Draw() {
+    bool skipped = false;
+    int old_y = 0;
+    Style current_style = { .fg = 12, .bg = 0, .attributes = STYLE_UNDERLINE };
+    //update_style(NULL, &current_style);
+    cursor_to(0, 0);
     for (size_t i=0; i<screen.canvas.size; i++) {
+        int x = i % screen.canvas.width;
+        int y =i / screen.canvas.width;
         if (!screen.canvas.buffer[i].changed) {
+            skipped = true;
             continue;
         }
-        cursor_to(i % screen.canvas.width, i / screen.canvas.width);
-        underline(screen.canvas.buffer[i].style.attributes & STYLE_UNDERLINE);
+        if (skipped || y != old_y) {
+            cursor_to(x, y);
+            skipped = false;
+            old_y = y;
+        }
+        Cell *cell = &screen.canvas.buffer[i];
+        update_style(&current_style, &cell->style);
+        current_style = cell->style;
         
         canvas_putchar(screen.canvas.buffer[i].ch);
         screen.canvas.buffer[i].changed = false;
     }
-    underline(false);
+    reset_style();
 }
 
 int Screen_GetWidth() {

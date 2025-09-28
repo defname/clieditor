@@ -38,11 +38,11 @@ Widget *BottomBar_Create(Widget *parent) {
     Widget *self = Widget_Create(parent, &bottombar_ops);
     BottomBarData *data = malloc(sizeof(BottomBarData));
     self->data = data;
-
+    self->style.bg = 21;
     Widget *label = Label_Create(self, "BottomBar");
     label->x = 0;
     label->y = 0;
-    label->width = 10;
+    label->width = 12;
     label->height = 1;
 
     Widget_onParentResize(self, parent->width, parent->height);

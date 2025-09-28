@@ -1,5 +1,6 @@
 #include "cell.h"
 
+
 void Cell_Init(Cell *cell) {
     cell->ch = utf8_space;
     cell->style = (Style){ .fg = 0, .bg = 0, .attributes = STYLE_NONE };

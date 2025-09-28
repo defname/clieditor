@@ -36,6 +36,8 @@ typedef struct _Widget {
     // Pointers to the widget's "methods"
     WidgetOps *ops;
 
+    Style style;
+
     // Tree structure
     struct _Widget *parent;
     struct _Widget **children;

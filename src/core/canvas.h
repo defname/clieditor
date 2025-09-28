@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "utf8.h"
+#include "utf8string.h"
 #include "cell.h"
 
 typedef struct _Canvas {
@@ -34,6 +35,6 @@ void Canvas_MoveCursor(Canvas *canvas, int col, int row);
 void Canvas_HideCursor(Canvas *canvas);
 void Canvas_ShowCursor(Canvas *canvas);
 void Canvas_PutChar(Canvas *canvas, UTF8Char c);  // put c to the current position and move the cursor
-void Canvas_Write(Canvas *canvas, const UTF8Char *s, size_t n);  // write s to the current position and move the cursor
+void Canvas_Write(Canvas *canvas, const UTF8String *s);  // write s to the current position and move the cursor
 
 #endif
