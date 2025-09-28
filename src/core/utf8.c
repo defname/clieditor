@@ -5,19 +5,8 @@
 #include <unistd.h>
 
 const UTF8Char utf8_space = { .bytes = {' '}, .length = 1 };
+const UTF8Char utf8_invalid = { .bytes = {0}, .length = 0 };
 
-// read like read() but retry if the process is interrupted.
-static int robust_read(int fd, void *buf, size_t count) {
-    int bytes_read = 0;
-
-    do {
-        bytes_read = read(fd, buf, count);
-        if (bytes_read != -1) {
-            return bytes_read;
-        }
-    } while (errno == EINTR);
-    return -1;
-}
 
 // return the length of the utf8 char starting with c or 0 if it's invalid
 size_t get_char_length(unsigned char c) {
@@ -39,37 +28,39 @@ size_t get_char_length(unsigned char c) {
     }
 }
 
-UTF8Char UTF8_GetChar(int fd) {
-    UTF8Char utf8_char;
-    // Initialize the struct to a known, zeroed state.
-    // This also sets length to 0, which is our error indicator.
-    memset(&utf8_char, 0, sizeof(UTF8Char));
+UTF8Char UTF8_ReadCharFromBuf(Buffer *buf) {
+    UTF8Char out = (UTF8Char){ .bytes = {0}, .length = 0 };
 
-    unsigned char c;
-    // Check for read error OR End-of-File. robust_read should return 1.
-    if (robust_read(fd, &c, 1) != 1) {
-        utf8_char.length = 0;
-        return utf8_char;
+    if (Buffer_IsEmpty(buf)) {
+        return out;
     }
-    utf8_char.bytes[0] = c;
-    utf8_char.length = get_char_length(c);
+    unsigned char c;
+    Buffer_Peek(buf, 0, &c);
+    size_t len = get_char_length(c);
 
-    for (int i=1; i<utf8_char.length; i++) {
+    if (len > Buffer_Size(buf)) {
+        return out;
+    }
+
+    Buffer_Dequeue(buf, NULL);
+
+    out.bytes[0] = c;
+    out.length = len;
+
+    size_t i = 1;
+    for (; i<len; i++) {
         // Read continuation byte
-        if (robust_read(fd, &c, 1) != 1) {
-            // Incomplete sequence (EOF or error)
-            utf8_char.length = 0;
-            return utf8_char;
-        }
+        Buffer_Dequeue(buf, &c);
         // Validate that it's a valid continuation byte (starts with 10xxxxxx)
         if ((c & 0b11000000) != 0b10000000) {
             // Invalid sequence
-            utf8_char.length = 0;
-            return utf8_char;
+            out.length = 0;
+            
+            return out;
         }
-        utf8_char.bytes[i] = c;
+        out.bytes[i] = c;
     }
-    return utf8_char;
+    return out;
 }
 
 UTF8Char UTF8_GetCharFromString(const char *s) {
