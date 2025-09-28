@@ -13,15 +13,20 @@ typedef struct _UTF8String {
     size_t capacity;
 } UTF8String;
 
+// Initialization and capacity management (only init/deinit should be needed)
 void UTF8String_Init(UTF8String *string);
 void UTF8String_Deinit(UTF8String *string);
 void UTF8String_Resize(UTF8String *string, size_t new_capacity);
 void UTF8String_IncreaseCapacity(UTF8String *string);
 
+// Creation
 UTF8String *UTF8String_Create();
-void UTF8String_Free();
+void UTF8String_Free(UTF8String *string);
 
+// Filling with content
 void UTF8String_AddChar(UTF8String *str, UTF8Char ch);
 void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length);
 
+// Manipulation
+void UTF8String_Concat(UTF8String *str1, UTF8String *str2);
 #endif

@@ -38,8 +38,7 @@ void test_widget_hierarchy(void) {
     TEST_CHECK(parent->children_count == 1);
     TEST_CHECK(child1->parent == NULL);
     // Check that child2 is still there
-    TEST_CHECK(parent->children[1] == child2);
-
+    TEST_CHECK(parent->children[0] == child2);
     Widget_Destroy(parent);
     Widget_Destroy(child1);
     Widget_Destroy(child2);

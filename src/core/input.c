@@ -226,7 +226,7 @@ EscapeSequence Input_Read() {
         if (seq != ESC_NONE) {
             return seq;
         }
-        logDebug("Unknown escape sequence: %s", seq_buffer);
+        logDebug("Unknown escape sequence: %.*s", (int)len, (const char*)seq_buffer);
         return ESC_NONE;
     }
     push_to_buffer(seq_buffer + 1, len-1);

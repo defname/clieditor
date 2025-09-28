@@ -41,7 +41,8 @@ static WidgetOps label_ops = {
 Widget* Label_Create(Widget *parent, const char* text) {
     Widget *widget = Widget_Create(parent, &label_ops);
     LabelData *data = malloc(sizeof(LabelData));
-    UTF8String_FromStr(&data->text, text, strlen(text));
+   const char *label_text = text ? text : "";
+   UTF8String_FromStr(&data->text, label_text, strlen(label_text));
     widget->data = data;
     return widget;
 }

@@ -71,3 +71,12 @@ void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length) {
     }
 }
 
+void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
+    size_t new_length = str1->length + str2->length;
+    if (new_length > str1->capacity) {
+        UTF8String_Resize(str1, new_length);
+    }
+    for (size_t i=0; i<str2->length; i++) {
+        UTF8String_AddChar(str1, str2->chars[i]);
+    }
+}
