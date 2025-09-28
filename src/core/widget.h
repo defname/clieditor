@@ -41,11 +41,11 @@ typedef struct _Widget {
     int children_capacity;
 } Widget;
 
-void Widget_Init(Widget *w, WidgetOps *ops);
+void Widget_Init(Widget *w, Widget *parent, WidgetOps *ops);
 void Widget_Deinit(Widget *w);
 
 Widget *Widget_Create(Widget *parent, WidgetOps *ops);
-void WidgetDestroy(Widget *self);
+void Widget_Destroy(Widget *self);
 
 void Widget_AddChild(Widget *self, Widget *child);
 void Widget_RemoveChild(Widget *self, Widget *child);

@@ -222,9 +222,17 @@ EscapeSequence Input_Read() {
     bool is_seq = read_escape_sequence(fd, seq_buffer, MAX_SEQUENCE_LEN, &len);
 
     if (is_seq) {
-        return find_sequence(seq_buffer, len);
+        EscapeSequence seq = find_sequence(seq_buffer, len);
+        if (seq != ESC_NONE) {
+            return seq;
+        }
+        logDebug("Unknown escape sequence: %s", seq_buffer);
+        return ESC_NONE;
     }
     push_to_buffer(seq_buffer + 1, len-1);
+    if (len > 1) {
+        return ESC_NONE;
+    }
     return ESC_ESCAPE;
 }
 

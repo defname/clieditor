@@ -89,16 +89,6 @@ UTF8Char UTF8_GetCharFromString(const char *s) {
 
 }
 
-size_t UTF8_FromString(UTF8Char *buf, size_t n, const char *s) {
-    size_t out_idx = 0;
-    while (out_idx < n && *s != '\0') {
-        buf[out_idx] = UTF8_GetCharFromString(s);
-        s += buf[out_idx].length;
-        out_idx++;
-    }
-    return out_idx;
-}
-
 ssize_t UTF8_PutChar(int fd, UTF8Char ch) {
     if (ch.length == 0) {
         return 0;

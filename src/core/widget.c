@@ -1,4 +1,6 @@
 #include "widget.h"
+
+#include <stdlib.h>
 #include "utils/logging.h"
 
 void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
@@ -56,7 +58,7 @@ static void increase_capacity(Widget *widget) {
     if (!widget->children) {
         logFatal("Failed to reallocate widget children.");
     }
-    for (int i=widget->children_capacity; i<new_capacity; i++) {
+    for (size_t i=widget->children_capacity; i<new_capacity; i++) {
         widget->children[i] = NULL;
     }
     widget->children_capacity = new_capacity;

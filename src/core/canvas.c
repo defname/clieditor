@@ -7,7 +7,7 @@
 #include <string.h>
 #include "terminal.h"
 #include "utf8.h"
-#include "../utils/logging.h"
+#include "utils/logging.h"
 
 
 void reallocate_buffers(Canvas *canvas) {
