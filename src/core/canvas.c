@@ -55,7 +55,7 @@ void Canvas_Resize(Canvas *canvas, int width, int height) {
 }
 
 void update_cell(Canvas *canvas, int col, int row, Cell *origin) {
-    if (col >= canvas->width || row >= canvas->height) {
+    if (col >= canvas->width || row >= canvas->height || col < 0 || row < 0) {
         return;
     }
     Cell *cell = &canvas->buffer[row * canvas->width + col];
@@ -109,17 +109,22 @@ void Canvas_MoveCursor(Canvas *canvas, int col, int row) {
 }
 
 void Canvas_PutChar(Canvas *canvas, UTF8Char c) {
-    if (canvas->cursor_x >= canvas->width || canvas->cursor_y >= canvas->height) {
-        logDebug("Cursor out of bounds.");
+    if (canvas->cursor_x >= canvas->width
+        || canvas->cursor_y >= canvas->height
+        || canvas->cursor_x < 0
+        || canvas->cursor_y < 0) {
+        //logDebug("Cursor out of bounds.");
+        canvas->cursor_x++;  // so Canvas_Write works if starting out of screen
         return;
     }
-    int idx = canvas->cursor_x + canvas->cursor_y * terminal.cols;
+    // Use the canvas's width for index calculation, not the terminal's.
+    int idx = canvas->cursor_x + canvas->cursor_y * canvas->width;
     if (!UTF8_Equal(canvas->buffer[idx].ch, c) || memcmp(&canvas->buffer[idx].style, &canvas->current_style, sizeof(Style)) != 0) {
         canvas->buffer[idx].ch = c;
         canvas->buffer[idx].style = canvas->current_style;
         canvas->buffer[idx].changed = true;
     }
-    cursor_increment(canvas);
+    canvas->cursor_x++; // Move cursor to the right. Wrapping is handled by the caller or by subsequent calls.
 }
 
 void Canvas_Write(Canvas *canvas, const UTF8Char *s, size_t n) {
@@ -133,4 +138,3 @@ void Canvas_Write(Canvas *canvas, const UTF8Char *s, size_t n) {
         Canvas_PutChar(canvas, s[i]);
     }
 }
-

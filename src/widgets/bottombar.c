@@ -1,0 +1,50 @@
+#include "bottombar.h"
+
+#include <stdlib.h>
+#include "label.h"
+#include "core/canvas.h"
+#include "utils/logging.h"
+
+void bottombar_draw(Widget *self, Canvas *canvas) {
+    (void)self;
+    (void)canvas;
+}
+
+void bottombar_destroy(Widget *self) {
+    free(self->data);
+    self->data = NULL;
+    Widget_Destroy(self);
+}
+
+void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {
+    if (!self->parent) {
+        logDebug("BottomBar has no parent.");
+        return;
+    }
+    self->x = 0;
+    self->y = new_parent_height - 1;
+    self->width = new_parent_width;
+    self->height = 1;
+}
+
+static WidgetOps bottombar_ops = {
+    .draw = bottombar_draw,
+    .destroy = bottombar_destroy,
+    .handle_resize = bottombar_handle_resize,
+    .handle_input = NULL,
+};
+
+Widget *BottomBar_Create(Widget *parent) {
+    Widget *self = Widget_Create(parent, &bottombar_ops);
+    BottomBarData *data = malloc(sizeof(BottomBarData));
+    self->data = data;
+
+    Widget *label = Label_Create(self, "BottomBar");
+    label->x = 0;
+    label->y = 0;
+    label->width = 10;
+    label->height = 1;
+
+    Widget_onParentResize(self, parent->width, parent->height);
+    return self;
+}

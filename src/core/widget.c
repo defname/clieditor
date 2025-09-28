@@ -12,10 +12,13 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->width = 0;
     widget->height = 0;
 
-    widget->parent = parent;
     widget->children = NULL;
     widget->children_count = 0;
     widget->children_capacity = 0;
+
+    if (parent) {
+        Widget_AddChild(parent, widget);
+    }
 }
 
 void Widget_Deinit(Widget *widget) {
@@ -34,6 +37,9 @@ Widget *Widget_Create(Widget *parent, WidgetOps *ops) {
 }
 
 void Widget_Destroy(Widget *self) {
+    for (int i=0; i<self->children_count; i++) {
+        Widget_Destroy(self->children[i]);
+    }
     if (!self) {
         return;
     }
@@ -98,4 +104,55 @@ void Widget_RemoveChild(Widget *parent, Widget *child) {
         }
     }
     logDebug("Child not found.");
+}
+
+void Widget_Draw(Widget *self, Canvas *canvas) {
+    if (!self) {
+        logDebug("Cannot draw NULL Widget");
+        return;
+    }
+
+    if (self->ops && self->ops->draw) {
+       self->ops->draw(self, canvas);
+    }
+
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        
+        Canvas child_canvas;
+        Canvas_Init(&child_canvas, child->width, child->height);
+        Widget_Draw(self->children[i], &child_canvas);
+        Canvas_ClipTo(&child_canvas, canvas, child->x, child->y);
+        Canvas_Deinit(&child_canvas);
+    }
+}
+
+void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height) {
+    if (!self) {
+        logError("Invalid widget.");
+        return;
+    }
+    int old_width = self->width;
+    int old_height = self->height;
+
+    if (self->ops && self->ops->handle_resize) {
+        self->ops->handle_resize(self, new_parent_width, new_parent_height);
+    }
+
+    // If the widget's size hasn't changed, we don't need to notify children.
+    if (self->width == old_width && self->height == old_height) {
+        return;
+    }
+
+    // Propagate the resize event to children, passing the NEW size of THIS widget.
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        Widget_onParentResize(child, self->width, self->height);
+    } 
 }

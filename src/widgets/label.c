@@ -9,17 +9,17 @@
 // 2. Spezifische Implementierungen der Operationen
 
 // Die "draw"-Methode für ein Label
-void label_draw(Widget *self, Canvas *canvas) {
+static void label_draw(Widget *self, Canvas *canvas) {
     if (!self || !self->data) return;
     LabelData *data = (LabelData*)self->data;
 
     // Schreibe den Text auf den Canvas
-    Canvas_MoveCursor(canvas, self->x, self->y);
+    Canvas_MoveCursor(canvas, 0, 0);
     Canvas_Write(canvas, data->text.chars, data->text.length);
 }
 
 // Die "destroy"-Methode für ein Label (gibt den Text frei)
-void label_destroy(Widget *self) {
+static void label_destroy(Widget *self) {
     if (self && self->data) {
         LabelData *data = (LabelData*)self->data;
         UTF8String_Deinit(&data->text);
@@ -41,8 +41,8 @@ static WidgetOps label_ops = {
 Widget* Label_Create(Widget *parent, const char* text) {
     Widget *widget = Widget_Create(parent, &label_ops);
     LabelData *data = malloc(sizeof(LabelData));
-   const char *label_text = text ? text : "";
-   UTF8String_FromStr(&data->text, label_text, strlen(label_text));
+    const char *label_text = text ? text : "";
+    UTF8String_FromStr(&data->text, label_text, strlen(label_text));
     widget->data = data;
     return widget;
 }

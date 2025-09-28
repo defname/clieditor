@@ -9,22 +9,26 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 #include "canvas.h"
+
+typedef void (*ResizeCallback)(int new_width, int new_height);
 
 typedef struct _Screen {
     Canvas canvas;
+    ResizeCallback onResize;
 } Screen;
 
 extern Screen screen;
 
-void Screen_Init();  // call after Terminal_Init()!!!
+void Screen_Init(ResizeCallback onResize);  // call after Terminal_Init()!!!
 void Screen_Deinit();
-void Screen_onResize();  // Reallocates memory for the buffer. Need to be called AFTER Terminal_Update()
 
 void Screen_HideCursor();
 void Screen_ShowCursor();
 
 void Screen_Draw();
+
+int Screen_GetWidth();
+int Screen_GetHeight();
 
 #endif

@@ -8,15 +8,25 @@
 #include "core/utf8string.h"
 #include "core/input.h"
 #include "widgets/label.h"
+#include "widgets/bottombar.h"
+#include "widgets/app.h"
+
+
+Widget *app;
+
 
 void finish() {
+    Widget_Destroy(app);
     Input_Deinit();
+    Screen_ShowCursor();
     Screen_Deinit();
     Terminal_Deinit();
     printf("Goodbye!\n");
 }
 
-int cursor_t = 0;
+void onResize(int new_width, int new_height) {
+    Widget_onParentResize(app, new_width, new_height);
+}
 
 int main(int argc, char *argv[]) {
     (void) argc;
@@ -25,15 +35,21 @@ int main(int argc, char *argv[]) {
     atexit(finish);  // make sure original settings are restored
 
     Terminal_Init(STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO);
-    Screen_Init();
+    Screen_Init(onResize);
     Input_Init();
 
     // initial screen draw
     Screen_Draw();
     Screen_HideCursor();
 
+    app = App_Create(Screen_GetWidth(), Screen_GetHeight());
+    
+    Widget *label = Label_Create(app, "Hello, World!");
+    label->width = 20;
+    label->height = 1;
 
-    Widget *label = Label_Create(NULL, "Hello, World!");
+    Widget *bottombar = BottomBar_Create(app);
+    (void)bottombar;
 
     while (1) {
         EscapeSequence esc_seq = Input_Read(terminal.fd_in);
@@ -60,30 +76,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        label->ops->draw(label, &screen.canvas);
+        Widget_Draw(app, &screen.canvas);
         Screen_Draw();
 
-        /*
-        if (esc_seq != ESC_NONE) {
-            // escape sequence
-        }
-        while ((tmp = Input_GetChar()).length != 0) {
-            if (tmp.length == 1 && tmp.bytes[0] == '\e') {
-                return 0;
-            }
-            Screen_PutChar(tmp);
-            Screen_Draw();
-        }
-        
-        // cursor blinking
-        if (cursor_t + 1 < time(NULL)) {
-            cursor_t = time(NULL);
-            Cell *under_curser = &screen.buffer[screen.cursor_col + screen.cursor_row * terminal.cols];
-            under_curser->style.attributes ^= STYLE_UNDERLINE;
-            under_curser->changed = true;
-
-            Screen_Draw();
-        }
-        */
     }
 }
