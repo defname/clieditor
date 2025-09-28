@@ -28,5 +28,5 @@ void UTF8String_AddChar(UTF8String *str, UTF8Char ch);
 void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length);
 
 // Manipulation
-void UTF8String_Concat(UTF8String *str1, UTF8String *str2);
+void UTF8String_Concat(UTF8String *str1, const UTF8String *str2);
 #endif
