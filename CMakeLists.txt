@@ -36,6 +36,9 @@ endforeach()
 add_executable(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_OBJECTS})
 
+add_compile_definitions(_XOPEN_SOURCE=700)
+
+
 
 # --- Tools Ordner hinzufügen ---
 add_subdirectory(tools)

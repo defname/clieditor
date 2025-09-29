@@ -4,6 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <wchar.h>
+
 
 const UTF8Char utf8_space = { .bytes = {' '}, .length = 1 };
 const UTF8Char utf8_invalid = { .bytes = {0}, .length = 0 };
@@ -111,6 +113,37 @@ bool UTF8_EqualToChar(UTF8Char a, char b) {
     return a.bytes[0] == b;
 }
 
+uint32_t UTF8Char_ToCodepoint(UTF8Char ch) {
+    if (ch.length == 0) return INVALID_CODEPOINT;
+
+    uint32_t cp = 0;
+
+    if (ch.length == 1) {
+        // ASCII
+        return ch.bytes[0];
+    }
+    else if (ch.length == 2) {
+        cp  = (ch.bytes[0] & 0b00011111) << 6;  // 5 bits aus erstem Byte
+        cp |= (ch.bytes[1] & 0b00111111);       // 6 bits aus zweitem Byte
+    }
+    else if (ch.length == 3) {
+        cp  = (ch.bytes[0] & 0b00001111) << 12; // 4 bits
+        cp |= (ch.bytes[1] & 0b00111111) << 6;  // 6 bits
+        cp |= (ch.bytes[2] & 0b00111111);       // 6 bits
+    }
+    else if (ch.length == 4) {
+        cp  = (ch.bytes[0] & 0b00000111) << 18; // 3 bits
+        cp |= (ch.bytes[1] & 0b00111111) << 12; // 6 bits
+        cp |= (ch.bytes[2] & 0b00111111) << 6;  // 6 bits
+        cp |= (ch.bytes[3] & 0b00111111);       // 6 bits
+    }
+    else {
+        return INVALID_CODEPOINT;
+    }
+
+    return cp;
+}
+
 bool UTF8_IsPrintable(UTF8Char ch) {
     if (ch.length == 0) {
         return false;
@@ -118,6 +151,9 @@ bool UTF8_IsPrintable(UTF8Char ch) {
     if (ch.length == 1) {
         return isprint(ch.bytes[0]);
     }
-    // TODO!!!!
-    return true;
+    uint32_t codepoint = UTF8Char_ToCodepoint(ch); // helper that decodes UTF8Char
+    if (codepoint == INVALID_CODEPOINT) {
+        return false;
+    }
+    return wcwidth((wchar_t)codepoint) > 0;
 }

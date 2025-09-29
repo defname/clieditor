@@ -91,12 +91,10 @@ void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t 
     }
     size_t len_a = pos;
     size_t len_b = s->length - pos;
-    UTF8String_Init(a);
-    UTF8String_Init(b);
     UTF8String_Resize(a, len_a);
     UTF8String_Resize(b, len_b);
-    mempcpy(a->chars, s->chars, sizeof(UTF8Char) * len_a);
-    mempcpy(b->chars, s->chars+pos, sizeof(UTF8Char) * len_b);
+    memcpy(a->chars, s->chars, sizeof(UTF8Char) * len_a);
+    memcpy(b->chars, s->chars+pos, sizeof(UTF8Char) * len_b);
     a->length = len_a;
     b->length = len_b;
 }
@@ -111,8 +109,8 @@ void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     if (new_length > str1->capacity) {
         UTF8String_Resize(str1, new_length);
     }
-    for (size_t i=0; i<str2->length; i++) {
-        UTF8String_AddChar(str1, str2->chars[i]);
+    for (size_t i = 0; i < cpy.length; i++) {
+        UTF8String_AddChar(str1, cpy.chars[i]);
     }
     UTF8String_Deinit(&cpy);
 }

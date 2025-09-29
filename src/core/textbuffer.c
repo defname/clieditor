@@ -59,6 +59,8 @@ void TB_MergeGap(TextBuffer *tb) {
     UTF8String *line = &tb->current_line->text;
     // split the line at cursor position
     UTF8String a, b;
+    UTF8String_Init(&a);
+    UTF8String_Init(&b);
     UTF8String_Split(line, &a, &b, tb->cursor_pos);
     // shrink the original line (it's now the part before the gap)
     UTF8String_Shorten(line, tb->cursor_pos - tb->gap.overlap);
@@ -77,16 +79,16 @@ void TB_MergeGap(TextBuffer *tb) {
 
 void TB_MoveCursor(TextBuffer *tb, int dx) {
     TB_MergeGap(tb);
-    size_t new_pos = dx + tb->cursor_pos;
-    if (new_pos >= tb->current_line->text.length) {
-        tb->cursor_pos = tb->current_line->text.length;
-        return;
-    }
-    if (new_pos <= 0) {
+    long new_pos = (long)tb->cursor_pos + dx;
+    if (new_pos < 0) {
         tb->cursor_pos = 0;
         return;
     }
-    tb->cursor_pos = new_pos;
+    if ((size_t)new_pos >= tb->current_line->text.length) {
+        tb->cursor_pos = tb->current_line->text.length;
+        return;
+    }
+    tb->cursor_pos = (size_t)new_pos;
 }
 
 void TB_ChangeLine(TextBuffer *tb, int ty) {
@@ -135,6 +137,9 @@ void TB_InsertLineAfter(TextBuffer *tb) {
     new_line->next = next;
     new_line->prev = tb->current_line;
     tb->current_line->next = new_line;
+    if (next) {
+        next->prev = new_line;
+    }
 }
 
 void TB_DeleteCurrentLine(TextBuffer *tb) {
@@ -184,6 +189,8 @@ void TB_Backspace(TextBuffer *tb) {
 void TB_Enter(TextBuffer *tb) {
     TB_MergeGap(tb);
     UTF8String before, after;
+    UTF8String_Init(&before);
+    UTF8String_Init(&after);
     UTF8String_Split(&tb->current_line->text, &before, &after, tb->cursor_pos);
     tb->current_line->text.length = tb->cursor_pos;
     TB_InsertLineAfter(tb);

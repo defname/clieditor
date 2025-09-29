@@ -186,6 +186,10 @@ void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
         self->ops->handle_input(self, key, ch);
     }
     for (int i=0; i<self->children_count; i++) {
-        Widget_HandleInput(self->children[i], key, ch);
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        Widget_HandleInput(child, key, ch);
     }
 }

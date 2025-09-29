@@ -52,6 +52,8 @@ static void draw_current_line(const Widget *self, const TextBuffer *tb, Canvas *
     UTF8String_Init(&cursor);
     UTF8String_FromStr(&cursor, "_", 1);
     UTF8String before, after;
+    UTF8String_Init(&before);
+    UTF8String_Init(&after);
     TB_TextAroundGap(tb, &before, &after);
     draw_text(self, &before, canvas, &x, y);
     draw_text(self, &tb->gap.text, canvas, &x, y);
@@ -135,11 +137,11 @@ static WidgetOps editor_ops = {
 
 Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
     EditorData *data = malloc(sizeof(EditorData));
-    data->tb = tb;
-    data->first_line = tb->current_line;
     if (!data) {
         logFatal("Cannot allocate memory for EditorData.");
     }
+    data->tb = tb;
+    data->first_line = tb->current_line;
     Widget *new = Widget_Create(parent, &editor_ops);
     new->data = data;
 
