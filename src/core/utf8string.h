@@ -30,7 +30,9 @@ void UTF8String_Copy(UTF8String *dest, const UTF8String *src);
 
 // Manipulation
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2);
+void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t pos);
 void UTF8String_Repeat(UTF8String *str, size_t n);
 void UTF8String_Spaces(UTF8String *str, size_t n);
+void UTF8String_Shorten(UTF8String *str, size_t n);
 
 #endif

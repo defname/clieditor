@@ -90,8 +90,8 @@ void reset_style() {
 void Screen_Draw() {
     bool skipped = false;
     int old_y = 0;
-    Style current_style = { .fg = 12, .bg = 0, .attributes = STYLE_UNDERLINE };
-    //update_style(NULL, &current_style);
+    Style current_style = { .fg = 12, .bg = 15, .attributes = STYLE_UNDERLINE };
+    update_style(NULL, &current_style);
     cursor_to(0, 0);
     for (size_t i=0; i<screen.canvas.size; i++) {
         int x = i % screen.canvas.width;

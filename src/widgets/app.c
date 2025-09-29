@@ -8,7 +8,6 @@
 void app_destroy(Widget *self) {
     free(self->data);
     self->data = NULL;
-    Widget_Destroy(self);
 }
 
 void app_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {

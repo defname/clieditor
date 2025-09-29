@@ -4,7 +4,7 @@
 #include "core/widget.h"
 
 typedef struct {
-
+    int dummy;
 } AppData;
 
 Widget *App_Create(int width, int height);

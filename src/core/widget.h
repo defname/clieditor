@@ -16,7 +16,7 @@ struct _Widget;
 // "Virtual methods" for a Widget.
 typedef struct {
     // Draws the widget onto a target canvas.
-    void (*draw)(struct _Widget *self, Canvas *target);
+    void (*draw)(const struct _Widget *self, Canvas *target);
     // Handles input. Returns true if the input was consumed.
     bool (*handle_input)(struct _Widget *self, EscapeSequence key, UTF8Char ch);
     // Handles resize events
@@ -56,5 +56,7 @@ void Widget_RemoveChild(Widget *self, Widget *child);
 
 void Widget_Draw(Widget *self, Canvas *canvas);
 void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height);
+
+void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch);
 
 #endif

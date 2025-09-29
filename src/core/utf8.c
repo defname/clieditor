@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 const UTF8Char utf8_space = { .bytes = {' '}, .length = 1 };
 const UTF8Char utf8_invalid = { .bytes = {0}, .length = 0 };
@@ -108,4 +109,15 @@ bool UTF8_EqualToChar(UTF8Char a, char b) {
         return false;
     }
     return a.bytes[0] == b;
+}
+
+bool UTF8_IsPrintable(UTF8Char ch) {
+    if (ch.length == 0) {
+        return false;
+    }
+    if (ch.length == 1) {
+        return isprint(ch.bytes[0]);
+    }
+    // TODO!!!!
+    return true;
 }

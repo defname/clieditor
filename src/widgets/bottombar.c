@@ -5,7 +5,7 @@
 #include "core/canvas.h"
 #include "utils/logging.h"
 
-void bottombar_draw(Widget *self, Canvas *canvas) {
+void bottombar_draw(const Widget *self, Canvas *canvas) {
     (void)self;
     (void)canvas;
 }
@@ -13,7 +13,6 @@ void bottombar_draw(Widget *self, Canvas *canvas) {
 void bottombar_destroy(Widget *self) {
     free(self->data);
     self->data = NULL;
-    Widget_Destroy(self);
 }
 
 void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {

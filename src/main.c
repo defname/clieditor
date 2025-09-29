@@ -7,20 +7,22 @@
 #include "core/screen.h"
 #include "core/utf8string.h"
 #include "core/input.h"
+#include "core/textbuffer.h"
 #include "widgets/label.h"
 #include "widgets/bottombar.h"
 #include "widgets/app.h"
-
+#include "widgets/editor.h"
 
 Widget *app;
-
+TextBuffer tb;
 
 void finish() {
     Widget_Destroy(app);
+    TB_Deinit(&tb);
     Input_Deinit();
-    Screen_ShowCursor();
     Screen_Deinit();
     Terminal_Deinit();
+    Screen_ShowCursor();
     printf("Goodbye!\n");
 }
 
@@ -42,37 +44,29 @@ int main(int argc, char *argv[]) {
     Screen_Draw();
     Screen_HideCursor();
 
+    TB_Init(&tb);
+
     app = App_Create(Screen_GetWidth(), Screen_GetHeight());
     
-    Widget *label = Label_Create(app, "Hello, World!");
-    label->width = 20;
-    label->height = 1;
-
+    Widget *editor = Editor_Create(app, &tb);
+    (void)editor;
     Widget *bottombar = BottomBar_Create(app);
     (void)bottombar;
 
+    Widget_onParentResize(app, Screen_GetWidth(), Screen_GetHeight());
+
     while (1) {
-        EscapeSequence esc_seq = Input_Read(terminal.fd_in);
-        (void)esc_seq;
-        if (esc_seq == ESC_CURSOR_DOWN) {
-            label->y++;
-        }
-        else if (esc_seq == ESC_CURSOR_UP) {
-            label->y--;
-        }
-        else if (esc_seq == ESC_CURSOR_LEFT) {
-            label->x--;
-        }
-        else if (esc_seq == ESC_CURSOR_RIGHT) {
-            label->x++;
-        }
-        else if (esc_seq == ESC_ESCAPE) {
+        EscapeSequence esc_seq = Input_Read();
+        if (esc_seq == ESC_ESCAPE) {
             return 0;
         }
 
-        UTF8Char tmp;
-        while ((tmp = Input_GetChar()).length != 0) {
-            UTF8String_AddChar(&(((LabelData*)(label->data))->text), tmp);
+        Widget_HandleInput(app, esc_seq, utf8_invalid);
+
+
+        UTF8Char ch;
+        while ((ch = Input_GetChar()).length != 0) {
+            Widget_HandleInput(app, ESC_NONE, ch);
         }
 
 

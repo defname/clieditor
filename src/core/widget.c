@@ -43,13 +43,20 @@ Widget *Widget_Create(Widget *parent, WidgetOps *ops) {
 }
 
 void Widget_Destroy(Widget *self) {
-    for (int i=0; i<self->children_count; i++) {
-        Widget_Destroy(self->children[i]);
-    }
     if (!self) {
         return;
     }
+    // 1. Destroy all children recursively
+    for (int i=0; i<self->children_count; i++) {
+        Widget_Destroy(self->children[i]);
+    }
+    // 2. Call the widget's specific destructor (if it exists) to free its data
+    if (self->ops && self->ops->destroy) {
+        self->ops->destroy(self);
+    }
+    // 3. Deinitialize the base widget (frees the children array)
     Widget_Deinit(self);
+    // 4. Free the widget struct itself
     free(self);
 }
 
@@ -121,6 +128,7 @@ void draw_background(Widget *self, Canvas *canvas) {
         Canvas_Write(canvas, &s);
     }
     UTF8String_Deinit(&s);
+    Canvas_MoveCursor(canvas, 0, 0);
 }
 void Widget_Draw(Widget *self, Canvas *canvas) {
     if (!self) {
@@ -154,16 +162,9 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
         logError("Invalid widget.");
         return;
     }
-    int old_width = self->width;
-    int old_height = self->height;
 
     if (self->ops && self->ops->handle_resize) {
         self->ops->handle_resize(self, new_parent_width, new_parent_height);
-    }
-
-    // If the widget's size hasn't changed, we don't need to notify children.
-    if (self->width == old_width && self->height == old_height) {
-        return;
     }
 
     // Propagate the resize event to children, passing the NEW size of THIS widget.
@@ -174,4 +175,17 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
         }
         Widget_onParentResize(child, self->width, self->height);
     } 
+}
+
+void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
+    if (!self) {
+        logError("Invalid widget.");
+        return;
+    }
+    if (self->ops && self->ops->handle_input) {
+        self->ops->handle_input(self, key, ch);
+    }
+    for (int i=0; i<self->children_count; i++) {
+        Widget_HandleInput(self->children[i], key, ch);
+    }
 }

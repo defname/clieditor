@@ -9,7 +9,7 @@
 // 2. Spezifische Implementierungen der Operationen
 
 // Die "draw"-Methode für ein Label
-static void label_draw(Widget *self, Canvas *canvas) {
+static void label_draw(const Widget *self, Canvas *canvas) {
     if (!self || !self->data) return;
     LabelData *data = (LabelData*)self->data;
 
@@ -26,8 +26,6 @@ static void label_destroy(Widget *self) {
         free(data);
         self->data = NULL;
     }
-    // Rufe die Basis-Destroy-Funktion auf
-    Widget_Destroy(self);
 }
 
 // 3. Die "vtable" für das Label-Widget
@@ -41,6 +39,10 @@ static WidgetOps label_ops = {
 Widget* Label_Create(Widget *parent, const char* text) {
     Widget *widget = Widget_Create(parent, &label_ops);
     LabelData *data = malloc(sizeof(LabelData));
+    if (!data) {
+        Widget_Destroy(widget);
+        return NULL;
+    }
     const char *label_text = text ? text : "";
     UTF8String_FromStr(&data->text, label_text, strlen(label_text));
     widget->data = data;

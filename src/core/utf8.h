@@ -27,5 +27,7 @@ ssize_t UTF8_PutChar(int fd, UTF8Char ch);      // Write an UTF character to fd 
 bool UTF8_Equal(UTF8Char a, UTF8Char b);        // return true if a and b are equal
 bool UTF8_EqualToChar(UTF8Char a, char b);      // return true if a and b are equal
 
+bool UTF8_IsPrintable(UTF8Char ch);
+
 
 #endif

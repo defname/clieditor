@@ -38,6 +38,11 @@ typedef enum {
     ESC_NONE
 } EscapeSequence;
 
+#define KEY_ENTER       10
+#define KEY_BACKSPACE   127
+#define KEY_TAB         9
+
+
 void Input_Init();
 void Input_Deinit();
 EscapeSequence Input_Read();

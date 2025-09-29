@@ -81,14 +81,40 @@ void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
     dest->length = src->length;
 }
 
+void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t pos) {
+    if (s == a || s == b || a == b) {
+        logWarn("Cannot split string into itself.");
+        return;
+    }
+    if (pos >= s->length) {
+        pos = s->length;
+    }
+    size_t len_a = pos;
+    size_t len_b = s->length - pos;
+    UTF8String_Init(a);
+    UTF8String_Init(b);
+    UTF8String_Resize(a, len_a);
+    UTF8String_Resize(b, len_b);
+    mempcpy(a->chars, s->chars, sizeof(UTF8Char) * len_a);
+    mempcpy(b->chars, s->chars+pos, sizeof(UTF8Char) * len_b);
+    a->length = len_a;
+    b->length = len_b;
+}
+
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     size_t new_length = str1->length + str2->length;
+    // copy second str for the case str1 == str2
+    // the loop below would run endless otherwise
+    UTF8String cpy;
+    UTF8String_Init(&cpy);
+    UTF8String_Copy(&cpy, str2);
     if (new_length > str1->capacity) {
         UTF8String_Resize(str1, new_length);
     }
     for (size_t i=0; i<str2->length; i++) {
         UTF8String_AddChar(str1, str2->chars[i]);
     }
+    UTF8String_Deinit(&cpy);
 }
 
 void UTF8String_Repeat(UTF8String *str, size_t n) {
@@ -102,9 +128,17 @@ void UTF8String_Repeat(UTF8String *str, size_t n) {
     for (size_t i=0; i<n; i++) {
         UTF8String_Concat(str, &orig_string);
     }
+    UTF8String_Deinit(&orig_string);
 }
 
 void UTF8String_Spaces(UTF8String *str, size_t n) {
     UTF8String_FromStr(str, " ", 1);
     UTF8String_Repeat(str, n);
+}
+
+void UTF8String_Shorten(UTF8String *str, size_t n) {
+    if (n >= str->length) {
+        return;
+    }
+    str->length = n;
 }

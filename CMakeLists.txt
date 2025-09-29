@@ -37,7 +37,8 @@ add_executable(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_OBJECTS})
 
 
-
+# --- Tools Ordner hinzufügen ---
+add_subdirectory(tools)
 
 # --- Test-Konfiguration ---
 # CTest-Unterstützung aktivieren
