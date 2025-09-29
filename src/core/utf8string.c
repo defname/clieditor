@@ -101,18 +101,12 @@ void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t 
 
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     size_t new_length = str1->length + str2->length;
-    // copy second str for the case str1 == str2
-    // the loop below would run endless otherwise
-    UTF8String cpy;
-    UTF8String_Init(&cpy);
-    UTF8String_Copy(&cpy, str2);
     if (new_length > str1->capacity) {
         UTF8String_Resize(str1, new_length);
     }
-    for (size_t i = 0; i < cpy.length; i++) {
-        UTF8String_AddChar(str1, cpy.chars[i]);
-    }
-    UTF8String_Deinit(&cpy);
+    // use memove to handle overlapping memory areas
+    memmove(str1->chars + str1->length, str2->chars, sizeof(UTF8Char) * str2->length);
+    str1->length = new_length;
 }
 
 void UTF8String_Repeat(UTF8String *str, size_t n) {
