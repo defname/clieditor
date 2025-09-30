@@ -14,6 +14,6 @@ typedef struct {
     uint16_t attributes; // Bit-Flags für fett, unterstrichen etc.
 } Style;
 
-bool Style_Cmp(const Style *a, const Style *b);
+bool Style_Equal(const Style *a, const Style *b);
 
 #endif

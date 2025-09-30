@@ -106,7 +106,7 @@ void Canvas_Fill(Canvas *canvas, Style style) {
     const UTF8Char blank = { .bytes = {' '}, .length = 1 };
     for (size_t i = 0; i < canvas->size; i++) {
         Cell *cell = &canvas->buffer[i];
-        if (!UTF8_Equal(cell->ch, blank) || memcmp(&cell->style, &style, sizeof(Style)) != 0) {
+        if (!UTF8_Equal(cell->ch, blank) || Style_Equal(&cell->style, &style)) {
             cell->ch = blank;
             cell->style = style;
             cell->changed = true;
