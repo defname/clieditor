@@ -23,12 +23,37 @@ extern Screen screen;
 void Screen_Init(ResizeCallback onResize);  // call after Terminal_Init()!!!
 void Screen_Deinit();
 
+/**
+ * @brief Hides the terminal cursor.
+ *
+ * Sends an ANSI escape code to the terminal to make the cursor invisible.
+ */
 void Screen_HideCursor();
+
+/**
+ * @brief Shows the terminal cursor.
+ *
+ * Sends an ANSI escape code to the terminal to make the cursor visible.
+ */
 void Screen_ShowCursor();
 
+/**
+ * @brief Draws the content of the screen's canvas to the terminal.
+ *
+ * This function iterates through the canvas buffer and updates only the cells
+ * that have changed since the last draw call, optimizing terminal output.
+ * It handles cursor positioning and style changes.
+ */
 void Screen_Draw();
 
+/**
+ * @brief Returns the current width of the screen's canvas in columns.
+ */
 int Screen_GetWidth();
+
+/**
+ * @brief Returns the current height of the screen's canvas in rows.
+ */
 int Screen_GetHeight();
 
 #endif

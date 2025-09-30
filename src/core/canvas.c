@@ -102,6 +102,18 @@ void Canvas_Clear(Canvas *canvas) {
     }
 }
 
+void Canvas_Fill(Canvas *canvas, Style style) {
+    const UTF8Char blank = { .bytes = {' '}, .length = 1 };
+    for (size_t i = 0; i < canvas->size; i++) {
+        Cell *cell = &canvas->buffer[i];
+        if (!UTF8_Equal(cell->ch, blank) || memcmp(&cell->style, &style, sizeof(Style)) != 0) {
+            cell->ch = blank;
+            cell->style = style;
+            cell->changed = true;
+        }
+    }
+}
+
 void Canvas_MoveCursor(Canvas *canvas, int col, int row) {
     canvas->cursor_x = col;
     canvas->cursor_y = row;

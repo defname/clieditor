@@ -18,6 +18,7 @@ static void on_resize(int sig) {
         perror("ioctl TIOCGWINSZ");
         return;
     }
+    dprintf(terminal.fd_out, "\e[2J");
     Terminal_Update(); // Update global terminal dimensions
     Canvas_Resize(&screen.canvas, w.ws_col, w.ws_row);
     if (screen.onResize) {
@@ -122,4 +123,3 @@ int Screen_GetWidth() {
 int Screen_GetHeight() {
     return screen.canvas.height;
 }
-
