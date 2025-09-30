@@ -6,8 +6,8 @@
 
 typedef struct _Timer {
     TimerState state;
-    Miliseconds remaining;
-    Miliseconds duration;
+    Milliseconds remaining;
+    Milliseconds duration;
     TimerCallback callback;
     void *user_data;
 } Timer;
@@ -23,7 +23,7 @@ static void init_timer(Timer *timer) {
     timer->user_data = NULL;
 }
 
-static void update_timer(Timer *timer, uint8_t timer_id, Miliseconds dt) {
+static void update_timer(Timer *timer, uint8_t timer_id, Milliseconds dt) {
     if (timer->state != TIMER_RUNNING) {
         if (timer->state == TIMER_FINISHED) {
             // Reset the timer in the next cycle after it has finished.
@@ -57,13 +57,13 @@ void Timer_Deinit() {
     // The resources are managed statically.
 }
 
-Miliseconds Timer_Update() {
+Milliseconds Timer_Update() {
     struct timeval now;
     gettimeofday(&now, NULL);
 
     uint64_t now_ms = (uint64_t)now.tv_sec * 1000 + now.tv_usec / 1000;
     uint64_t last_ms = (uint64_t)last_update_time.tv_sec * 1000 + last_update_time.tv_usec / 1000;
-    Miliseconds dt = now_ms - last_ms;
+    Milliseconds dt = now_ms - last_ms;
 
     last_update_time = now;
 
@@ -74,7 +74,7 @@ Miliseconds Timer_Update() {
     return dt;
 }
 
-uint8_t Timer_Start(Miliseconds time, TimerCallback callback, void *user_data) {
+uint8_t Timer_Start(Milliseconds time, TimerCallback callback, void *user_data) {
     // find free slot
     for (int i = 0; i < MAX_TIMER; i++) {
         if (timers[i].state == TIMER_INACTIVE) {

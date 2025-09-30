@@ -20,14 +20,14 @@ typedef enum {
 
 // callback function takes the id of the timer calling it and additional data 
 typedef void (*TimerCallback)(uint8_t timer_id, void *user_data);
-typedef uint32_t Miliseconds;
+typedef uint32_t Milliseconds;
 
 void Timer_Init();          // call this when initializing the program
 void Timer_Deinit();        // not used at the moment
-Miliseconds Timer_Update(); // call this in every iteration of the main loop. return time in ms since last call
+Milliseconds Timer_Update(); // call this in every iteration of the main loop. return time in ms since last call
 
 // return id of the created timer
-uint8_t Timer_Start(Miliseconds time,       // time in ms the timer should run
+uint8_t Timer_Start(Milliseconds time,       // time in ms the timer should run
                     TimerCallback callback, // function that will be called at timeout
                     void *user_data);       // additional data to pass to the callback function
 void Timer_Restart(uint8_t id);
