@@ -10,18 +10,20 @@
 
 Screen screen;
 
+Screen screen;
+static volatile sig_atomic_t resize_pending = 0;
 
-static void on_resize(int sig) {
+static void on_resize(int sig) {  // WINCH signal handler
     (void)sig;
-    struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-        perror("ioctl TIOCGWINSZ");
-        return;
-    }
+    resize_pending = 1;  // this is checked at the beginning of Screen_Draw()
+}
+
+static void handle_resize() {  // actually do the resize
+    Screen_Clear();
     Terminal_Update(); // Update global terminal dimensions
-    Canvas_Resize(&screen.canvas, w.ws_col, w.ws_row);
+    Canvas_Resize(&screen.canvas, terminal.cols, terminal.rows);
     if (screen.onResize) {
-        screen.onResize(w.ws_col, w.ws_row);
+        screen.onResize(terminal.cols, terminal.rows);
     }
     Canvas_Clear(&screen.canvas);
 }
@@ -50,6 +52,7 @@ void Screen_ShowCursor() {
 }
 
 //---------- DRAW -------------
+// TODO: not all styles are implemented so far
 
 void cursor_to(int col, int row) {
     dprintf(terminal.fd_out, "\033[%d;%dH", row+1, col+1);
@@ -88,6 +91,11 @@ void reset_style() {
 }
 
 void Screen_Draw() {
+    if (resize_pending) {
+        handle_resize();
+        resize_pending = 0;
+    }
+
     bool skipped = false;
     int old_y = 0;
     Style current_style = { .fg = 12, .bg = 15, .attributes = STYLE_UNDERLINE };
@@ -115,6 +123,11 @@ void Screen_Draw() {
     reset_style();
 }
 
+void Screen_Clear() {
+    dprintf(terminal.fd_out, "\e[2J");
+}
+
+
 int Screen_GetWidth() {
     return screen.canvas.width;
 }
@@ -122,4 +135,3 @@ int Screen_GetWidth() {
 int Screen_GetHeight() {
     return screen.canvas.height;
 }
-

@@ -119,17 +119,6 @@ void Widget_RemoveChild(Widget *parent, Widget *child) {
     logDebug("Child not found.");
 }
 
-void draw_background(Widget *self, Canvas *canvas) {
-    UTF8String s;
-    UTF8String_Init(&s);
-    // Fill the entire width of the canvas it's drawing on.
-    UTF8String_Spaces(&s, self->width);
-    for (int i=0; i<self->height; i++) {
-        Canvas_Write(canvas, &s);
-    }
-    UTF8String_Deinit(&s);
-    Canvas_MoveCursor(canvas, 0, 0);
-}
 void Widget_Draw(Widget *self, Canvas *canvas) {
     if (!self) {
         logDebug("Cannot draw NULL Widget");
@@ -137,7 +126,7 @@ void Widget_Draw(Widget *self, Canvas *canvas) {
     }
 
     canvas->current_style = self->style;
-    draw_background(self, canvas);
+    Canvas_Fill(canvas, self->style);
 
     if (self->ops && self->ops->draw) {
        self->ops->draw(self, canvas);
