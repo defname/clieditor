@@ -11,18 +11,13 @@
 Screen screen;
 
 
-static void on_resize(int sig) {
+static void on_resize(int sig) {  // WINCH signal handler
     (void)sig;
-    struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-        perror("ioctl TIOCGWINSZ");
-        return;
-    }
     dprintf(terminal.fd_out, "\e[2J");
     Terminal_Update(); // Update global terminal dimensions
-    Canvas_Resize(&screen.canvas, w.ws_col, w.ws_row);
+    Canvas_Resize(&screen.canvas, terminal.cols, terminal.rows);
     if (screen.onResize) {
-        screen.onResize(w.ws_col, w.ws_row);
+        screen.onResize(terminal.cols, terminal.rows);
     }
     Canvas_Clear(&screen.canvas);
 }
