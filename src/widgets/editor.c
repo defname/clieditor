@@ -5,6 +5,12 @@
 #include "core/input.h"
 #include "utils/logging.h"
 
+static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
+    EditorData *data = (EditorData*)user_data;
+    data->cursor_visible = !data->cursor_visible;
+    Timer_Restart(timer_id);
+}
+
 void editor_free(Widget *self) {
     free(self->data);
 }
@@ -48,9 +54,15 @@ static void draw_line(const Widget *self, const UTF8String *text, Canvas *canvas
 
 static void draw_current_line(const Widget *self, const TextBuffer *tb, Canvas *canvas, int *y) {
     int x = 0;
+    EditorData *data = (EditorData*)self->data;
     UTF8String cursor;
     UTF8String_Init(&cursor);
-    UTF8String_FromStr(&cursor, "_", 1);
+    if (data->cursor_visible) {
+        UTF8String_FromStr(&cursor, "_", 1);
+    }
+    else {
+        UTF8String_FromStr(&cursor, " ", 1);
+    }
     UTF8String before, after;
     UTF8String_Init(&before);
     UTF8String_Init(&after);
@@ -142,6 +154,8 @@ Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
     }
     data->tb = tb;
     data->first_line = tb->current_line;
+    data->cursor_timer = Timer_Start(500, alternate_cursor_visibility, data);
+    data->cursor_visible = true;
     Widget *new = Widget_Create(parent, &editor_ops);
     new->data = data;
 

@@ -8,6 +8,7 @@
 #include "core/utf8string.h"
 #include "core/input.h"
 #include "core/textbuffer.h"
+#include "core/timer.h"
 #include "widgets/label.h"
 #include "widgets/bottombar.h"
 #include "widgets/app.h"
@@ -39,6 +40,7 @@ int main(int argc, char *argv[]) {
     Terminal_Init(STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO);
     Screen_Init(onResize);
     Input_Init();
+    Timer_Init();
 
     // initial screen draw
     Screen_Draw();
@@ -56,6 +58,7 @@ int main(int argc, char *argv[]) {
     Widget_onParentResize(app, Screen_GetWidth(), Screen_GetHeight());
 
     while (1) {
+        Timer_Update();
         EscapeSequence esc_seq = Input_Read();
         if (esc_seq == ESC_ESCAPE) {
             return 0;
