@@ -5,7 +5,7 @@
 #include <fcntl.h>
 
 // Inkludiere die C-Datei direkt.
-#include "utils/logging.c"
+#include "common/logging.c"
 
 void test_log_output(void) {
     // stderr auf eine Pipe umleiten, um die Ausgabe abzufangen

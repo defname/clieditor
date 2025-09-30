@@ -49,7 +49,7 @@
 #ifndef TEXTBUFFER_H
 #define TEXTBUFFER_H
 
-#include "utf8string.h"
+#include "common/utf8string.h"
 
 typedef struct _Line {
     UTF8String text;

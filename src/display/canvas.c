@@ -1,12 +1,12 @@
-#include "canvas.h"
+#include "display/canvas.h"
 
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "terminal.h"
-#include "utils/logging.h"
+#include "io/terminal.h"
+#include "common/logging.h"
 
 
 void reallocate_buffers(Canvas *canvas) {
@@ -72,7 +72,7 @@ void Canvas_ClipTo(Canvas *canvas, Canvas *target, int x, int y) {
         for (int row=0; row < canvas->height; row++) {
             size_t idx = row * canvas->width + col;
             if (idx >= canvas->size) {
-                logDebug("canvas index out of bounds.");
+                logDebug("display/canvas index out of bounds.");
                 continue;
             }
             Cell *origin = &canvas->buffer[idx];

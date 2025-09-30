@@ -2,7 +2,7 @@
 
 // Inkludiere die C-Datei direkt.
 // terminal.c inkludiert unistd.h, termios.h, stdio.h, stdlib.h
-#include "core/terminal.c"
+#include "io/terminal.c"
 
 void test_terminal_init(void) {
     // Wir können die echten termios-Funktionen nicht einfach testen,

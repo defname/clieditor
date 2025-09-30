@@ -1,7 +1,7 @@
 #include "widget.h"
 
 #include <stdlib.h>
-#include "utils/logging.h"
+#include "common/logging.h"
 
 void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->ops = ops;

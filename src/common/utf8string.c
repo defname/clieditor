@@ -1,9 +1,9 @@
-#include "utf8string.h"
+#include "common/utf8string.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils/logging.h"
+#include "common/logging.h"
 
 
 void UTF8String_Init(UTF8String *str) {

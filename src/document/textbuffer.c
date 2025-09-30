@@ -1,6 +1,6 @@
-#include "textbuffer.h"
+#include "document/textbuffer.h"
 
-#include "utils/logging.h"
+#include "common/logging.h"
 
 Line *Line_Create() {
     Line *new_line = malloc(sizeof(Line));

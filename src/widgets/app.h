@@ -1,7 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
-#include "core/widget.h"
+#include "display/widget.h"
 
 typedef struct {
     int dummy;

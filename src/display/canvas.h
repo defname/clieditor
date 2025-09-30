@@ -7,8 +7,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "utf8.h"
-#include "utf8string.h"
+#include "common/utf8.h"
+#include "common/utf8string.h"
 #include "cell.h"
 
 /**

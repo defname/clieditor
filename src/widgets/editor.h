@@ -1,9 +1,9 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "core/widget.h"
-#include "core/textbuffer.h"
-#include "core/timer.h"
+#include "display/widget.h"
+#include "document/textbuffer.h"
+#include "io/timer.h"
 
 typedef struct {
     TextBuffer *tb;

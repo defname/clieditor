@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include "utils/buffer.h"
+#include "common/buffer.h"
 
 #define INVALID_CODEPOINT 0xFFFFFFFF
 

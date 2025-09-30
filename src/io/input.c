@@ -5,10 +5,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include "utf8.h"
-#include "terminal.h"
-#include "utils/logging.h"
-#include "utils/buffer.h"
+#include "common/utf8.h"
+#include "io/terminal.h"
+#include "common/logging.h"
+#include "common/buffer.h"
 
 /*
 CSI ::= ESC '['

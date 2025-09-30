@@ -1,9 +1,9 @@
 #include "editor.h"
 
 #include <ctype.h>
-#include "core/canvas.h"
-#include "core/input.h"
-#include "utils/logging.h"
+#include "display/canvas.h"
+#include "io/input.h"
+#include "common/logging.h"
 
 static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
     EditorData *data = (EditorData*)user_data;
