@@ -9,11 +9,13 @@
 #include "terminal.h"
 
 Screen screen;
-bool resize_pending = false;
+
+Screen screen;
+static volatile sig_atomic_t resize_pending = 0;
 
 static void on_resize(int sig) {  // WINCH signal handler
     (void)sig;
-    resize_pending = true;  // this is checked at the beginning of Screen_Draw()
+    resize_pending = 1;  // this is checked at the beginning of Screen_Draw()
 }
 
 static void handle_resize() {  // actually do the resize
@@ -91,7 +93,7 @@ void reset_style() {
 void Screen_Draw() {
     if (resize_pending) {
         handle_resize();
-        resize_pending = false;
+        resize_pending = 0;
     }
 
     bool skipped = false;
