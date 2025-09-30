@@ -13,7 +13,8 @@ Screen screen;
 
 static void on_resize(int sig) {  // WINCH signal handler
     (void)sig;
-    dprintf(terminal.fd_out, "\e[2J");
+    
+    Screen_Clear();
     Terminal_Update(); // Update global terminal dimensions
     Canvas_Resize(&screen.canvas, terminal.cols, terminal.rows);
     if (screen.onResize) {
@@ -110,6 +111,11 @@ void Screen_Draw() {
     }
     reset_style();
 }
+
+void Screen_Clear() {
+    dprintf(terminal.fd_out, "\e[2J");
+}
+
 
 int Screen_GetWidth() {
     return screen.canvas.width;

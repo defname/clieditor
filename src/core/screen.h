@@ -47,6 +47,13 @@ void Screen_ShowCursor();
 void Screen_Draw();
 
 /**
+ * @brief Clears the entire terminal screen.
+ *
+ * Sends an ANSI escape code to clear the terminal display.
+ */
+void Screen_Clear();
+
+/**
  * @brief Returns the current width of the screen's canvas in columns.
  */
 int Screen_GetWidth();
