@@ -9,11 +9,14 @@
 #include "terminal.h"
 
 Screen screen;
-
+bool resize_pending = false;
 
 static void on_resize(int sig) {  // WINCH signal handler
     (void)sig;
-    
+    resize_pending = true;  // this is checked at the beginning of Screen_Draw()
+}
+
+static void handle_resize() {  // actually do the resize
     Screen_Clear();
     Terminal_Update(); // Update global terminal dimensions
     Canvas_Resize(&screen.canvas, terminal.cols, terminal.rows);
@@ -47,6 +50,7 @@ void Screen_ShowCursor() {
 }
 
 //---------- DRAW -------------
+// TODO: not all styles are implemented so far
 
 void cursor_to(int col, int row) {
     dprintf(terminal.fd_out, "\033[%d;%dH", row+1, col+1);
@@ -85,6 +89,11 @@ void reset_style() {
 }
 
 void Screen_Draw() {
+    if (resize_pending) {
+        handle_resize();
+        resize_pending = false;
+    }
+
     bool skipped = false;
     int old_y = 0;
     Style current_style = { .fg = 12, .bg = 15, .attributes = STYLE_UNDERLINE };
