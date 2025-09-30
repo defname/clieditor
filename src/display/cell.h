@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "utf8.h"
-#include "style.h"
+#include "common/utf8.h"
+#include "display/style.h"
 
 typedef struct _Cell {
     UTF8Char ch;

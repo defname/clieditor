@@ -7,7 +7,7 @@
 #include <string.h>
 
 // Inkludiere die C-Datei direkt, um auch `static` Funktionen testen zu können.
-#include "core/utf8.c" // Inkludiert auch utf8.h
+#include "common/utf8.c" // Inkludiert auch utf8.h
 
 
 // --- Deine Test-Funktionen ---

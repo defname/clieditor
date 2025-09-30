@@ -1,5 +1,5 @@
 #include "acutest.h"
-#include "core/input.c" // Include C file to test static functions
+#include "io/input.c" // Include C file to test static functions
 
 void test_init_seq_results(void) {
     size_t results[MAX_ESCAPE_SEQUENCES];

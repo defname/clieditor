@@ -20,7 +20,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "utf8.h"
+#include "common/utf8.h"
 
 #define INPUT_BUFFER_SIZE   24
 

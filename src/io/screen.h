@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "canvas.h"
+#include "display/canvas.h"
 
 typedef void (*ResizeCallback)(int new_width, int new_height);
 

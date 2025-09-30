@@ -63,7 +63,7 @@ foreach(TEST_SOURCE_FILE ${TEST_SOURCES})
     # Wir iterieren durch alle bekannten Sourcen und finden die, die wir ausschließen wollen.
     set(OBJECTS_TO_EXCLUDE "")
     foreach(SOURCE_FILE ${SOURCES})
-        get_filename_component(FILENAME ${SOURCE_FILE} NAME_WE) # z.B. "main" oder "utf8"
+        get_filename_component(FILENAME ${SOURCE_FILE} NAME_WE) # z.B. "main" oder "common/utf8"
         
         # Schließe immer main aus UND die Datei, die dem Testnamen entspricht.
         if(FILENAME STREQUAL "main" OR FILENAME STREQUAL ORIGINAL_SOURCE_NAME)

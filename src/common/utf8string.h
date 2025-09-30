@@ -1,7 +1,7 @@
 #ifndef UTF8STRING_H
 #define UTF8STRING_H
 
-#include "utf8.h"
+#include "common/utf8.h"
 
 #define UTF8STRING_GROW_FACTOR 2
 #define UTF8STRING_INITIAL_CAPACITY 16

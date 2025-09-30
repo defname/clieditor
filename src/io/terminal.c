@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <signal.h>
-#include "../utils/logging.h"
+#include "../common/logging.h"
 
 Terminal terminal;
 

@@ -2,8 +2,8 @@
 
 #include <stdlib.h>
 #include "label.h"
-#include "core/canvas.h"
-#include "utils/logging.h"
+#include "display/canvas.h"
+#include "common/logging.h"
 
 void bottombar_draw(const Widget *self, Canvas *canvas) {
     (void)self;

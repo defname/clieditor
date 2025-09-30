@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "canvas.h"
-#include "input.h"
+#include "display/canvas.h"
+#include "io/input.h"
 
 #define WIDGET_INITIAL_CAPACITY 4
 #define WIDGET_GROWTH_FACTOR 2

@@ -2,7 +2,7 @@
 
 // Inkludiere die C-Datei direkt.
 // widget.c inkludiert widget.h, logging.h und stdlib.h
-#include "core/widget.c"
+#include "display/widget.c"
 
 void test_widget_creation(void) {
     Widget *w = Widget_Create(NULL, NULL);

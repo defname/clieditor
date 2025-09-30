@@ -1,5 +1,5 @@
 #include "acutest.h"
-#include "core/textbuffer.c" // Include C file to test static functions
+#include "document/textbuffer.c" // Include C file to test static functions
 
 void test_init_tb(void) {
     TextBuffer tb;

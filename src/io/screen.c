@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 
-#include "terminal.h"
+#include "io/terminal.h"
 
 Screen screen;
 
