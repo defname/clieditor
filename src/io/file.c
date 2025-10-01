@@ -11,6 +11,7 @@ static File *create_file_object() {
     }
     file->path = NULL;
     file->fp   = NULL;
+    file->access = FILE_ACCESS_READ;
     return file;
 }
 
@@ -23,12 +24,13 @@ File *File_Open(const char *filename, FileAccessType access) {
     if (!file->path) {
         logFatal("Cannot allocate memory for filename.");
     }
-    file->path = strcpy(file->path, filename);
+    strcpy(file->path, filename);
 
     file->fp = fopen(filename, access == FILE_ACCESS_READ ? "r" : "w");
     if (!file->fp) {
         logFatal("Cannot open file %s.", filename);
     }
+    file->access = access;
 
     return file;
 }
@@ -36,6 +38,7 @@ File *File_Open(const char *filename, FileAccessType access) {
 File *File_OpenStdin() {
     File *file = create_file_object();
     file->fp = stdin;
+    file->access = FILE_ACCESS_READ;
     return file;
 }
 
@@ -53,7 +56,7 @@ void File_Close(File *file) {
 }
 
 UTF8String *File_ReadLine(File *file) {
-    if (!file || !file->fp) {
+    if (!file || !file->fp || file->access != FILE_ACCESS_READ) {
         logError("Invalid file handle.");
         return NULL;
     }
@@ -76,7 +79,7 @@ UTF8String *File_ReadLine(File *file) {
 }
 
 void File_WriteLine(File *file, const UTF8String *line) {
-    if (!file || !file->fp || !line) {
+    if (!file || !file->fp || !line || file->access != FILE_ACCESS_WRITE) {
         logError("Invalid parameters for File_WriteLine.");
         return;
     }
