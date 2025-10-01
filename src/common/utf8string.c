@@ -56,6 +56,26 @@ void UTF8String_Free(UTF8String *str) {
     free(str);
 }
 
+char *UTF8String_ToStr(const UTF8String *string) {
+    size_t size = 0;
+    for (int i=0; i<string->length; i++) {
+        size += string->chars[i].length;
+    }
+    char *return_str = malloc(sizeof(char) * size + 1);
+    if (!return_str) {
+        logFatal("Cannot allocate memory for return string.");
+    }
+    size_t idx = 0;
+    for (int i=0; i<string->length; i++) {
+        for (int j=0; j<string->chars[i].length; j++) {
+            return_str[idx] = string->chars[i].bytes[j];
+            idx++;
+        }
+    }
+    return_str[idx] = '\0';
+    return return_str;
+}
+
 void UTF8String_AddChar(UTF8String *str, UTF8Char ch) {
     if (str->length >= str->capacity) {
         UTF8String_IncreaseCapacity(str);

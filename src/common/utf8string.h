@@ -23,6 +23,9 @@ void UTF8String_IncreaseCapacity(UTF8String *string);
 UTF8String *UTF8String_Create();
 void UTF8String_Free(UTF8String *string);
 
+// Conversion
+char *UTF8String_ToStr(UTF8String *string);  // return value needs to be freed by the caller
+
 // Filling with content
 void UTF8String_AddChar(UTF8String *str, UTF8Char ch);
 void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length);
