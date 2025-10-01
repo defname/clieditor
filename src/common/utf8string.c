@@ -58,7 +58,7 @@ void UTF8String_Free(UTF8String *str) {
 
 char *UTF8String_ToStr(const UTF8String *string) {
     size_t size = 0;
-    for (int i=0; i<string->length; i++) {
+    for (size_t i=0; i<string->length; i++) {
         size += string->chars[i].length;
     }
     char *return_str = malloc(sizeof(char) * size + 1);
@@ -66,7 +66,7 @@ char *UTF8String_ToStr(const UTF8String *string) {
         logFatal("Cannot allocate memory for return string.");
     }
     size_t idx = 0;
-    for (int i=0; i<string->length; i++) {
+    for (size_t i=0; i<string->length; i++) {
         for (int j=0; j<string->chars[i].length; j++) {
             return_str[idx] = string->chars[i].bytes[j];
             idx++;

@@ -2,49 +2,84 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "common/logging.h"
-
 static File *create_file_object() {
     File *file = malloc(sizeof(File));
     if (!file) {
         logFatal("Cannot allocate memory for File.");
     }
     file->path = NULL;
+    file->fp   = NULL;
     return file;
 }
 
-File *File_Open(const char *filename) {
+File *File_Open(const char *filename, FileAccessType access) {
+    if (!filename || strlen(filename) == 0) {
+        logFatal("Invalid filename.");
+    }
     File *file = create_file_object();
-    file->path = filename;
+    file->path = malloc(strlen(filename) + 1);
+    if (!file->path) {
+        logFatal("Cannot allocate memory for filename.");
+    }
+    file->path = strcpy(file->path, filename);
 
-    FILE *fp = fopen(filename, "r");
-    if (!fp) {
+    file->fp = fopen(filename, access == FILE_ACCESS_READ ? "r" : "w");
+    if (!file->fp) {
         logFatal("Cannot open file %s.", filename);
     }
 
     return file;
 }
 
+File *File_OpenStdin() {
+    File *file = create_file_object();
+    file->fp = stdin;
+    return file;
+}
+
 void File_Close(File *file) {
-    fclose(file->fp);
+    if (!file) {
+        return;
+    }
+    if (file->path) {
+        free(file->path);
+    }
+    if (file->fp && file->fp != stdin) {
+        fclose(file->fp);
+    }
     free(file);
 }
 
 UTF8String *File_ReadLine(File *file) {
+    if (!file || !file->fp) {
+        logError("Invalid file handle.");
+        return NULL;
+    }
     UTF8String *line = UTF8String_Create();
     char *lineptr = NULL;
-    size_t length;
-    getline(&lineptr, &length, file->fp);
-    if (lineptr[length-1] == '\n') {
-        lineptr[length-1] = '\0';
-        length--;
+    size_t length = 0;
+    ssize_t bytes_read = getline(&lineptr, &length, file->fp);
+    if (bytes_read == -1) {
+        free(lineptr);
+        UTF8String_Free(line);
+        return NULL;
     }
-    UTF8String_FromString(line, lineptr);
+    if (bytes_read > 0 && lineptr[bytes_read-1] == '\n') {
+        lineptr[bytes_read-1] = '\0';
+        bytes_read--;
+    }
+    UTF8String_FromStr(line, lineptr, (size_t)bytes_read);
     free(lineptr);
     return line;
 }
 
 void File_WriteLine(File *file, const UTF8String *line) {
+    if (!file || !file->fp || !line) {
+        logError("Invalid parameters for File_WriteLine.");
+        return;
+    }
     char *str = UTF8String_ToStr(line);
     fputs(str, file->fp);
     free(str);

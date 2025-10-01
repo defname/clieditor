@@ -4,12 +4,18 @@
 #include "stdio.h"
 #include "common/utf8string.h"
 
+typedef enum {
+    FILE_ACCESS_READ,
+    FILE_ACCESS_WRITE
+} FileAccessType;
+
 /**
  * @brief File structure to hold all necessary information about a open file.
  */
 typedef struct _File {
-    const char *path;       //< pathname of the file
+    char *path;             //< pathname of the file
     FILE *fp;               //< file handler
+    FileAccessType access;  //< read/write access
 } File;
 
 /**
@@ -19,7 +25,8 @@ typedef struct _File {
  * @param path filepath
  * @returns the created File instance
  */
-File *File_Open(const char *path);
+File *File_Open(const char *path, FileAccessType access);
+File *File_OpenStdin();
 
 /**
  * @brief Close a file
