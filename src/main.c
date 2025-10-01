@@ -13,12 +13,24 @@
 #include "widgets/bottombar.h"
 #include "widgets/app.h"
 #include "widgets/editor.h"
+#include "common/config.h"
 
 Widget *app;
 TextBuffer tb;
 
-void finish() {
+static void parse_arguments(int argc, char *argv[]) {
+    // For now, we only handle a single filename argument.
+    if (argc >= 2) {
+        Config_SetFilename(argv[1]);
+    } else {
+        // No file provided, could set a default or leave it empty.
+        Config_SetFilename(NULL);
+    }
+}
+
+static void finish() {
     Widget_Destroy(app);
+    Config_Deinit();
     TB_Deinit(&tb);
     Input_Deinit();
     Screen_Deinit();
@@ -27,16 +39,16 @@ void finish() {
     printf("Goodbye!\n");
 }
 
-void onResize(int new_width, int new_height) {
+static void onResize(int new_width, int new_height) {
     Widget_onParentResize(app, new_width, new_height);
 }
 
 int main(int argc, char *argv[]) {
-    (void) argc;
-    (void) argv;
+    Config_Init();
+    parse_arguments(argc, argv);
 
     atexit(finish);  // make sure original settings are restored
-
+    
     Terminal_Init(STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO);
     Screen_Init(onResize);
     Input_Init();
@@ -47,6 +59,17 @@ int main(int argc, char *argv[]) {
     Screen_HideCursor();
 
     TB_Init(&tb);
+
+    const char * fn = Config_GetFilename();
+    if (strcmp(fn, "") != 0) {
+        File *file;        
+        file = File_Open(fn, FILE_ACCESS_READ);
+
+        if (file) {
+            TB_LoadFromFile(&tb, file);
+            File_Close(file);
+        }
+    }
 
     app = App_Create(Screen_GetWidth(), Screen_GetHeight());
     

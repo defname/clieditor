@@ -50,6 +50,22 @@ void TB_Deinit(TextBuffer *tb) {
     Gap_Deinit(&tb->gap);
 }
 
+void TB_ReInit(TextBuffer *tb) {
+    TB_Deinit(tb);
+    TB_Init(tb);
+}
+
+void TB_LoadFromFile(TextBuffer *tb, File *file) {
+    TB_ReInit(tb);
+    Line *current = tb->current_line;
+    UTF8String *line;
+    while ((line = File_ReadLine(file)) != NULL) {
+        UTF8String_Copy(&current->text, line);
+        UTF8String_Free(line);
+        current = TB_InsertLineAfter(tb);
+    }
+}
+
 void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after) {
     UTF8String_Split(&tb->current_line->text, before, after, tb->cursor_pos);
     UTF8String_Shorten(before, tb->cursor_pos - tb->gap.overlap);
@@ -110,28 +126,9 @@ void TB_ChangeLine(TextBuffer *tb, int ty) {
     if (tb->cursor_pos > tb->current_line->text.length) {
         tb->cursor_pos = tb->current_line->text.length;
     }
-
-#if 0
-    if (ty > 0) {
-        for (int i=0; i<ty; i++) {
-            if (!tb->current_line->next) {
-                return;
-            }
-            tb->current_line = tb->current_line->next;
-        }
-    }
-    else {
-        for (int i=0; i>ty; i--) {
-            if (!tb->current_line->prev) {
-                return;
-            }
-            tb->current_line = tb->current_line->prev;
-        }
-    }
-#endif
 }
 
-void TB_InsertLineAfter(TextBuffer *tb) {
+Line *TB_InsertLineAfter(TextBuffer *tb) {
     Line *new_line = Line_Create();
     Line *next = tb->current_line->next;
     new_line->next = next;
@@ -140,6 +137,8 @@ void TB_InsertLineAfter(TextBuffer *tb) {
     if (next) {
         next->prev = new_line;
     }
+
+    return new_line;
 }
 
 void TB_DeleteCurrentLine(TextBuffer *tb) {

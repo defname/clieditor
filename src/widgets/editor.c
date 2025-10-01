@@ -42,7 +42,7 @@ static void draw_spaces(const Widget *self, Canvas *canvas, int n, int *x, int *
 }
 
 void fill_line_with_spaces(const Widget *self, Canvas *canvas, int *x, int *y) {
-    int n = self->width  - (*x) - 1;
+    int n = self->width  - (*x);
     draw_spaces(self, canvas, n, x, y);
 }
 

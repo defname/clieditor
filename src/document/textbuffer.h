@@ -50,6 +50,7 @@
 #define TEXTBUFFER_H
 
 #include "common/utf8string.h"
+#include "io/file.h"
 
 typedef struct _Line {
     UTF8String text;
@@ -77,6 +78,10 @@ typedef struct _TextBuffer {
 
 void TB_Init(TextBuffer *tb);
 void TB_Deinit(TextBuffer *tb);
+void TB_ReInit(TextBuffer *tb);
+
+void TB_LoadFromFile(TextBuffer *tb, File *file);
+void TB_SaveToFile(TextBuffer *tb, File *file);
 
 void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
 void TB_MergeGap(TextBuffer *tb);
@@ -84,7 +89,7 @@ void TB_MergeGap(TextBuffer *tb);
 void TB_MoveCursor(TextBuffer *tb, int dx);
 void TB_ChangeLine(TextBuffer *tb, int dy);
 
-void TB_InsertLineAfter(TextBuffer *tb);
+Line *TB_InsertLineAfter(TextBuffer *tb);
 
 void TB_InsertChar(TextBuffer *tb, UTF8Char ch);
 
