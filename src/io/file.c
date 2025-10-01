@@ -78,6 +78,8 @@ void File_WriteLine(File *file, const UTF8String *line) {
     }
     char *str = UTF8String_ToStr(line);
     fputs(str, file->fp);
+    char *str = UTF8String_ToStr(line);
+    fputs(str, file->fp);
     free(str);
-    free(str);
+    fputc('\n', file->fp);
 }

@@ -26,6 +26,7 @@ void Config_SetFilename(const char *filename) {
         return;
     }
     strncpy(config.filename, filename, FILENAME_MAX_LENGTH);
+    config.filename[FILENAME_MAX_LENGTH - 1] = '\0';
 }
 
 const char *Config_GetFilename() {
