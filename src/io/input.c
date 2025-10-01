@@ -19,7 +19,25 @@ parameter_byte ::= 0x30–0x3F  // '0'..'?'  → Ziffern, Semikolon, ...
 intermediates ::= (intermediate_byte)*
 intermediate_byte ::= 0x20–0x2F  // ' '..'/' → meist selten
 final_byte   ::= 0x40–0x7E       // '@'..'~' → bestimmt die Funktion
+*/
 
+/*
+CSI sequences for keys
+
+ESC [ key ~
+for single keys
+
+ESC [ key ; modifier ~
+for key combinations
+
+Modifier        Value
+Shift	        2
+Alt	            3
+Shift+Alt	    4
+Ctrl	        5
+Shift+Ctrl	    6
+Alt+Ctrl	    7
+Shift+Alt+Ctrl	8
 */
 
 
@@ -48,6 +66,12 @@ static const EscapeSequenceMapping escape_mappings[] = {
     {"\e[5~", ESC_PAGE_UP},
     {"\e[6~", ESC_PAGE_DOWN},
     {"\e[3~", ESC_DELETE},
+    {"\e[A;2", ESC_SHIFT_CURSOR_UP},
+    {"\e[B;2", ESC_SHIFT_CURSOR_DOWN},
+    {"\e[C;2", ESC_SHIFT_CURSOR_RIGHT},
+    {"\e[D;2", ESC_SHIFT_CURSOR_LEFT},
+    {"\e[5;2~", ESC_SHIFT_PAGE_UP},
+    {"\e[6;2~", ESC_SHIFT_PAGE_DOWN},
 };
 static const size_t num_escape_mappings = sizeof(escape_mappings) / sizeof(escape_mappings[0]);
 

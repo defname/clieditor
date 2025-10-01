@@ -40,7 +40,7 @@ void File_Close(File *file);
  * 
  * @returns The read line as a new created UTF8String.
  *          The caller is responsible for freeing it with
- *          UTF8String_Free()
+ *          UTF8String_Destroy()
  */
 UTF8String *File_ReadLine(File *file);
 

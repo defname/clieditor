@@ -8,6 +8,7 @@
 #include "common/utf8string.h"
 #include "io/input.h"
 #include "document/textbuffer.h"
+#include "document/textio.h"
 #include "io/timer.h"
 #include "widgets/label.h"
 #include "widgets/bottombar.h"

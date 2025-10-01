@@ -48,7 +48,7 @@ UTF8String *UTF8String_Create() {
     return str;
 }
 
-void UTF8String_Free(UTF8String *str) {
+void UTF8String_Destroy(UTF8String *str) {
     if (str == NULL) {
         return;
     }

@@ -59,7 +59,7 @@ UTF8String *File_ReadLine(File *file) {
     ssize_t bytes_read = getline(&lineptr, &length, file->fp);
     if (bytes_read == -1) {
         free(lineptr);
-        UTF8String_Free(line);
+        UTF8String_Destroy(line);
         return NULL;
     }
     if (bytes_read > 0 && lineptr[bytes_read-1] == '\n') {
@@ -76,8 +76,6 @@ void File_WriteLine(File *file, const UTF8String *line) {
         logError("Invalid parameters for File_WriteLine.");
         return;
     }
-    char *str = UTF8String_ToStr(line);
-    fputs(str, file->fp);
     char *str = UTF8String_ToStr(line);
     fputs(str, file->fp);
     free(str);

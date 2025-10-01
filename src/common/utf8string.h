@@ -21,7 +21,7 @@ void UTF8String_IncreaseCapacity(UTF8String *string);
 
 // Creation
 UTF8String *UTF8String_Create();
-void UTF8String_Free(UTF8String *string);
+void UTF8String_Destroy(UTF8String *string);
 
 // Conversion
 char *UTF8String_ToStr(const UTF8String *string);  // return value needs to be freed by the caller
