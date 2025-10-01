@@ -35,13 +35,6 @@ File *File_Open(const char *filename, FileAccessType access) {
     return file;
 }
 
-File *File_OpenStdin() {
-    File *file = create_file_object();
-    file->fp = stdin;
-    file->access = FILE_ACCESS_READ;
-    return file;
-}
-
 void File_Close(File *file) {
     if (!file) {
         return;

@@ -26,7 +26,6 @@ typedef struct _File {
  * @returns the created File instance
  */
 File *File_Open(const char *path, FileAccessType access);
-File *File_OpenStdin();
 
 /**
  * @brief Close a file
