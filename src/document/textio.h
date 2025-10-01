@@ -6,6 +6,6 @@
 
 
 void TB_LoadFromFile(TextBuffer *tb, File *file);
-void TB_SaveToFile(TextBuffer *tb, File *file);
+void TB_SaveToFile(const TextBuffer *tb, File *file);
 
 #endif

@@ -3,30 +3,24 @@
 Line *TB_InsertLineAfter(TextBuffer *tb) {
     Line *new_line = Line_Create();
     tb->line_count++;
-    Line *next = tb->current_line->next;
-    new_line->next = next;
-    new_line->prev = tb->current_line;
-    tb->current_line->next = new_line;
-    if (next) {
-        next->prev = new_line;
-    }
+    Line_InsertAfter(tb->current_line, new_line);
 
     return new_line;
 }
 
 void TB_DeleteCurrentLine(TextBuffer *tb) {
-    Line *prev = tb->current_line->prev;
-    Line *next = tb->current_line->next;
-    if (prev == NULL) {
+    Line *current = tb->current_line;
+    if (current->prev) {
+        tb->current_line = current->prev;
+    }
+    else if (current->next) {
+        tb->current_line = current->next;
+    }
+    else {
+        UTF8String_Shorten(&tb->current_line->text, 0);
         return;
     }
-    prev->next = next;
-    if (next != NULL) {
-        next->prev = prev;
-    }
-    Line *old_current = tb->current_line;
-    tb->current_line = prev;
-    Line_Destroy(old_current);
+    Line_Delete(tb->current_line);
     tb->line_count--;
 }
 

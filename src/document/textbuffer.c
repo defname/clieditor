@@ -21,6 +21,33 @@ void Line_Destroy(Line *line) {
     free(line);
 }
 
+void Line_InserAfter(Line *line, Line *new_line) {
+    if (!line || !new_line) {
+        logWarn("Invalid parameters for Line_InsertAfter.");
+        return;
+    }
+    Line *third = line->next;
+    line->next = new_line;
+    new_line->prev = line;
+    new_line->next = third;
+    if (third) {
+        third->prev = new_line;
+    }
+}
+
+void Line_Delete(Line *line) {
+    if (!line) {
+        return;
+    }
+    if (line->prev) {
+        line->prev->next = line->next;
+    }
+    if (line->next) {
+        line->next->prev = line->prev;
+    }
+    Line_Destroy(line);
+}
+
 void Gap_Init(Gap *gap) {
     UTF8String_Init(&gap->text);
     gap->overlap = 0;
@@ -82,4 +109,20 @@ void TB_MergeGap(TextBuffer *tb) {
     // reset the gap
     tb->gap.text.length = 0;
     tb->gap.overlap = 0;
+}
+
+Line *TB_GetFirstLine(const TextBuffer *tb) {
+    Line *current = tb->current_line;
+    while (current->prev) {
+        current = current->prev;
+    }
+    return current;
+}
+
+Line *TB_GetLastLine(const TextBuffer *tb) {
+    Line *current = tb->current_line;
+    while (current->next) {
+        current = current->next;
+    }
+    return current;
 }

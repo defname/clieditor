@@ -61,6 +61,8 @@ typedef struct _Line {
 
 Line *Line_Create();
 void Line_Destroy(Line *l);
+void Line_InsertAfter(Line *line, Line *new_line);
+void Line_Delete(Line *line);
 
 typedef struct _Gap {
     UTF8String text;
@@ -85,5 +87,8 @@ void TB_ReInit(TextBuffer *tb);
 
 void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
 void TB_MergeGap(TextBuffer *tb);
+
+Line *TB_GetFirstLine(const TextBuffer *tb);
+Line *TB_GetLastLine(const TextBuffer *tb);
 
 #endif

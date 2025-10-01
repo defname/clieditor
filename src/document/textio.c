@@ -11,4 +11,15 @@ void TB_LoadFromFile(TextBuffer *tb, File *file) {
         UTF8String_Destroy(line);
         current = TB_InsertLineAfter(tb);
     }
+    // current is now a last empty line which was not in the document
+    // so delete it
+    Line_Delete(current);
+}
+
+void TB_SaveToFile(const TextBuffer *tb, File *file) {
+    Line *current = TB_GetFirstLine(tb);
+    while (current) {
+        File_WriteLine(file, &current->text);
+        current = current->next;
+    }
 }
