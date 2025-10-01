@@ -1,5 +1,7 @@
 #include "textedit.h"
 
+#include "line.h"
+
 Line *TB_InsertLineAfter(TextBuffer *tb) {
     Line *new_line = Line_Create();
     tb->line_count++;

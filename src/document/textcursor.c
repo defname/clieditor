@@ -4,6 +4,9 @@
 
 
 size_t TB_CursorPos(const TextBuffer *tb) {
+    if (!tb || tb->gap.overlap > tb->gap.position) {
+        return 0;  // or handle error appropriately
+    }
     return tb->gap.position - tb->gap.overlap + tb->gap.text.length;
 }
 
