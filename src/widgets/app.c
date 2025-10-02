@@ -29,6 +29,7 @@ static WidgetOps app_ops = {
 void App_Init(int width, int height) {
     Widget_Init(&app, NULL, &app_ops);
     AppData *data = malloc(sizeof(AppData));
+    data->focus = NULL;
     app.data = data;
 
     App_onParentResize(width, height);
@@ -56,4 +57,22 @@ void App_onParentResize(int new_parent_width, int new_parent_height) {
 
 void App_HandleInput(EscapeSequence key, UTF8Char ch) {
     Widget_HandleInput(&app, key, ch);
+}
+
+void App_SetFocus(Widget *widget) {
+    if (!widget) {
+        return;
+    }
+    AppData *data = (AppData*)app.data;
+    data->focus = widget;
+}
+
+void App_ClearFocus() {
+    AppData *data = (AppData*)app.data;
+    data->focus = NULL;
+}
+
+Widget *App_HasFocus() {
+    AppData *data = (AppData*)app.data;
+    return data->focus;
 }
