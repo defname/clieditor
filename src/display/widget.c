@@ -152,8 +152,8 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
         return;
     }
 
-    if (self->ops && self->ops->handle_resize) {
-        self->ops->handle_resize(self, new_parent_width, new_parent_height);
+    if (self->ops && self->ops->on_resize) {
+        self->ops->on_resize(self, new_parent_width, new_parent_height);
     }
 
     // Propagate the resize event to children, passing the NEW size of THIS widget.
@@ -171,8 +171,8 @@ void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
         logError("Invalid widget.");
         return;
     }
-    if (self->ops && self->ops->handle_input) {
-        self->ops->handle_input(self, key, ch);
+    if (self->ops && self->ops->on_input) {
+        self->ops->on_input(self, key, ch);
     }
     for (int i=0; i<self->children_count; i++) {
         Widget *child = self->children[i];

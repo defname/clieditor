@@ -32,8 +32,8 @@ void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_
 static WidgetOps bottombar_ops = {
     .draw = bottombar_draw,
     .destroy = bottombar_destroy,
-    .handle_resize = bottombar_handle_resize,
-    .handle_input = NULL,
+    .on_resize = bottombar_handle_resize,
+    .on_input = NULL,
 };
 
 Widget *BottomBar_Create(Widget *parent) {

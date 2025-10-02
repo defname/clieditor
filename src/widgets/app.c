@@ -22,8 +22,8 @@ static void app_handle_resize(Widget *self, int new_parent_width, int new_parent
 static WidgetOps app_ops = {
     .draw = NULL,
     .destroy = app_destroy,
-    .handle_resize = app_handle_resize,
-    .handle_input = NULL,
+    .on_resize = app_handle_resize,
+    .on_input = NULL,
 };
 
 void App_Init(int width, int height) {
