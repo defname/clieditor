@@ -79,15 +79,32 @@ void App_SetFocus(Widget *widget) {
         logError("App has no data.");
         return;
     }
+    App_ClearFocus();
     data->focus = widget;
+    if (widget->ops && widget->ops->on_focus) {
+        widget->ops->on_focus(widget);
+    }
 }
 
 void App_ClearFocus() {
     AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
+    // if a Widget has focus blur it first
+    Widget *focus = App_HasFocus();
+    if (focus && focus->ops && focus->ops->on_blur) {
+        focus->ops->on_blur(focus);
+    }
     data->focus = NULL;
 }
 
 Widget *App_HasFocus() {
     AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return NULL;
+    }
     return data->focus;
 }
