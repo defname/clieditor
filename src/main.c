@@ -16,7 +16,6 @@
 #include "widgets/editor.h"
 #include "common/config.h"
 
-Widget *app;
 TextBuffer tb;
 
 static void parse_arguments(int argc, char *argv[]) {
@@ -29,7 +28,14 @@ static void parse_arguments(int argc, char *argv[]) {
     }
 }
 
-static void finish() {
+static void onResize(int new_width, int new_height) {
+    App_onParentResize(new_width, new_height);
+}
+
+/************************************
+ * Cleanup                          *
+ ************************************/
+static void finish() {  // called automatically (set with atexit())
     Timer_Deinit();
     App_Deinit();
     Config_Deinit();
@@ -41,11 +47,13 @@ static void finish() {
     printf("Goodbye!\n");
 }
 
-static void onResize(int new_width, int new_height) {
-    Widget_onParentResize(app, new_width, new_height);
-}
-
 int main(int argc, char *argv[]) {
+
+    /************************************
+     * Initialization                   *
+     ************************************/
+    srand(time(NULL));
+
     Config_Init();
     parse_arguments(argc, argv);
 
@@ -82,6 +90,9 @@ int main(int argc, char *argv[]) {
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
+    /************************************
+     * Main loop                        *
+     ************************************/
     while (1) {
         Timer_Update();
         EscapeSequence esc_seq = Input_Read();
@@ -89,14 +100,14 @@ int main(int argc, char *argv[]) {
             return 0;
         }
 
-        App_HandleInput(esc_seq, utf8_invalid);
-
-
-        UTF8Char ch;
-        while ((ch = Input_GetChar()).length != 0) {
-            App_HandleInput(ESC_NONE, ch);
+        Widget *focus = App_HasFocus();
+        if (focus) {
+            Widget_HandleInput(focus, esc_seq, utf8_invalid);
+            UTF8Char ch;
+            while ((ch = Input_GetChar()).length != 0) {
+                Widget_HandleInput(focus, ESC_NONE, ch);
+            }
         }
-
 
         App_Draw(&screen.canvas);
         Screen_Draw();
