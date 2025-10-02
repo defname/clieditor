@@ -4,7 +4,7 @@
 #include "display/widget.h"
 
 typedef struct {
-    int dummy;
+    Widget *focus;
 } AppData;
 
 extern Widget app;
@@ -18,6 +18,9 @@ void App_RemoveChild(Widget *child);
 void App_Draw(Canvas *canvas);
 
 void App_onParentResize(int new_parent_width, int new_parent_height);
-void App_HandleInput(EscapeSequence key, UTF8Char ch);
+
+void App_SetFocus(Widget *widget);
+void App_ClearFocus();
+Widget *App_HasFocus();
 
 #endif

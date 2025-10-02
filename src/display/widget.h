@@ -21,6 +21,10 @@ typedef struct {
     bool (*handle_input)(struct _Widget *self, EscapeSequence key, UTF8Char ch);
     // Handles resize events
     void (*handle_resize)(struct _Widget *self, int new_parent_width, int new_parent_height);
+    // Called (by App_SetFocus()) when the widget gains focus.
+    void (*on_focus)(struct _Widget *self);
+    // Called (by App_ClearFocus()) when the widget looses focus.
+    void (*on_blur)(struct _Widget *self);
     // Frees all resources associated with the widget.
     void (*destroy)(struct _Widget *self);
 } WidgetOps;

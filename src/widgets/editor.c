@@ -189,11 +189,24 @@ static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
     self->height = parent_h - 1;
 }
 
+static void editor_on_focus(Widget *self) {
+    EditorData *data = (EditorData*)self->data;
+    Timer_Resume(data->cursor_timer);
+}
+
+static void editor_on_blur(Widget *self) {
+    EditorData *data = (EditorData*)self->data;
+    Timer_Pause(data->cursor_timer);
+    data->cursor_visible = false;
+}
+
 static WidgetOps editor_ops = {
     .destroy = editor_Destroy,
     .draw = editor_draw,
     .handle_input = editor_handle_input,
-    .handle_resize = editor_handle_resize
+    .handle_resize = editor_handle_resize,
+    .on_focus = editor_on_focus,
+    .on_blur = editor_on_blur,
 };
 
 Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
@@ -204,6 +217,7 @@ Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
     data->tb = tb;
     data->first_line = tb->current_line;
     data->cursor_timer = Timer_Start(500, alternate_cursor_visibility, data);
+    Timer_Pause(data->cursor_timer);  // start when getting focus
     data->cursor_visible = true;
     Widget *new = Widget_Create(parent, &editor_ops);
     new->data = data;

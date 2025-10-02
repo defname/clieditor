@@ -29,6 +29,7 @@ static WidgetOps app_ops = {
 void App_Init(int width, int height) {
     Widget_Init(&app, NULL, &app_ops);
     AppData *data = malloc(sizeof(AppData));
+    data->focus = NULL;
     app.data = data;
 
     App_onParentResize(width, height);
@@ -43,6 +44,17 @@ void App_AddChild(Widget *child) {
 }
 
 void App_RemoveChild(Widget *child) {
+    if (!child) {
+        return;
+    }
+    AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
+    if (App_HasFocus() == child) {
+        App_ClearFocus();
+    }
     Widget_RemoveChild(&app, child);
 }
 
@@ -54,6 +66,41 @@ void App_onParentResize(int new_parent_width, int new_parent_height) {
     Widget_onParentResize(&app, new_parent_width, new_parent_height);
 }
 
-void App_HandleInput(EscapeSequence key, UTF8Char ch) {
-    Widget_HandleInput(&app, key, ch);
+void App_SetFocus(Widget *widget) {
+    if (!widget) {
+        return;
+    }
+    AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
+    App_ClearFocus();
+    data->focus = widget;
+    if (widget->ops && widget->ops->on_focus) {
+        widget->ops->on_focus(widget);
+    }
+}
+
+void App_ClearFocus() {
+    AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
+    // if a Widget has focus blur it first
+    Widget *focus = App_HasFocus();
+    if (focus && focus->ops && focus->ops->on_blur) {
+        focus->ops->on_blur(focus);
+    }
+    data->focus = NULL;
+}
+
+Widget *App_HasFocus() {
+    AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return NULL;
+    }
+    return data->focus;
 }
