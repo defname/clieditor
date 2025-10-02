@@ -32,7 +32,7 @@ static void label_destroy(Widget *self) {
 static WidgetOps label_ops = {
     .draw = label_draw,
     .destroy = label_destroy,
-    // .handle_input = NULL, // Ein Label reagiert nicht auf Input
+    // .on_input = NULL, // Ein Label reagiert nicht auf Input
 };
 
 // 4. Der "Konstruktor"

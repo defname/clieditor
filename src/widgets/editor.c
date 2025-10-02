@@ -120,7 +120,7 @@ static void editor_scroll_down(EditorData *data) {
     data->first_line = data->first_line->next;
 }
 
-// widget->ops->handle_input() function
+// widget->ops->on_input() function
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     EditorData *data = (EditorData*)self->data;
@@ -183,7 +183,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     return true;
 }
 
-// widget->ops->handle_resize() function
+// widget->ops->on_resize() function
 static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
     self->width = parent_w;
     self->height = parent_h - 1;
@@ -203,8 +203,8 @@ static void editor_on_blur(Widget *self) {
 static WidgetOps editor_ops = {
     .destroy = editor_Destroy,
     .draw = editor_draw,
-    .handle_input = editor_handle_input,
-    .handle_resize = editor_handle_resize,
+    .on_input = editor_handle_input,
+    .on_resize = editor_handle_resize,
     .on_focus = editor_on_focus,
     .on_blur = editor_on_blur,
 };
