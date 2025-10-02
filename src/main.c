@@ -30,7 +30,8 @@ static void parse_arguments(int argc, char *argv[]) {
 }
 
 static void finish() {
-    Widget_Destroy(app);
+    Timer_Deinit();
+    App_Deinit();
     Config_Deinit();
     TB_Deinit(&tb);
     Input_Deinit();
@@ -72,14 +73,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    app = App_Create(Screen_GetWidth(), Screen_GetHeight());
+    App_Init(Screen_GetWidth(), Screen_GetHeight());
     
-    Widget *editor = Editor_Create(app, &tb);
+    Widget *editor = Editor_Create(&app, &tb);
     (void)editor;
-    Widget *bottombar = BottomBar_Create(app);
+    Widget *bottombar = BottomBar_Create(&app);
     (void)bottombar;
 
-    Widget_onParentResize(app, Screen_GetWidth(), Screen_GetHeight());
+    App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
     while (1) {
         Timer_Update();
@@ -88,16 +89,16 @@ int main(int argc, char *argv[]) {
             return 0;
         }
 
-        Widget_HandleInput(app, esc_seq, utf8_invalid);
+        App_HandleInput(esc_seq, utf8_invalid);
 
 
         UTF8Char ch;
         while ((ch = Input_GetChar()).length != 0) {
-            Widget_HandleInput(app, ESC_NONE, ch);
+            App_HandleInput(ESC_NONE, ch);
         }
 
 
-        Widget_Draw(app, &screen.canvas);
+        App_Draw(&screen.canvas);
         Screen_Draw();
 
     }

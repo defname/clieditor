@@ -7,7 +7,17 @@ typedef struct {
     int dummy;
 } AppData;
 
-Widget *App_Create(int width, int height);
+extern Widget app;
 
+void App_Init(int width, int height);
+void App_Deinit();
+
+void App_AddChild(Widget *child);
+void App_RemoveChild(Widget *child);
+
+void App_Draw(Canvas *canvas);
+
+void App_onParentResize(int new_parent_width, int new_parent_height);
+void App_HandleInput(EscapeSequence key, UTF8Char ch);
 
 #endif

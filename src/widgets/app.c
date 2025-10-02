@@ -5,12 +5,14 @@
 #include "display/canvas.h"
 #include "common/logging.h"
 
-void app_destroy(Widget *self) {
+Widget app;  // global widget
+
+static void app_destroy(Widget *self) {
     free(self->data);
     self->data = NULL;
 }
 
-void app_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {
+static void app_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {
     self->width = new_parent_width;
     self->height = new_parent_height;
 }
@@ -24,12 +26,34 @@ static WidgetOps app_ops = {
     .handle_input = NULL,
 };
 
-Widget *App_Create(int width, int height) {
-    Widget *self = Widget_Create(NULL, &app_ops);
+void App_Init(int width, int height) {
+    Widget_Init(&app, NULL, &app_ops);
     AppData *data = malloc(sizeof(AppData));
-    self->data = data;
+    app.data = data;
 
-    Widget_onParentResize(self, width, height);
+    App_onParentResize(width, height);
+}
 
-    return self;
+void App_Deinit() {
+    Widget_Deinit(&app);
+}
+
+void App_AddChild(Widget *child) {
+    Widget_AddChild(&app, child);
+}
+
+void App_RemoveChild(Widget *child) {
+    Widget_RemoveChild(&app, child);
+}
+
+void App_Draw(Canvas *canvas) {
+    Widget_Draw(&app, canvas);
+}
+
+void App_onParentResize(int new_parent_width, int new_parent_height) {
+    Widget_onParentResize(&app, new_parent_width, new_parent_height);
+}
+
+void App_HandleInput(EscapeSequence key, UTF8Char ch) {
+    Widget_HandleInput(&app, key, ch);
 }
