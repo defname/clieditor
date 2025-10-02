@@ -66,10 +66,6 @@ void App_onParentResize(int new_parent_width, int new_parent_height) {
     Widget_onParentResize(&app, new_parent_width, new_parent_height);
 }
 
-void App_HandleInput(EscapeSequence key, UTF8Char ch) {
-    Widget_HandleInput(&app, key, ch);
-}
-
 void App_SetFocus(Widget *widget) {
     if (!widget) {
         return;

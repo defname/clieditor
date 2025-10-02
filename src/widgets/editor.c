@@ -204,7 +204,9 @@ static WidgetOps editor_ops = {
     .destroy = editor_Destroy,
     .draw = editor_draw,
     .handle_input = editor_handle_input,
-    .handle_resize = editor_handle_resize
+    .handle_resize = editor_handle_resize,
+    .on_focus = editor_on_focus,
+    .on_blur = editor_on_blur,
 };
 
 Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
