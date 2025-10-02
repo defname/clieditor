@@ -63,8 +63,10 @@ UTF8String *File_ReadLine(File *file) {
         return NULL;
     }
     if (bytes_read > 0 && lineptr[bytes_read-1] == '\n') {
-        lineptr[bytes_read-1] = '\0';
-        bytes_read--;
+        lineptr[--bytes_read] = '\0';
+    }
+    if (bytes_read > 0 && lineptr[bytes_read-1] == '\r') {
+        lineptr[--bytes_read] = '\0';
     }
     UTF8String_FromStr(line, lineptr, (size_t)bytes_read);
     free(lineptr);

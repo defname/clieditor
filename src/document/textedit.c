@@ -11,18 +11,18 @@ Line *TB_InsertLineAfter(TextBuffer *tb) {
 }
 
 void TB_DeleteCurrentLine(TextBuffer *tb) {
-    Line *current = tb->current_line;
-    if (current->prev) {
-        tb->current_line = current->prev;
+    Line *former_current = tb->current_line;
+    if (former_current->prev) {
+        tb->current_line = former_current->prev;
     }
-    else if (current->next) {
-        tb->current_line = current->next;
+    else if (former_current->next) {
+        tb->current_line = former_current->next;
     }
     else {
         UTF8String_Shorten(&tb->current_line->text, 0);
         return;
     }
-    Line_Delete(tb->current_line);
+    Line_Delete(former_current);
     tb->line_count--;
 }
 

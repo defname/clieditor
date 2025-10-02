@@ -13,7 +13,10 @@ void TB_LoadFromFile(TextBuffer *tb, File *file) {
     }
     // current is now a last empty line which was not in the document
     // so delete it
-    Line_Delete(current);
+    if (tb->line_count > 1) {
+        Line_Delete(current);
+        tb->line_count--;
+    }
 }
 
 void TB_SaveToFile(const TextBuffer *tb, File *file) {

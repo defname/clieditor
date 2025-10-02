@@ -59,7 +59,7 @@ void TB_MergeGap(TextBuffer *tb) {
     UTF8String_Deinit(&a);
     UTF8String_Deinit(&b);
     // set the cursor position to end of the former gap
-    tb->gap.position += tb->gap.text.length - tb->gap.overlap;
+    tb->gap.position += (long)tb->gap.text.length - (long)tb->gap.overlap;
     // reset the gap
     tb->gap.text.length = 0;
     tb->gap.overlap = 0;
