@@ -44,6 +44,17 @@ void App_AddChild(Widget *child) {
 }
 
 void App_RemoveChild(Widget *child) {
+    if (!child) {
+        return;
+    }
+    AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
+    if (App_HasFocus() == child) {
+        App_ClearFocus();
+    }
     Widget_RemoveChild(&app, child);
 }
 
@@ -64,6 +75,10 @@ void App_SetFocus(Widget *widget) {
         return;
     }
     AppData *data = (AppData*)app.data;
+    if (!data) {
+        logError("App has no data.");
+        return;
+    }
     data->focus = widget;
 }
 
