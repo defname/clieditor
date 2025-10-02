@@ -25,7 +25,7 @@ typedef struct {
     void (*on_focus)(struct _Widget *self);
     // Called (by App_ClearFocus()) when the widget looses focus.
     void (*on_blur)(struct _Widget *self);
-    // Frees all resources associated with the widget.
+    // Frees all resources associated with the widget including widget->data, *but not* the widget itself
     void (*destroy)(struct _Widget *self);
 } WidgetOps;
 
