@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
     App_Init(Screen_GetWidth(), Screen_GetHeight());
     
     Widget *editor = Editor_Create(&app, &tb);
+    App_SetFocus(editor);
     (void)editor;
     Widget *bottombar = BottomBar_Create(&app);
     (void)bottombar;
