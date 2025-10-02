@@ -4,6 +4,7 @@
 #include "label.h"
 #include "display/canvas.h"
 #include "common/logging.h"
+#include "common/config.h"
 
 void bottombar_draw(const Widget *self, Canvas *canvas) {
     (void)self;
@@ -11,8 +12,10 @@ void bottombar_draw(const Widget *self, Canvas *canvas) {
 }
 
 void bottombar_destroy(Widget *self) {
-    free(self->data);
-    self->data = NULL;
+    if (self && self->data) {
+        free(self->data);
+        self->data = NULL;
+    }
 }
 
 void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {
@@ -38,10 +41,10 @@ Widget *BottomBar_Create(Widget *parent) {
     BottomBarData *data = malloc(sizeof(BottomBarData));
     self->data = data;
     self->style.bg = 21;
-    Widget *label = Label_Create(self, "BottomBar");
+    Widget *label = Label_Create(self, Config_GetFilename());
     label->x = 0;
     label->y = 0;
-    label->width = 12;
+    label->width = FILENAME_MAX_LENGTH;
     label->height = 1;
 
     Widget_onParentResize(self, parent->width, parent->height);

@@ -50,19 +50,13 @@
 #define TEXTBUFFER_H
 
 #include "common/utf8string.h"
+#include "io/file.h"
 
-typedef struct _Line {
-    UTF8String text;
-
-    struct _Line *prev;
-    struct _Line *next;
-} Line;
-
-Line *Line_Create();
-void LineFree(Line *l);
+#include "line.h"
 
 typedef struct _Gap {
     UTF8String text;
+    size_t position;
     size_t overlap;
 } Gap;
 
@@ -71,25 +65,20 @@ void Gap_Deinit(Gap *gap);
 
 typedef struct _TextBuffer {
     Line *current_line;
-    size_t cursor_pos;
     Gap gap;
+
+    size_t line_count;
+    size_t line_pos;
 } TextBuffer;
 
 void TB_Init(TextBuffer *tb);
 void TB_Deinit(TextBuffer *tb);
+void TB_ReInit(TextBuffer *tb);
 
 void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
 void TB_MergeGap(TextBuffer *tb);
 
-void TB_MoveCursor(TextBuffer *tb, int dx);
-void TB_ChangeLine(TextBuffer *tb, int dy);
-
-void TB_InsertLineAfter(TextBuffer *tb);
-
-void TB_InsertChar(TextBuffer *tb, UTF8Char ch);
-
-void TB_Backspace(TextBuffer *tb);
-void TB_Delete(TextBuffer *tb);
-void TB_Enter(TextBuffer *tb);
+Line *TB_GetFirstLine(const TextBuffer *tb);
+Line *TB_GetLastLine(const TextBuffer *tb);
 
 #endif

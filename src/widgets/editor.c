@@ -4,6 +4,8 @@
 #include "display/canvas.h"
 #include "io/input.h"
 #include "common/logging.h"
+#include "document/textedit.h"
+#include "document/textcursor.h"
 
 static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
     EditorData *data = (EditorData*)user_data;
@@ -11,7 +13,9 @@ static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
     Timer_Restart(timer_id);
 }
 
-void editor_free(Widget *self) {
+// widget->ops->free() function
+static void editor_Destroy(Widget *self) {
+    Timer_Stop(((EditorData*)self->data)->cursor_timer);
     free(self->data);
 }
 
@@ -41,8 +45,8 @@ static void draw_spaces(const Widget *self, Canvas *canvas, int n, int *x, int *
     UTF8String_Deinit(&s);
 }
 
-void fill_line_with_spaces(const Widget *self, Canvas *canvas, int *x, int *y) {
-    int n = self->width  - (*x) - 1;
+static void fill_line_with_spaces(const Widget *self, Canvas *canvas, int *x, int *y) {
+    int n = self->width  - (*x);
     draw_spaces(self, canvas, n, x, y);
 }
 
@@ -77,7 +81,8 @@ static void draw_current_line(const Widget *self, const TextBuffer *tb, Canvas *
     fill_line_with_spaces(self, canvas, &x, y);
 }
 
-void editor_draw(const Widget *self, Canvas *canvas) {
+// widget->ops->draw() function
+static void editor_draw(const Widget *self, Canvas *canvas) {
     EditorData *data = (EditorData*)self->data;
     Line *current = data->first_line;
     int y = 0;
@@ -101,7 +106,22 @@ void editor_draw(const Widget *self, Canvas *canvas) {
     }
 }
 
-bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
+static void editor_scroll_up(EditorData *data) {
+    if (data->first_line->prev == NULL) {
+        return;
+    }
+    data->first_line = data->first_line->prev;
+}
+
+static void editor_scroll_down(EditorData *data) {
+    if (data->first_line->next == NULL) {
+        return;
+    }
+    data->first_line = data->first_line->next;
+}
+
+// widget->ops->handle_input() function
+static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     EditorData *data = (EditorData*)self->data;
 
@@ -109,39 +129,68 @@ bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         char c = ch.bytes[0];
         if (c == KEY_ENTER) {
             TB_Enter(data->tb);
+            return true;
         }
         else if (c == KEY_BACKSPACE) {
             TB_Backspace(data->tb);
+            return true;
         }
         else if (c == KEY_TAB) {
-            
+            return true;
         }
     }
     if (UTF8_IsPrintable(ch)) {
         TB_InsertChar(data->tb, ch);
     }
-    if (key == ESC_CURSOR_LEFT) {
+    else if (key == ESC_CURSOR_LEFT) {
         TB_MoveCursor(data->tb, -1);
     }
-    if (key == ESC_CURSOR_RIGHT) {
+    else if (key == ESC_CURSOR_RIGHT) {
         TB_MoveCursor(data->tb, 1);
     }
-    if (key == ESC_CURSOR_UP) {
+    else if (key == ESC_CURSOR_UP) {
         TB_ChangeLine(data->tb, -1);
     }
-    if (key == ESC_CURSOR_DOWN) {
+    else if (key == ESC_CURSOR_DOWN) {
         TB_ChangeLine(data->tb, 1);
+    }
+    else if (key == ESC_HOME) {
+        TB_Home(data->tb);
+    } 
+    else if (key == ESC_END) {
+        TB_End(data->tb);
+    }
+    else if (key == ESC_PAGE_DOWN) {
+        editor_scroll_down(data);
+    }
+    else if (key == ESC_PAGE_UP) {
+        editor_scroll_up(data);
+    }
+    else if (key == ESC_SHIFT_PAGE_DOWN) {
+        editor_scroll_down(data);
+        editor_scroll_down(data);
+        editor_scroll_down(data);
+        editor_scroll_down(data);
+        editor_scroll_down(data);
+    }
+    else if (key == ESC_SHIFT_PAGE_UP) {
+        editor_scroll_up(data);
+        editor_scroll_up(data);
+        editor_scroll_up(data);
+        editor_scroll_up(data);
+        editor_scroll_up(data);
     }
     return true;
 }
 
-void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
+// widget->ops->handle_resize() function
+static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
     self->width = parent_w;
     self->height = parent_h - 1;
 }
 
 static WidgetOps editor_ops = {
-    .destroy = editor_free,
+    .destroy = editor_Destroy,
     .draw = editor_draw,
     .handle_input = editor_handle_input,
     .handle_resize = editor_handle_resize

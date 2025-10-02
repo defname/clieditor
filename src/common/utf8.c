@@ -157,3 +157,13 @@ bool UTF8_IsPrintable(UTF8Char ch) {
     }
     return wcwidth((wchar_t)codepoint) > 0;
 }
+
+bool UTF8_IsSpace(UTF8Char ch) {
+    if (ch.length == 0) {
+        return false;
+    }
+    if (ch.length == 1) {
+        return isspace(ch.bytes[0]);
+    }
+    return false;
+}

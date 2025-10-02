@@ -43,6 +43,7 @@ Widget* Label_Create(Widget *parent, const char* text) {
         Widget_Destroy(widget);
         return NULL;
     }
+    UTF8String_Init(&data->text);
     const char *label_text = text ? text : "";
     UTF8String_FromStr(&data->text, label_text, strlen(label_text));
     widget->data = data;

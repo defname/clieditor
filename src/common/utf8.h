@@ -33,5 +33,7 @@ bool UTF8_EqualToChar(UTF8Char a, char b);      // return true if a and b are eq
 uint32_t UTF8Char_ToCodepoint(UTF8Char ch);
 bool UTF8_IsPrintable(UTF8Char ch);
 
+bool UTF8_IsSpace(UTF8Char ch);
+
 
 #endif

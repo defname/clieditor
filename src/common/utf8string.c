@@ -48,12 +48,32 @@ UTF8String *UTF8String_Create() {
     return str;
 }
 
-void UTF8String_Free(UTF8String *str) {
+void UTF8String_Destroy(UTF8String *str) {
     if (str == NULL) {
         return;
     }
     UTF8String_Deinit(str);
     free(str);
+}
+
+char *UTF8String_ToStr(const UTF8String *string) {
+    size_t size = 0;
+    for (size_t i=0; i<string->length; i++) {
+        size += string->chars[i].length;
+    }
+    char *return_str = malloc(sizeof(char) * size + 1);
+    if (!return_str) {
+        logFatal("Cannot allocate memory for return string.");
+    }
+    size_t idx = 0;
+    for (size_t i=0; i<string->length; i++) {
+        for (int j=0; j<string->chars[i].length; j++) {
+            return_str[idx] = string->chars[i].bytes[j];
+            idx++;
+        }
+    }
+    return_str[idx] = '\0';
+    return return_str;
 }
 
 void UTF8String_AddChar(UTF8String *str, UTF8Char ch) {
@@ -65,19 +85,20 @@ void UTF8String_AddChar(UTF8String *str, UTF8Char ch) {
 }
 
 void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length) {
-    UTF8String_Resize(str, length);
-    size_t out_idx = 0;
-    while (out_idx < length && *chstr != '\0') {
+    // Reset the string length before filling it.
+    str->length = 0;
+    size_t bytes_processed = 0;
+    while (bytes_processed < length && *chstr != '\0') {
         UTF8Char new_char = UTF8_GetCharFromString(chstr);
-        chstr += new_char.length;
-        out_idx++;
         UTF8String_AddChar(str, new_char);
+        chstr += new_char.length;
+        bytes_processed += new_char.length;
     }
 }
 
 void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
-    UTF8String_Resize(dest, src->length);
-    memcpy(dest->chars, src->chars, sizeof(UTF8Char) * src->length);
+    UTF8String_Resize(dest, src->length); // Ensures dest has enough capacity
+    memmove(dest->chars, src->chars, sizeof(UTF8Char) * src->length);
     dest->length = src->length;
 }
 
@@ -91,10 +112,10 @@ void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t 
     }
     size_t len_a = pos;
     size_t len_b = s->length - pos;
-    UTF8String_Resize(a, len_a);
-    UTF8String_Resize(b, len_b);
-    memcpy(a->chars, s->chars, sizeof(UTF8Char) * len_a);
-    memcpy(b->chars, s->chars+pos, sizeof(UTF8Char) * len_b);
+    UTF8String_Resize(a, len_a); // Ensures 'a' has enough capacity
+    UTF8String_Resize(b, len_b); // Ensures 'b' has enough capacity
+    memmove(a->chars, s->chars, sizeof(UTF8Char) * len_a);
+    memmove(b->chars, s->chars + pos, sizeof(UTF8Char) * len_b);
     a->length = len_a;
     b->length = len_b;
 }
@@ -111,16 +132,21 @@ void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
 
 void UTF8String_Repeat(UTF8String *str, size_t n) {
     size_t new_length = str->length * n;
-    UTF8String orig_string;
-    UTF8String_Init(&orig_string);
-    UTF8String_Copy(&orig_string, str);
+    if (n == 0) {
+        str->length = 0;
+        return;
+    }
+    if (n == 1) {
+        return; // Nothing to do
+    }
+    size_t original_length = str->length;
     if (new_length > str->capacity) {
         UTF8String_Resize(str, new_length);
     }
-    for (size_t i=0; i<n; i++) {
-        UTF8String_Concat(str, &orig_string);
+    for (size_t i = 1; i < n; i++) {
+        memcpy(str->chars + (i * original_length), str->chars, original_length * sizeof(UTF8Char));
     }
-    UTF8String_Deinit(&orig_string);
+    str->length = new_length;
 }
 
 void UTF8String_Spaces(UTF8String *str, size_t n) {
