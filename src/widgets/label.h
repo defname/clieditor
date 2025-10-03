@@ -5,11 +5,13 @@
 #include "common/utf8string.h"
 
 typedef struct {
+    Widget base;
     UTF8String text;
-} LabelData;
+} Label;
 
+#define AS_LABEL(w) ((Label*)(w))
 
-// "Konstruktor" für ein Label-Widget
-Widget* Label_Create(Widget *parent, const char* text);
+void Label_Init(Label *self, Widget *parent, const char *text);
+Label* Label_Create(Widget *parent, const char* text);
 
-#endif // LABEL_H
+#endif

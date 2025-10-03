@@ -5,7 +5,6 @@
 
 void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->ops = ops;
-    widget->data = NULL;
 
     widget->x = 0;
     widget->y = 0;
@@ -31,7 +30,6 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
 
 void Widget_Deinit(Widget *widget) {
     widget->ops = NULL;
-    widget->data = NULL;
     widget->children_count = 0;
     free(widget->children);
     widget->children = NULL;

@@ -4,15 +4,15 @@
 #include "display/widget.h"
 
 typedef struct {
+    Widget base;
     Widget *focus;
-} AppData;
+} App;
 
-extern Widget app;
+extern App app;
 
 void App_Init(int width, int height);
 void App_Deinit();
 
-void App_AddChild(Widget *child);
 void App_RemoveChild(Widget *child);
 
 void App_Draw(Canvas *canvas);

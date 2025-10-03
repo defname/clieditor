@@ -12,10 +12,7 @@ void bottombar_draw(const Widget *self, Canvas *canvas) {
 }
 
 void bottombar_destroy(Widget *self) {
-    if (self && self->data) {
-        free(self->data);
-        self->data = NULL;
-    }
+    (void)self;
 }
 
 void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_height) {
@@ -36,17 +33,20 @@ static WidgetOps bottombar_ops = {
     .on_input = NULL,
 };
 
-Widget *BottomBar_Create(Widget *parent) {
-    Widget *self = Widget_Create(parent, &bottombar_ops);
-    BottomBarData *data = malloc(sizeof(BottomBarData));
-    self->data = data;
-    self->style.bg = 21;
-    Widget *label = Label_Create(self, Config_GetFilename());
-    label->x = 0;
-    label->y = 0;
-    label->width = FILENAME_MAX_LENGTH;
-    label->height = 1;
+void BottomBar_Init(BottomBar *self, Widget *parent) {
+    Widget_Init(AS_WIDGET(self), parent, &bottombar_ops);
+    self->base.x = 0;
+    self->base.y = 0;
+    self->base.width = FILENAME_MAX_LENGTH;
+    self->base.height = 1;
+    Label_Create(AS_WIDGET(self), Config_GetFilename());
+}
 
-    Widget_onParentResize(self, parent->width, parent->height);
+BottomBar *BottomBar_Create(Widget *parent) {
+    BottomBar *self = malloc(sizeof(BottomBar));
+    if (!self) {
+        logFatal("Cannot allocate memory for BottomBar.");
+    }
+    BottomBar_Init(self, parent);
     return self;
 }

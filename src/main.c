@@ -84,20 +84,20 @@ int main(int argc, char *argv[]) {
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
     
-    Widget *editor = Editor_Create(&app, &tb);
-    App_SetFocus(editor);
+    Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
+    App_SetFocus(AS_WIDGET(&app));
     (void)editor;
-    Widget *bottombar = BottomBar_Create(&app);
+    BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
 
-    Widget *frame = Frame_Create(&app);
-    frame->x = 10;
-    frame->y = 10;
-    frame->width = 20;
-    frame->height = 5;
+    Frame *frame = Frame_Create(AS_WIDGET(&app));
+    frame->base.x = 10;
+    frame->base.y = 10;
+    frame->base.width = 20;
+    frame->base.height = 5;
 
-    Widget_SetZIndex(frame, 10);
-    App_SetFocus(frame);
+    Widget_SetZIndex((Widget*)frame, 10);
+    App_SetFocus((Widget*)frame);
 
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
