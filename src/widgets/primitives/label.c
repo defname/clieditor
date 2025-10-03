@@ -1,8 +1,8 @@
 #include "label.h"
 #include <stdlib.h>
 #include <string.h>
-#include "../display/canvas.h"
-#include "../common/logging.h"
+#include "display/canvas.h"
+#include "common/logging.h"
 
 // 1. Spezifische Daten für das Label
 

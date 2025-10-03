@@ -1,7 +1,7 @@
 #include "bottombar.h"
 
 #include <stdlib.h>
-#include "label.h"
+#include "widgets/primitives/label.h"
 #include "display/canvas.h"
 #include "common/logging.h"
 #include "common/config.h"

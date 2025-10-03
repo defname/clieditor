@@ -1,7 +1,6 @@
 #include "app.h"
 
 #include <stdlib.h>
-#include "label.h"
 #include "display/canvas.h"
 #include "common/logging.h"
 
