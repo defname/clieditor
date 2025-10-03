@@ -84,13 +84,13 @@ int main(int argc, char *argv[]) {
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
     
-    Editor *editor = Editor_Create((Widget*)(&app), &tb);
-    App_SetFocus((Widget*)(&app));
+    Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
+    App_SetFocus(AS_WIDGET(&app));
     (void)editor;
-    BottomBar *bottombar = BottomBar_Create((Widget*)(&app));
+    BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
 
-    Frame *frame = Frame_Create((Widget*)(&app));
+    Frame *frame = Frame_Create(AS_WIDGET(&app));
     frame->base.x = 10;
     frame->base.y = 10;
     frame->base.width = 20;

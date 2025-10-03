@@ -6,8 +6,6 @@
 
 typedef struct {
     Widget base;
-
-    UTF8String text;
 } BottomBar;
 
 

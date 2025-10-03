@@ -2,6 +2,8 @@
 #define FRAME_H
 
 #include "display/widget.h"
+#include "common/utf8string.h"
+
 
 typedef struct {
     Widget base;

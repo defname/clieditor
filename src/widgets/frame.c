@@ -1,6 +1,7 @@
 #include "frame.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "common/logging.h"
 #include "common/utf8string.h"

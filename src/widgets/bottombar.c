@@ -34,8 +34,7 @@ static WidgetOps bottombar_ops = {
 };
 
 void BottomBar_Init(BottomBar *self, Widget *parent) {
-    Widget_Init(&self->base, parent, &bottombar_ops);
-    UTF8String_Init(&self->text);
+    Widget_Init(AS_WIDGET(self), parent, &bottombar_ops);
     self->base.x = 0;
     self->base.y = 0;
     self->base.width = FILENAME_MAX_LENGTH;
