@@ -15,6 +15,7 @@
 #include "widgets/app.h"
 #include "widgets/editor.h"
 #include "common/config.h"
+#include "widgets/frame.h"
 
 TextBuffer tb;
 
@@ -88,6 +89,16 @@ int main(int argc, char *argv[]) {
     (void)editor;
     Widget *bottombar = BottomBar_Create(&app);
     (void)bottombar;
+
+    Widget *frame = Frame_Create(&app);
+    frame->x = 10;
+    frame->y = 10;
+    frame->width = 20;
+    frame->height = 5;
+
+    Widget_SetZIndex(frame, 10);
+    App_SetFocus(frame);
+
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 

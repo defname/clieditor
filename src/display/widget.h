@@ -25,7 +25,7 @@ typedef struct {
     void (*on_focus)(struct _Widget *self);
     // Called (by App_ClearFocus()) when the widget looses focus.
     void (*on_blur)(struct _Widget *self);
-    // Frees all resources associated with the widget.
+    // Frees all resources associated with the widget including widget->data, *but not* the widget itself
     void (*destroy)(struct _Widget *self);
 } WidgetOps;
 
@@ -34,6 +34,8 @@ typedef struct _Widget {
     // Layout properties (relative to the parent)
     int x, y;
     int width, height;
+
+    int z_index;
 
     // Widget-specific data (e.g., a pointer to a struct with text content)
     void *data;
@@ -57,6 +59,8 @@ void Widget_Destroy(Widget *self);
 
 void Widget_AddChild(Widget *self, Widget *child);
 void Widget_RemoveChild(Widget *self, Widget *child);
+
+void Widget_SetZIndex(Widget *self, int z_index);
 
 void Widget_Draw(Widget *self, Canvas *canvas);
 void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height);
