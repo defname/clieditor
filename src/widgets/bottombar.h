@@ -5,12 +5,13 @@
 #include "common/utf8string.h"
 
 typedef struct {
-    int cursor_x;
-    int cursor_y;
+    Widget base;
 
     UTF8String text;
-} BottomBarData;
+} BottomBar;
 
-Widget *BottomBar_Create(Widget *parent);
+
+void BottomBar_Init(BottomBar *self, Widget *parent);
+BottomBar* BottomBar_Create(Widget *parent);
 
 #endif

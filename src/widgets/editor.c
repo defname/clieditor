@@ -8,15 +8,14 @@
 #include "document/textcursor.h"
 
 static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
-    EditorData *data = (EditorData*)user_data;
+    Editor *data = (Editor*)user_data;
     data->cursor_visible = !data->cursor_visible;
     Timer_Restart(timer_id);
 }
 
 // widget->ops->free() function
 static void editor_Destroy(Widget *self) {
-    Timer_Stop(((EditorData*)self->data)->cursor_timer);
-    free(self->data);
+    Timer_Stop(AS_EDITOR(self)->cursor_timer);
 }
 
 static void draw_text(const Widget *self, const UTF8String *text, Canvas *canvas, int *x, int *y) {
@@ -58,10 +57,10 @@ static void draw_line(const Widget *self, const UTF8String *text, Canvas *canvas
 
 static void draw_current_line(const Widget *self, const TextBuffer *tb, Canvas *canvas, int *y) {
     int x = 0;
-    EditorData *data = (EditorData*)self->data;
+    Editor *editor = AS_EDITOR(self);
     UTF8String cursor;
     UTF8String_Init(&cursor);
-    if (data->cursor_visible) {
+    if (editor->cursor_visible) {
         UTF8String_FromStr(&cursor, "_", 1);
     }
     else {
@@ -83,7 +82,7 @@ static void draw_current_line(const Widget *self, const TextBuffer *tb, Canvas *
 
 // widget->ops->draw() function
 static void editor_draw(const Widget *self, Canvas *canvas) {
-    EditorData *data = (EditorData*)self->data;
+    Editor *data = AS_EDITOR(self);
     Line *current = data->first_line;
     int y = 0;
     while ((y < self->height) && current) {
@@ -106,14 +105,14 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
     }
 }
 
-static void editor_scroll_up(EditorData *data) {
+static void editor_scroll_up(Editor *data) {
     if (data->first_line->prev == NULL) {
         return;
     }
     data->first_line = data->first_line->prev;
 }
 
-static void editor_scroll_down(EditorData *data) {
+static void editor_scroll_down(Editor *data) {
     if (data->first_line->next == NULL) {
         return;
     }
@@ -123,7 +122,7 @@ static void editor_scroll_down(EditorData *data) {
 // widget->ops->on_input() function
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
-    EditorData *data = (EditorData*)self->data;
+    Editor *data = AS_EDITOR(self);
 
     if (ch.length == 1) {
         char c = ch.bytes[0];
@@ -190,12 +189,11 @@ static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
 }
 
 static void editor_on_focus(Widget *self) {
-    EditorData *data = (EditorData*)self->data;
-    Timer_Resume(data->cursor_timer);
+    Timer_Resume(AS_EDITOR(self)->cursor_timer);
 }
 
 static void editor_on_blur(Widget *self) {
-    EditorData *data = (EditorData*)self->data;
+    Editor *data = (Editor*)self;
     Timer_Pause(data->cursor_timer);
     data->cursor_visible = false;
 }
@@ -209,19 +207,23 @@ static WidgetOps editor_ops = {
     .on_blur = editor_on_blur,
 };
 
-Widget *Editor_Create(Widget *parent, TextBuffer *tb) {
-    EditorData *data = malloc(sizeof(EditorData));
-    if (!data) {
-        logFatal("Cannot allocate memory for EditorData.");
-    }
-    data->tb = tb;
-    data->first_line = tb->current_line;
-    data->cursor_timer = Timer_Start(500, alternate_cursor_visibility, data);
-    Timer_Pause(data->cursor_timer);  // start when getting focus
-    data->cursor_visible = true;
-    Widget *new = Widget_Create(parent, &editor_ops);
-    new->data = data;
 
-    new->style.bg = 232;
+void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
+    Widget_Init(&self->base, parent, &editor_ops);
+    self->tb = tb;
+    self->first_line = tb->current_line;
+    self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
+    Timer_Pause(self->cursor_timer);  // start when getting focus
+    self->cursor_visible = true;
+
+    self->base.style.bg = 232;
+}
+
+Editor *Editor_Create(Widget *parent, TextBuffer *tb) {
+    Editor *new = malloc(sizeof(Editor));
+    if (!new) {
+        logFatal("Cannot allocate memory for Editor.");
+    }
+    Editor_Init(new, parent, tb);
     return new;
 }

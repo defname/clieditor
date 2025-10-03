@@ -10,22 +10,14 @@
 
 // Die "draw"-Methode für ein Label
 static void label_draw(const Widget *self, Canvas *canvas) {
-    if (!self || !self->data) return;
-    LabelData *data = (LabelData*)self->data;
-
     // Schreibe den Text auf den Canvas
     Canvas_MoveCursor(canvas, 0, 0);
-    Canvas_Write(canvas, &data->text);
+    Canvas_Write(canvas, &(AS_LABEL(self)->text));
 }
 
 // Die "destroy"-Methode für ein Label (gibt den Text frei)
 static void label_destroy(Widget *self) {
-    if (self && self->data) {
-        LabelData *data = (LabelData*)self->data;
-        UTF8String_Deinit(&data->text);
-        free(data);
-        self->data = NULL;
-    }
+    UTF8String_Deinit(&(AS_LABEL(self))->text);
 }
 
 // 3. Die "vtable" für das Label-Widget
@@ -36,16 +28,19 @@ static WidgetOps label_ops = {
 };
 
 // 4. Der "Konstruktor"
-Widget* Label_Create(Widget *parent, const char* text) {
-    Widget *widget = Widget_Create(parent, &label_ops);
-    LabelData *data = malloc(sizeof(LabelData));
-    if (!data) {
-        Widget_Destroy(widget);
-        return NULL;
+
+void Label_Init(Label *self, Widget *parent, const char *text) {
+    Widget_Init(&self->base, parent, &label_ops);
+    UTF8String_Init(&self->text);
+    UTF8String_FromStr(&self->text, text, strlen(text));
+}
+
+Label *Label_Create(Widget *parent, const char* text) {
+    Label *new = malloc(sizeof(Label));
+    if (!new) {
+        logFatal("Cannot allocate memory for Label.");
     }
-    UTF8String_Init(&data->text);
-    const char *label_text = text ? text : "";
-    UTF8String_FromStr(&data->text, label_text, strlen(label_text));
-    widget->data = data;
-    return widget;
+    Label_Init(new, parent, text);
+    
+    return new;
 }

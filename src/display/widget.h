@@ -37,8 +37,6 @@ typedef struct _Widget {
 
     int z_index;
 
-    // Widget-specific data (e.g., a pointer to a struct with text content)
-    void *data;
     // Pointers to the widget's "methods"
     WidgetOps *ops;
 
@@ -50,6 +48,9 @@ typedef struct _Widget {
     int children_count;
     int children_capacity;
 } Widget;
+
+#define AS_WIDGET(w) ((Widget*)(w))
+
 
 void Widget_Init(Widget *w, Widget *parent, WidgetOps *ops);
 void Widget_Deinit(Widget *w);
