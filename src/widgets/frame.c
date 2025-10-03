@@ -36,6 +36,11 @@ static void frame_draw(const Widget *self, Canvas *canvas) {
     FrameData *data = self->data;
     UTF8Char *border_chars = data->charset.chars;
 
+    if (self->width < 2 || self->height < 2) {
+        logWarn("Frame is too small to render.");
+        return;
+    }
+
     // Draw a border
 
     // top border
@@ -106,7 +111,7 @@ void Frame_AddChild(Widget *self, Widget *child) {
 }
 
 void Frame_SetBorderStyle(Widget *self, unsigned char style) {
-    if (style > (sizeof(box_drawing_chars) / sizeof(box_drawing_chars[0]))) {
+    if (style >= (sizeof(box_drawing_chars) / sizeof(box_drawing_chars[0]))) {
         logWarn("style out of bounds. Border style not set.");
         return;
     }
