@@ -10,12 +10,12 @@
 #include "document/textbuffer.h"
 #include "document/textio.h"
 #include "io/timer.h"
-#include "widgets/label.h"
-#include "widgets/bottombar.h"
+#include "widgets/components/bottombar.h"
 #include "widgets/app.h"
-#include "widgets/editor.h"
+#include "widgets/components/editor.h"
 #include "common/config.h"
-#include "widgets/frame.h"
+
+#include "widgets/primitives/frame.h"
 
 TextBuffer tb;
 
