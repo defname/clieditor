@@ -35,6 +35,8 @@ typedef struct _Widget {
     int x, y;
     int width, height;
 
+    int z_index;
+
     // Widget-specific data (e.g., a pointer to a struct with text content)
     void *data;
     // Pointers to the widget's "methods"
@@ -57,6 +59,8 @@ void Widget_Destroy(Widget *self);
 
 void Widget_AddChild(Widget *self, Widget *child);
 void Widget_RemoveChild(Widget *self, Widget *child);
+
+void Widget_SetZIndex(Widget *self, int z_index);
 
 void Widget_Draw(Widget *self, Canvas *canvas);
 void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height);

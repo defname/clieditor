@@ -12,6 +12,8 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->width = 0;
     widget->height = 0;
 
+    widget->z_index = 0;
+
     widget->children = NULL;
     widget->children_count = 0;
     widget->children_capacity = 0;
@@ -83,6 +85,28 @@ static void increase_capacity(Widget *widget) {
     widget->children_capacity = new_capacity;
 }
 
+static int compare_children_z_index(const void *a, const void *b) {
+    Widget *w1 = *(Widget **)a;
+    Widget *w2 = *(Widget **)b;
+    if (!w1 && !w2) {
+        return 0;
+    }
+    if (!w1) {
+        return 1;
+    }
+    if (!w2) {
+        return -1;
+    }
+    return w1->z_index - w2->z_index;
+}
+
+void Widget_SetZIndex(Widget *self, int z_index) {
+    self->z_index = z_index;
+    if (self->parent) {
+        qsort(self->parent->children, self->parent->children_count, sizeof(Widget *), compare_children_z_index);
+    }
+}
+
 void Widget_AddChild(Widget *parent, Widget *child) {
     if (!parent || !child) {
         logError("Invalid parent or child widget.");
@@ -97,10 +121,9 @@ void Widget_AddChild(Widget *parent, Widget *child) {
             parent->children[i] = child;
             parent->children_count++;
             child->parent = parent;
-            return;
+            break;
         }
     }
-    logDebug("Should not happen.... unreachable code...");
 }
 
 void Widget_RemoveChild(Widget *parent, Widget *child) {
