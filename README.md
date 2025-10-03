@@ -52,13 +52,13 @@ Contains fundamental, reusable modules that have no dependencies on any other pa
 Handles all direct interaction with the outside world (the operating system, terminal, and file system). This is the only layer that contains platform-specific code, like reading from `stdin` or writing ANSI escape codes to the screen.
 
 ### `display/`
-Provides the abstract, platform-independent graphics and UI framework. It knows *what* to draw, but not *how* to render it on a specific terminal. This includes the abstract `Canvas` and the base `Widget` structure, which forms the foundation of the UI tree.
+Provides the abstract, platform-independent graphics and UI framework. It knows *what* to draw, but not *how* to render it on a specific terminal. This includes the abstract `Canvas` and the base `Widget` structure.
 
 ### `document/`
 Contains the core data model of the application, completely independent of the UI. Its main responsibility is managing the text buffer.
 
 ### `widgets/`
-Contains all concrete, instantiable UI components that are built upon the base `Widget` from the `display` layer. Examples include the main editor view, status bars, and labels.
+Contains all concrete, instantiable UI components that are built upon the base `Widget` from the `display` layer. Examples include the main editor view, status bars, and labels. The `App` widget forms the root of the UI tree.
 
 ### `main.c` (root of `src/`)
 The entry point of the application, responsible for initializing all systems and running the main loop.
