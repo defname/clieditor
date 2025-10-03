@@ -39,7 +39,7 @@ void BottomBar_Init(BottomBar *self, Widget *parent) {
     self->base.y = 0;
     self->base.width = FILENAME_MAX_LENGTH;
     self->base.height = 1;
-    Label_Create((Widget*)self, Config_GetFilename());
+    Label_Create(AS_WIDGET(self), Config_GetFilename());
 }
 
 BottomBar *BottomBar_Create(Widget *parent) {
@@ -47,6 +47,6 @@ BottomBar *BottomBar_Create(Widget *parent) {
     if (!self) {
         logFatal("Cannot allocate memory for BottomBar.");
     }
-    BottomBar_Init((BottomBar*)self, parent);
+    BottomBar_Init(self, parent);
     return self;
 }

@@ -193,7 +193,7 @@ static void editor_on_focus(Widget *self) {
 }
 
 static void editor_on_blur(Widget *self) {
-    Editor *data = (Editor*)self;
+    Editor *data = AS_EDITOR(self);
     Timer_Pause(data->cursor_timer);
     data->cursor_visible = false;
 }

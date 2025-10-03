@@ -101,6 +101,11 @@ void Frame_SetBorderStyle(Frame *self, unsigned char style) {
 }
 
 void Frame_SetBoxDrawingCharacters(Frame *self, const char *chars) {
+    if (!chars) {
+        logError("Charset is NULL.");
+        Frame_SetBorderStyle(self, 0);
+        return;
+    }
     UTF8String_FromStr(&self->charset, chars, strlen(chars));
     if (self->charset.length != 8) {
         logError("Invalid charset length.");
