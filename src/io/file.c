@@ -28,6 +28,8 @@ File *File_Open(const char *filename, FileAccessType access) {
 
     file->fp = fopen(filename, access == FILE_ACCESS_READ ? "r" : "w");
     if (!file->fp) {
+        free(file->path);
+        free(file);
         return NULL;
     }
     file->access = access;
