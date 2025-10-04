@@ -50,6 +50,25 @@ void *Stack_Pop(Stack *stack) {
     return stack->items[--stack->size];
 }
 
+void *Stack_Peek(const Stack *stack) {
+    if (!stack || stack->size == 0) {
+        return NULL;
+    }
+    return stack->items[stack->size - 1];
+}
+
+bool Stack_Has(const Stack *stack, const void *item) {
+    if (!stack) {
+        return false;
+    }
+    for (int i=0; i<stack->size; i++) {
+        if (stack->items[i] == item) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void Stack_Clear(Stack *stack) {
     if (!stack) {
         return;
