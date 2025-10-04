@@ -12,7 +12,7 @@ extern App app;
 void App_Init(int width, int height);
 void App_Deinit();
 
-void App_HandleInput(EscapeSequence key, UTF8Char ch);
+bool App_HandleInput(EscapeSequence key, UTF8Char ch);
 void App_Draw(Canvas *canvas);
 
 void App_onParentResize(int new_parent_width, int new_parent_height);
