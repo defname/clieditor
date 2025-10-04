@@ -1,4 +1,5 @@
 #include "stack.h"
+#include "logging.h"
 
 static void increase_capacity(Stack *stack) {
     if (!stack) {
@@ -61,7 +62,7 @@ bool Stack_Has(const Stack *stack, const void *item) {
     if (!stack) {
         return false;
     }
-    for (int i=0; i<stack->size; i++) {
+    for (size_t i=0; i<stack->size; i++) {
         if (stack->items[i] == item) {
             return true;
         }

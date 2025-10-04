@@ -71,4 +71,7 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
 
 void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch);
 
+Widget *Widget_ChildHasFocus(Widget *self);
+void Widget_Focus(Widget *widget);
+void Widget_Blur(Widget *widget);
 #endif

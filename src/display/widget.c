@@ -214,20 +214,20 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
 }
 
 void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
-    if (!self) {
+    if (!self || !self->has_focus) {
         logError("Invalid widget.");
         return;
     }
+    // check if the widget handles input
     if (self->ops && self->ops->on_input) {
-        self->ops->on_input(self, key, ch);
-    }
-    for (int i=0; i<self->children_count; i++) {
-        Widget *child = self->children[i];
-        if (!child) {
-            continue;
+        if (self->ops->on_input(self, key, ch)) {
+            return;
         }
-        Widget_HandleInput(child, key, ch);
     }
+    // if self does not handle the input (not on_input() or on_input() == false)
+    // bubble up
+    Widget *child_with_focus = Widget_ChildHasFocus(self);
+    Widget_HandleInput(child_with_focus, key, ch);
 }
 
 Widget *Widget_ChildHasFocus(Widget *self) {
