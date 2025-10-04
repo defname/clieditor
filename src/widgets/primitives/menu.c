@@ -13,6 +13,7 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     Menu *menu = AS_MENU(self);
     if (key == ESC_ESCAPE) {
         Callback_Call(&menu->on_close, self);
+        Widget_Hide(self);
     }
     else if (key == ESC_CURSOR_UP) {
         if (menu->selected_entry > 0) {
