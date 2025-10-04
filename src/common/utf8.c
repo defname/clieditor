@@ -167,3 +167,14 @@ bool UTF8_IsSpace(UTF8Char ch) {
     }
     return false;
 }
+
+bool UTF8_IsASCII(UTF8Char ch) {
+    return ch.length == 1 && ch.bytes[0] <= 127;
+}
+
+char UTF8_AsASCII(UTF8Char ch) {
+    if (ch.length == 1) {
+        return ch.bytes[0];
+    }
+    return '\0';
+}
