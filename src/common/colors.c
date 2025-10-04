@@ -1,6 +1,6 @@
 #include "colors.h"
 
-static ColorMode active_mode;
+static ColorMode active_mode = COLOR_MODE_256;
 
 static Color color_table[] = {
     [COLOR_FG] 			 = { 7, 252},
