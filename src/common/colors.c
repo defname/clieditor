@@ -7,6 +7,13 @@ static Color color_table[] = {
     [COLOR_BG] 			 = { 0, 236},
     [COLOR_HIGHLIGHT_FG] = {15, 255},
     [COLOR_HIGHLIGHT_BG] = { 8, 239},
+    [COLOR_PRIMARY_FG]   = { 7, 252},
+    [COLOR_PRIMARY_BG]   = {12,  33},
+    [COLOR_SECONDARY_FG] = { 7, 252},
+    [COLOR_SECONDARY_BG] = { 5, 127},
+    [COLOR_SUCCESS]      = {10,  76},
+    [COLOR_WARNING]      = { 1, 214},
+    [COLOR_ERROR]        = { 9, 160},
 };
 
 void Color_SetMode(ColorMode mode) {
