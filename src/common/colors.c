@@ -1,0 +1,34 @@
+#include "colors.h"
+
+static ColorMode active_mode;
+
+static Color color_table[] = {
+    [COLOR_FG] 			 = { 7, 252},
+    [COLOR_BG] 			 = { 0, 236},
+    [COLOR_HIGHLIGHT_FG] = {15, 255},
+    [COLOR_HIGHLIGHT_BG] = { 8, 239},
+};
+
+void Colors_SetMode(ColorMode mode) {
+    active_mode = mode;
+}
+
+ColorMode Colors_GetMode() {
+    return active_mode;
+}
+
+bool Color_Equal(const Color *a, const Color *b) {
+    return a->index_16 == b->index_16 && a->index_256 == b->index_256;
+}
+
+Color Color_ById(ColorId id) {
+    return color_table[id];
+}
+
+unsigned char Color_GetCode(Color color) {
+    return active_mode == COLOR_MODE_256 ? color.index_256 : color.index_16;
+}
+
+unsigned char Color_GetCodeById(ColorId id) {
+    return Color_GetCode(Color_ById(id));
+}
