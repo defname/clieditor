@@ -330,7 +330,7 @@ Widget *Widget_GetFocusLeaf(Widget *root) {
     if (!root || !root->has_focus) {
         return NULL;
     }
-    while (root->has_focus) {
+    while (1) {
         Widget *child_with_focus = Widget_ChildHasFocus(root);
         if (!child_with_focus) {
             break;

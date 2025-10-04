@@ -77,7 +77,7 @@ Widget *Widget_ChildHasFocus(Widget *self);
 void Widget_Focus(Widget *widget);
 void Widget_FocusAndReturn(Widget *widget, Widget *caller);
 void Widget_Blur(Widget *widget);
-Widget *Widget_GetFocusLeaf(Widget *root);  //< return the most outer Widget that has focus (root needs to be any Widget in the focus chain)
+Widget *Widget_GetFocusLeaf(Widget *root);  //< return the most outer Widget that has focus (root needs to be any Widget in the focus chain). you must be careful not to destroy a widget before it was returned to, to prevent dangling pointers
 
 void Widget_Show(Widget *widget);
 void Widget_Hide(Widget *widget);
