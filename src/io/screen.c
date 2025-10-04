@@ -72,8 +72,13 @@ void underline(bool on) {
     }
 }
 
-void bold() {
-    dprintf(terminal.fd_out, "\033[1m");
+void bold(bool on) {
+    if (on) {
+        dprintf(terminal.fd_out, "\033[1m");
+    }
+    else {
+        dprintf(terminal.fd_out, "\033[22m");
+    }
 }
 
 void update_style(const Style *current_style, const Style *new_style) {
@@ -82,6 +87,20 @@ void update_style(const Style *current_style, const Style *new_style) {
     }
     if (!current_style || current_style->bg != new_style->bg) {
         dprintf(terminal.fd_out, "\e[48;5;%dm", new_style->bg);
+    }
+    if (!current_style || current_style->attributes != new_style->attributes) {
+        if (new_style->attributes & STYLE_BOLD) {
+            bold(true);
+        }
+        else {
+            bold(false);
+        }
+        if (new_style->attributes & STYLE_UNDERLINE) {
+            underline(true);
+        }
+        else {
+            underline(false);
+        }
     }
 
 }
