@@ -25,9 +25,10 @@ void Stack_Init(Stack *stack) {
 }
 
 void Stack_Deinit(Stack *stack) {
-    if (stack) {
-        free(stack->items);
+    if (!stack) {
+        return;
     }
+    free(stack->items);
     stack->items = NULL;
     stack->size = 0;
     stack->capacity = 0;

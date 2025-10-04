@@ -145,24 +145,24 @@ void Widget_RemoveChild(Widget *parent, Widget *child) {
 Widget *Widget_LCP(const Widget *a, const Widget *b) {
     if (!a || !b) return NULL;
 
-    // 1. Finde die Tiefe beider Widgets
+    // 1. find depth of both widgets
     int depth_a = 0, depth_b = 0;
     const Widget *tmp;
 
     for (tmp = a; tmp; tmp = tmp->parent) depth_a++;
     for (tmp = b; tmp; tmp = tmp->parent) depth_b++;
 
-    // 2. Gehe die tiefere Ebene nach oben, bis beide auf gleicher Höhe sind
+    // 2. ascent the deeper widget until both are on the same height
     while (depth_a > depth_b) { a = a->parent; depth_a--; }
     while (depth_b > depth_a) { b = b->parent; depth_b--; }
 
-    // 3. Gehe gleichzeitig nach oben, bis die gemeinsame Wurzel gefunden ist
+    // 3. ascent both until a common ancestor is found
     while (a && b && a != b) {
         a = a->parent;
         b = b->parent;
     }
 
-    // 4. Rückgabe des LCP oder NULL, falls keine gemeinsame Wurzel
+    // 4. return LCP or NULL if none was found
     return (Widget *)a;
 }
 
@@ -227,7 +227,9 @@ void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
     // if self does not handle the input (not on_input() or on_input() == false)
     // bubble up
     Widget *child_with_focus = Widget_ChildHasFocus(self);
-    Widget_HandleInput(child_with_focus, key, ch);
+    if (child_with_focus) {
+        Widget_HandleInput(child_with_focus, key, ch);
+    }
 }
 
 Widget *Widget_ChildHasFocus(Widget *self) {

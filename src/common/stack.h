@@ -8,7 +8,7 @@
 #define STACK_GROW_FACTOR 2
 
 
-typedef struct _ {
+typedef struct _Stack {
     void **items;
     size_t size;
     size_t capacity;
