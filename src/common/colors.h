@@ -2,6 +2,7 @@
 #define COLORS_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
     COLOR_MODE_256,
@@ -23,8 +24,8 @@ typedef enum {
 } ColorId;
 
 typedef struct _Color {
-    unsigned char index_16;
-    unsigned char index_256;
+    uint8_t index_16;
+    uint8_t index_256;
 } Color;
 
 void Color_SetMode(ColorMode mode);
@@ -33,7 +34,7 @@ ColorMode Color_GetMode();
 bool Color_Equal(const Color *a, const Color *b);
 
 Color Color_ById(ColorId id);
-unsigned char Color_GetCode(Color color);
-unsigned char Color_GetCodeById(ColorId id);
+uint8_t Color_GetCode(Color color);
+uint8_t Color_GetCodeById(ColorId id);
 
 #endif
