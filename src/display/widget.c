@@ -13,6 +13,8 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
 
     widget->z_index = 0;
 
+    widget->has_focus = false;
+
     widget->children = NULL;
     widget->children_count = 0;
     widget->children_capacity = 0;
@@ -140,6 +142,30 @@ void Widget_RemoveChild(Widget *parent, Widget *child) {
     logDebug("Child not found.");
 }
 
+Widget *Widget_LCP(const Widget *a, const Widget *b) {
+    if (!a || !b) return NULL;
+
+    // 1. Finde die Tiefe beider Widgets
+    int depth_a = 0, depth_b = 0;
+    const Widget *tmp;
+
+    for (tmp = a; tmp; tmp = tmp->parent) depth_a++;
+    for (tmp = b; tmp; tmp = tmp->parent) depth_b++;
+
+    // 2. Gehe die tiefere Ebene nach oben, bis beide auf gleicher Höhe sind
+    while (depth_a > depth_b) { a = a->parent; depth_a--; }
+    while (depth_b > depth_a) { b = b->parent; depth_b--; }
+
+    // 3. Gehe gleichzeitig nach oben, bis die gemeinsame Wurzel gefunden ist
+    while (a && b && a != b) {
+        a = a->parent;
+        b = b->parent;
+    }
+
+    // 4. Rückgabe des LCP oder NULL, falls keine gemeinsame Wurzel
+    return (Widget *)a;
+}
+
 void Widget_Draw(Widget *self, Canvas *canvas) {
     if (!self) {
         logDebug("Cannot draw NULL Widget");
@@ -201,5 +227,80 @@ void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
             continue;
         }
         Widget_HandleInput(child, key, ch);
+    }
+}
+
+Widget *Widget_ChildHasFocus(Widget *self) {
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        if (child->has_focus) {
+            return child;
+        }
+    }
+    return NULL;
+}
+
+static void focus_recursively(Widget *self) {
+    if (!self || self->has_focus) {
+        return;
+    }
+
+    focus_recursively(self->parent);
+    self->has_focus = true;
+    if (self->ops && self->ops->on_focus) {
+        self->ops->on_focus(self);
+    }
+}
+
+void Widget_Focus(Widget *self) {
+    if (!self || self->has_focus) {
+        return;
+    }
+    /*
+            F                       F
+           / \                     / \
+          F   X <- focus   =>     X   F
+          |                       |
+          F                       X
+    */
+    // find the first predecessor that is in focus
+    Widget *predecessor_in_focus = self->parent;
+    while (predecessor_in_focus && !predecessor_in_focus->has_focus) {
+        predecessor_in_focus = predecessor_in_focus->parent;
+    }
+    if (predecessor_in_focus) {
+        // if it has a child in focus blur it
+        Widget *predecessor_child = Widget_ChildHasFocus(predecessor_in_focus);
+        if (predecessor_child) {
+            Widget_Blur(predecessor_child);
+        }
+    }
+
+    focus_recursively(self);
+}
+
+void Widget_Blur(Widget *self) {
+    if (!self || !self->has_focus) {
+        return;
+    }
+    /*
+            F         F
+           / \       / \
+   blur-> F   X  => X   X
+          |         |
+          F         X
+    */
+    // if a child has focus blur it first
+    Widget *child_in_focus = Widget_ChildHasFocus(self);
+    if (child_in_focus) {
+        Widget_Blur(child_in_focus);
+    }
+    // blur self
+    self->has_focus = false;
+    if (self->ops && self->ops->on_blur) {
+        self->ops->on_blur(self);
     }
 }
