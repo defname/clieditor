@@ -37,6 +37,8 @@ typedef struct _Widget {
 
     int z_index;
 
+    bool has_focus;
+
     // Pointers to the widget's "methods"
     WidgetOps *ops;
 
@@ -60,6 +62,7 @@ void Widget_Destroy(Widget *self);
 
 void Widget_AddChild(Widget *self, Widget *child);
 void Widget_RemoveChild(Widget *self, Widget *child);
+Widget *Widget_LCP(const Widget *a, const Widget *b);
 
 void Widget_SetZIndex(Widget *self, int z_index);
 
@@ -68,4 +71,7 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
 
 void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch);
 
+Widget *Widget_ChildHasFocus(Widget *self);
+void Widget_Focus(Widget *widget);
+void Widget_Blur(Widget *widget);
 #endif

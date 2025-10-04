@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     App_Init(Screen_GetWidth(), Screen_GetHeight());
  
     Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
-    App_SetFocus(AS_WIDGET(editor));
+    Widget_Focus(AS_WIDGET(editor));
     (void)editor;
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
@@ -125,13 +125,10 @@ int main(int argc, char *argv[]) {
             return 0;
         }
 
-        Widget *focus = App_HasFocus();
-        if (focus) {
-            Widget_HandleInput(focus, esc_seq, utf8_invalid);
-            UTF8Char ch;
-            while ((ch = Input_GetChar()).length != 0) {
-                Widget_HandleInput(focus, ESC_NONE, ch);
-            }
+        App_HandleInput(esc_seq, utf8_invalid);
+        UTF8Char ch;
+        while ((ch = Input_GetChar()).length != 0) {
+            App_HandleInput(ESC_NONE, ch);
         }
 
         App_Draw(&screen.canvas);
