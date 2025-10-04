@@ -9,11 +9,11 @@ static Color color_table[] = {
     [COLOR_HIGHLIGHT_BG] = { 8, 239},
 };
 
-void Colors_SetMode(ColorMode mode) {
+void Color_SetMode(ColorMode mode) {
     active_mode = mode;
 }
 
-ColorMode Colors_GetMode() {
+ColorMode Color_GetMode() {
     return active_mode;
 }
 
