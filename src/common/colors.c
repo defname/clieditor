@@ -3,10 +3,10 @@
 static ColorMode active_mode = COLOR_MODE_256;
 
 static Color color_table[] = {
-    [COLOR_FG] 			 = { 7, 252},
+    [COLOR_FG] 			 = { 7, 255},
     [COLOR_BG] 			 = { 0, 236},
     [COLOR_HIGHLIGHT_FG] = {15, 255},
-    [COLOR_HIGHLIGHT_BG] = { 8, 239},
+    [COLOR_HIGHLIGHT_BG] = { 4, 239},
     [COLOR_PRIMARY_FG]   = { 7, 252},
     [COLOR_PRIMARY_BG]   = {12,  33},
     [COLOR_SECONDARY_FG] = { 7, 252},

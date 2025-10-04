@@ -5,6 +5,7 @@
 
 #include "common/logging.h"
 #include "common/utf8string.h"
+#include "common/colors.h"
 
 // 0:┌ 1:─ 2:┒ 3:│ 4:┕ 5:┛ 6:┃ 7:━
 static const char *box_drawing_chars[] = {
@@ -77,8 +78,6 @@ void Frame_Init(Frame *self, Widget *parent) {
     Widget_Init(&self->base, parent, &frame_ops);
     UTF8String_Init(&self->charset);
     Frame_SetBorderStyle(self, 0);
-    self->base.style.bg = 32;
-    self->container = Widget_Create(AS_WIDGET(self), &container_ops);
     self->container->x = 1;
     self->container->y = 1;
 }
