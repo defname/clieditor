@@ -38,6 +38,7 @@ typedef struct _Widget {
     int z_index;
 
     bool has_focus;
+    struct _Widget *return_focus_to;
     bool visible;
 
     // Pointers to the widget's "methods"
@@ -74,7 +75,9 @@ bool Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch);
 
 Widget *Widget_ChildHasFocus(Widget *self);
 void Widget_Focus(Widget *widget);
+void Widget_FocusAndReturn(Widget *widget, Widget *caller);
 void Widget_Blur(Widget *widget);
+Widget *Widget_GetFocusLeaf(Widget *root);  //< return the most outer Widget that has focus (root needs to be any Widget in the focus chain)
 
 void Widget_Show(Widget *widget);
 void Widget_Hide(Widget *widget);

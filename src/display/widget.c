@@ -14,6 +14,7 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->z_index = 0;
 
     widget->has_focus = false;
+    widget->return_focus_to = NULL;
     widget->visible = true;
 
 
@@ -291,6 +292,12 @@ void Widget_Focus(Widget *self) {
     focus_recursively(self);
 }
 
+void Widget_FocusAndReturn(Widget *widget, Widget *caller) {
+    Widget *focus_leaf = Widget_GetFocusLeaf(caller);
+    Widget_Focus(widget);
+    widget->return_focus_to = focus_leaf;
+}
+
 void Widget_Blur(Widget *self) {
     if (!self || !self->has_focus) {
         return;
@@ -312,6 +319,25 @@ void Widget_Blur(Widget *self) {
     if (self->ops && self->ops->on_blur) {
         self->ops->on_blur(self);
     }
+    if (self->return_focus_to) {
+        Widget *new_focus =  self->return_focus_to;
+        self->return_focus_to = NULL;
+        Widget_Focus(new_focus);
+    }
+}
+
+Widget *Widget_GetFocusLeaf(Widget *root) {
+    if (!root || !root->has_focus) {
+        return NULL;
+    }
+    while (root->has_focus) {
+        Widget *child_with_focus = Widget_ChildHasFocus(root);
+        if (!child_with_focus) {
+            break;
+        }
+        root = child_with_focus;
+    }
+    return root;
 }
 
 void Widget_Show(Widget *self) {

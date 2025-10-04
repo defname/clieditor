@@ -47,7 +47,8 @@ static void onResize(int new_width, int new_height) {
 
 static void onMenuClose(void *menu, void *new_focus) {
     Widget_Hide(AS_WIDGET(menu));
-    Widget_Focus(AS_WIDGET(new_focus));
+    (void)new_focus;
+    //Widget_Focus(AS_WIDGET(new_focus));
 }
 
 static void onMenuClick(void *menu, void *entry) {
@@ -132,7 +133,7 @@ int main(int argc, char *argv[]) {
         { .text = "Exit", Callback_New(onMenuClick, "exit") },
     };
     Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), Callback_New(onMenuClose, editor));
-    Widget_Focus(AS_WIDGET(menu));
+    Widget_Hide(AS_WIDGET(menu));
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
@@ -145,7 +146,7 @@ int main(int argc, char *argv[]) {
         
         if (!App_HandleInput(esc_seq, utf8_invalid)) {
             if (esc_seq == ESC_ESCAPE) {
-                Widget_Focus(AS_WIDGET(menu));
+                Widget_FocusAndReturn(AS_WIDGET(menu), AS_WIDGET(&app));
             }
         }
         UTF8Char ch;
