@@ -4,6 +4,7 @@
 #include "display/canvas.h"
 #include "io/input.h"
 #include "common/logging.h"
+#include "common/colors.h"
 #include "document/textedit.h"
 #include "document/textcursor.h"
 
@@ -89,7 +90,7 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
         UTF8String *text = &current->text;
         if (current == data->tb->current_line) {
             Style s = canvas->current_style;
-            canvas->current_style.bg = 237;
+            canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
             draw_current_line(self, data->tb, canvas, &y);
             canvas->current_style.bg = s.bg;
         }
@@ -216,7 +217,8 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     Timer_Pause(self->cursor_timer);  // start when getting focus
     self->cursor_visible = true;
 
-    self->base.style.bg = 232;
+    self->base.style.bg = Color_GetCodeById(COLOR_BG);
+    self->base.style.fg = Color_GetCodeById(COLOR_FG);
 }
 
 Editor *Editor_Create(Widget *parent, TextBuffer *tb) {

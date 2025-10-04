@@ -5,6 +5,7 @@
 #include "display/canvas.h"
 #include "common/logging.h"
 #include "common/config.h"
+#include "common/colors.h"
 
 void bottombar_draw(const Widget *self, Canvas *canvas) {
     (void)self;
@@ -39,6 +40,10 @@ void BottomBar_Init(BottomBar *self, Widget *parent) {
     self->base.y = 0;
     self->base.width = FILENAME_MAX_LENGTH;
     self->base.height = 1;
+
+    self->base.style.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
+    self->base.style.fg = Color_GetCodeById(COLOR_PRIMARY_FG);
+
     Label_Create(AS_WIDGET(self), Config_GetFilename());
 }
 

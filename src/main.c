@@ -14,6 +14,7 @@
 #include "widgets/app.h"
 #include "widgets/components/editor.h"
 #include "common/config.h"
+#include "common/colors.h"
 
 #include "widgets/primitives/frame.h"
 
@@ -26,6 +27,15 @@ static void parse_arguments(int argc, char *argv[]) {
     } else {
         // No file provided, could set a default or leave it empty.
         Config_SetFilename(NULL);
+    }
+}
+
+static void load_environment() {
+    const char *colorterm = getenv("COLORTERM");
+    if (colorterm) {
+        Color_SetMode(COLOR_MODE_256);
+    } else {
+        Color_SetMode(COLOR_MODE_16);
     }
 }
 
@@ -57,6 +67,7 @@ int main(int argc, char *argv[]) {
 
     Config_Init();
     parse_arguments(argc, argv);
+    load_environment();
 
     atexit(finish);  // make sure original settings are restored
     
@@ -83,13 +94,15 @@ int main(int argc, char *argv[]) {
     }
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
-    
+ 
     Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
-    App_SetFocus(AS_WIDGET(&app));
+    App_SetFocus(AS_WIDGET(editor));
     (void)editor;
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
+    
 
+/*
     Frame *frame = Frame_Create(AS_WIDGET(&app));
     frame->base.x = 10;
     frame->base.y = 10;
@@ -98,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     Widget_SetZIndex((Widget*)frame, 10);
     App_SetFocus((Widget*)frame);
-
+*/
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
