@@ -141,30 +141,39 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     }
     if (UTF8_IsPrintable(ch)) {
         TB_InsertChar(data->tb, ch);
+        return true;
     }
     else if (key == ESC_CURSOR_LEFT) {
         TB_MoveCursor(data->tb, -1);
+        return true;
     }
     else if (key == ESC_CURSOR_RIGHT) {
         TB_MoveCursor(data->tb, 1);
+        return true;
     }
     else if (key == ESC_CURSOR_UP) {
         TB_ChangeLine(data->tb, -1);
+        return true;
     }
     else if (key == ESC_CURSOR_DOWN) {
         TB_ChangeLine(data->tb, 1);
+        return true;
     }
     else if (key == ESC_HOME) {
         TB_Home(data->tb);
+        return true;
     } 
     else if (key == ESC_END) {
         TB_End(data->tb);
+        return true;
     }
     else if (key == ESC_PAGE_DOWN) {
         editor_scroll_down(data);
+        return true;
     }
     else if (key == ESC_PAGE_UP) {
         editor_scroll_up(data);
+        return true;
     }
     else if (key == ESC_SHIFT_PAGE_DOWN) {
         editor_scroll_down(data);
@@ -172,6 +181,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         editor_scroll_down(data);
         editor_scroll_down(data);
         editor_scroll_down(data);
+        return true;
     }
     else if (key == ESC_SHIFT_PAGE_UP) {
         editor_scroll_up(data);
@@ -179,8 +189,9 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         editor_scroll_up(data);
         editor_scroll_up(data);
         editor_scroll_up(data);
+        return true;
     }
-    return true;
+    return false;
 }
 
 // widget->ops->on_resize() function

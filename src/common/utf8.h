@@ -34,6 +34,7 @@ uint32_t UTF8Char_ToCodepoint(UTF8Char ch);
 bool UTF8_IsPrintable(UTF8Char ch);
 
 bool UTF8_IsSpace(UTF8Char ch);
-
+bool UTF8_IsASCII(UTF8Char ch);
+char UTF8_AsASCII(UTF8Char ch);
 
 #endif

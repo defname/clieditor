@@ -15,8 +15,10 @@
 #include "widgets/components/editor.h"
 #include "common/config.h"
 #include "common/colors.h"
+#include "common/callback.h"
 
 #include "widgets/primitives/frame.h"
+#include "widgets/primitives/menu.h"
 
 TextBuffer tb;
 
@@ -41,6 +43,19 @@ static void load_environment() {
 
 static void onResize(int new_width, int new_height) {
     App_onParentResize(new_width, new_height);
+}
+
+static void onMenuClose(void *menu, void *new_focus) {
+    Widget_Hide(AS_WIDGET(menu));
+    Widget_Focus(AS_WIDGET(new_focus));
+}
+
+static void onMenuClick(void *menu, void *entry) {
+    (void)menu;
+    (void)entry;
+    if (strcmp(entry, "exit") == 0) {
+        exit(0);
+    }
 }
 
 /************************************
@@ -112,6 +127,12 @@ int main(int argc, char *argv[]) {
     Widget_SetZIndex((Widget*)frame, 10);
     App_SetFocus((Widget*)frame);
 */
+    MenuEntry entries[] = {
+        { .text = "Save", Callback_New(onMenuClick, "save") },
+        { .text = "Exit", Callback_New(onMenuClick, "exit") },
+    };
+    Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), Callback_New(onMenuClose, editor));
+    Widget_Focus(AS_WIDGET(menu));
 
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
@@ -121,11 +142,12 @@ int main(int argc, char *argv[]) {
     while (1) {
         Timer_Update();
         EscapeSequence esc_seq = Input_Read();
-        if (esc_seq == ESC_ESCAPE) {
-            return 0;
+        
+        if (!App_HandleInput(esc_seq, utf8_invalid)) {
+            if (esc_seq == ESC_ESCAPE) {
+                Widget_Focus(AS_WIDGET(menu));
+            }
         }
-
-        App_HandleInput(esc_seq, utf8_invalid);
         UTF8Char ch;
         while ((ch = Input_GetChar()).length != 0) {
             App_HandleInput(ESC_NONE, ch);
