@@ -44,7 +44,9 @@ void BottomBar_Init(BottomBar *self, Widget *parent) {
     self->base.style.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
     self->base.style.fg = Color_GetCodeById(COLOR_PRIMARY_FG);
 
-    Label_Create(AS_WIDGET(self), Config_GetFilename());
+    Label *filename = Label_Create(AS_WIDGET(self), Config_GetFilename());
+    AS_WIDGET(filename)->width = 20;
+    AS_WIDGET(filename)->height = 1;
 }
 
 BottomBar *BottomBar_Create(Widget *parent) {
