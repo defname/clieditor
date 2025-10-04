@@ -14,6 +14,8 @@ void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->z_index = 0;
 
     widget->has_focus = false;
+    widget->visible = true;
+
 
     widget->children = NULL;
     widget->children_count = 0;
@@ -181,7 +183,7 @@ void Widget_Draw(Widget *self, Canvas *canvas) {
 
     for (int i=0; i<self->children_count; i++) {
         Widget *child = self->children[i];
-        if (!child) {
+        if (!child || !child->visible) {
             continue;
         }
         
@@ -213,23 +215,24 @@ void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_he
     } 
 }
 
-void Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
+bool Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch) {
     if (!self || !self->has_focus) {
         logError("Invalid widget.");
-        return;
+        return false;
     }
     // check if the widget handles input
     if (self->ops && self->ops->on_input) {
         if (self->ops->on_input(self, key, ch)) {
-            return;
+            return true;
         }
     }
     // if self does not handle the input (not on_input() or on_input() == false)
     // bubble up
     Widget *child_with_focus = Widget_ChildHasFocus(self);
     if (child_with_focus) {
-        Widget_HandleInput(child_with_focus, key, ch);
+        return Widget_HandleInput(child_with_focus, key, ch);
     }
+    return false;
 }
 
 Widget *Widget_ChildHasFocus(Widget *self) {
@@ -260,6 +263,10 @@ static void focus_recursively(Widget *self) {
 void Widget_Focus(Widget *self) {
     if (!self || self->has_focus) {
         return;
+    }
+
+    if (!self->visible) {
+        Widget_Show(self);
     }
     /*
             F                       F
@@ -304,5 +311,30 @@ void Widget_Blur(Widget *self) {
     self->has_focus = false;
     if (self->ops && self->ops->on_blur) {
         self->ops->on_blur(self);
+    }
+}
+
+void Widget_Show(Widget *self) {
+    if (!self || self->visible) {
+        return;
+    }
+    self->visible = true;
+    Widget_Show(self->parent);
+}
+
+void Widget_Hide(Widget *self) {
+    if (!self || !self->visible) {
+        return;
+    }
+    if (self->has_focus) {
+        Widget_Blur(self);
+    }
+    self->visible = false;
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        Widget_Hide(child);
     }
 }
