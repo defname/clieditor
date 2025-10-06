@@ -23,6 +23,25 @@ void Line_Destroy(Line *line) {
     free(line);
 }
 
+static void rebuild_positions(Line *line) {
+    if (!line) {
+        logWarn("Invalid parameters for rebuild_positions.");
+        return;
+    }
+    // find first line
+    Line *first = line;
+    while (first->prev) {
+        first = first->prev;
+    }
+    // rebuild positions
+    int position = 0;
+    while (first) {
+        first->position = position;
+        position += LINE_POSITION_STEP;
+        first = first->next;
+    }
+}
+
 void Line_InsertAfter(Line *line, Line *new_line) {
     if (!line || !new_line) {
         logWarn("Invalid parameters for Line_InsertAfter.");
@@ -34,7 +53,12 @@ void Line_InsertAfter(Line *line, Line *new_line) {
     new_line->next = third;
     if (third) {
         third->prev = new_line;
-        new_line->position = (third->position - line->position) / 2;
+        int diff = third->position - line->position;
+        if (diff < 2) {
+            rebuild_positions(line);
+            diff = third->position - line->position;
+        }
+        new_line->position = diff / 2;
     }
     else {
         new_line->position = line->position + LINE_POSITION_STEP;
