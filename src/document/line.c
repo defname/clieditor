@@ -11,6 +11,7 @@ Line *Line_Create() {
     UTF8String_Init(&new_line->text);
     new_line->prev = NULL;
     new_line->next = NULL;
+    new_line->position = 0;
     return new_line;
 }
 
@@ -33,6 +34,10 @@ void Line_InsertAfter(Line *line, Line *new_line) {
     new_line->next = third;
     if (third) {
         third->prev = new_line;
+        new_line->position = (third->position - line->position) / 2;
+    }
+    else {
+        new_line->position = line->position + LINE_POSITION_STEP;
     }
 }
 

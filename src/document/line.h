@@ -3,8 +3,12 @@
 
 #include "common/utf8string.h"
 
+#define LINE_POSITION_STEP 100
+
 typedef struct _Line {
     UTF8String text;
+
+    int position;
 
     struct _Line *prev;
     struct _Line *next;
