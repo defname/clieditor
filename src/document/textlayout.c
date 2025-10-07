@@ -92,7 +92,7 @@ bool TextLayout_ScrollDown(TextLayout *tl) {
     VisualLine *first_line = &tl->first_line;
     int length = first_line->src->text.length;
     if (first_line->src == tl->tb->current_line) {
-        length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
+        length += tl->tb->gap.text.length - tl->tb->gap.overlap;
     }
     if (first_line->offset + tl->width < length) {
         first_line->offset += tl->width;
@@ -151,7 +151,7 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
         int last_length = last->src->text.length;
         // calc last length if last->src is the gap line
         if (last->src == tl->tb->current_line) {  // it's the gap line
-            last_length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
+            last_length += tl->tb->gap.text.length - tl->tb->gap.overlap;
         }
 
         VisualLine *current = &tl->cache[y];
@@ -196,7 +196,7 @@ int TextLayout_GetVisualLineLength(TextLayout *tl, int y) {
     }
     int length = line->src->text.length;
     if (line->src == tl->tb->current_line) {
-        length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
+        length += tl->tb->gap.text.length - tl->tb->gap.overlap;
     }
 
     if (line->offset + tl->width < length) {
