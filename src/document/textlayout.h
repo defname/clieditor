@@ -45,6 +45,15 @@ void TextLayout_Deinit(TextLayout *tl);
 
 void TextLayout_SetDimensions(TextLayout *tl, int display_w, int display_h);
 void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int offset);
+/**
+ * @brief Scroll one line up.
+ */
+void TextLayout_ScrollUp(TextLayout *tl);
+
+/**
+ * @brief Scroll one line down. Make sure TextBuffer_MergeGap() was called before.
+ */
+void TextLayout_ScrollDown(TextLayout *tl);
 
 /**
  * @brief Recalc the TextLayout cache, starting at line start_y.

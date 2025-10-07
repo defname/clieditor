@@ -52,6 +52,58 @@ void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int offset) {
     tl->dirty = true;
 }
 
+void TextLayout_ScrollUp(TextLayout *tl) {
+    if (tl->first_line.offset >= tl->width) {
+        tl->first_line.offset -= tl->width;
+        tl->dirty = true;
+    }
+    else if (tl->first_line.src->prev) {
+        Line *new_src = tl->first_line.src->prev;
+        int len = new_src->text.length;
+        int w = tl->width;
+
+        // Calculate the offset of the last visual line of the previous logical line.
+        int new_offset = (len / w) * w;
+        // If the line length is a multiple of the width and the line is not empty,
+        // the calculated offset is out of bounds. We need to go to the start of the
+        // *actual* last visual line.
+        if (len > 0 && len % w == 0) {
+            new_offset -= w;
+        }
+        tl->first_line.src = new_src;
+        tl->first_line.offset = new_offset;
+        tl->dirty = true;
+    }
+}
+
+
+void TextLayout_ScrollDown(TextLayout *tl) {
+    if (tl->dirty) {
+        TextLayout_Recalc(tl, 0);
+    }
+    // check if the end of the document is already reached.
+    for (int i=0; i<tl->height; i++) {
+        if (tl->cache[i].src == NULL) {
+            return;
+        }
+    }
+    VisualLine *first_line = &tl->first_line;
+    int length = first_line->src->text.length;
+    if (first_line->src == tl->tb->current_line) {
+        length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
+        tl->dirty = true;
+    }
+    if (first_line->offset + tl->width < length) {
+        first_line->offset += tl->width;
+        tl->dirty = true;
+    }
+    else if (first_line->src->next) {
+        first_line->src = first_line->src->next;
+        first_line->offset = 0;
+        tl->dirty = true;
+    }
+}
+
 static void increase_capacity(TextLayout *tl) {
     if (!tl) {
         return;
