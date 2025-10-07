@@ -85,17 +85,14 @@ bool TextLayout_ScrollDown(TextLayout *tl) {
         TextLayout_Recalc(tl, 0);
     }
     // check if the end of the document is already reached.
-    for (int i=0; i<tl->height; i++) {
-        if (tl->cache[i].src == NULL) {
-            return false;
-        }
+    if (tl->cache[tl->height-1].src == NULL) {
+        return false;
     }
+
     VisualLine *first_line = &tl->first_line;
     int length = first_line->src->text.length;
     if (first_line->src == tl->tb->current_line) {
         length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
-        tl->dirty = true;
-        return true;
     }
     if (first_line->offset + tl->width < length) {
         first_line->offset += tl->width;
@@ -179,11 +176,12 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
 }
 
 VisualLine *TextLayout_GetVisualLine(TextLayout *tl, int y) {
-    if (!tl || !tl->cache || y < 0 || y >= tl->height) {
-        return NULL;
-    }
     if (tl->dirty) {
         TextLayout_Recalc(tl, 0);
+    }
+    // Check after Recalc, because Recalc allocates the cache.
+    if (!tl || !tl->cache || y < 0 || y >= tl->height) {
+        return NULL;
     }
     if (tl->cache[y].src == NULL) {
         return NULL;
@@ -196,11 +194,17 @@ int TextLayout_GetVisualLineLength(TextLayout *tl, int y) {
     if (!line) {
         return -1;
     }
-    if (line->offset + tl->width < (int)line->src->text.length) {
+    int length = line->src->text.length;
+    if (line->src == tl->tb->current_line) {
+        length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
+    }
+
+    if (line->offset + tl->width < length) {
         return tl->width;
     }
     else {
-        return line->src->text.length - line->offset;
+        int remaining = length - line->offset;
+        return (remaining > 0) ? remaining : 0;
     }
 }
 
