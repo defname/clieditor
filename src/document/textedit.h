@@ -9,7 +9,7 @@ typedef struct _TextEdit {
     TextLayout *tl;
 } TextEdit;
 
-void TextEdit_Init(TextEdit *te, TextBuffer *tb, TextLayout *tl);
+void TextEdit_Init(TextEdit *te, TextBuffer *tb, TextLayout *tls);
 void TextEdit_Deinit(TextEdit *te);
 
 // --- Cursor movement ---
