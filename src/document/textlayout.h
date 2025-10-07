@@ -27,7 +27,7 @@ typedef struct _TextLayout {
     bool dirty;
 } TextLayout;
 
-void TextLayout_Init(TextLayout *tl, TextBuffer *tb, int display_w, int display_h);
+void TextLayout_Init(TextLayout *tl, const TextBuffer *tb, int display_w, int display_h);
 void TextLayout_Deinit(TextLayout *tl);
 
 void TextLayout_SetDimensions(TextLayout *tl, int display_w, int display_h);
