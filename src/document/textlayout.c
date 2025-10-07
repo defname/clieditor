@@ -56,6 +56,7 @@ void TextLayout_ScrollUp(TextLayout *tl) {
     if (tl->first_line.offset >= tl->width) {
         tl->first_line.offset -= tl->width;
         tl->dirty = true;
+        return true;
     }
     else if (tl->first_line.src->prev) {
         Line *new_src = tl->first_line.src->prev;
@@ -73,18 +74,20 @@ void TextLayout_ScrollUp(TextLayout *tl) {
         tl->first_line.src = new_src;
         tl->first_line.offset = new_offset;
         tl->dirty = true;
+        return true;
     }
+    return false;
 }
 
 
-void TextLayout_ScrollDown(TextLayout *tl) {
+bool TextLayout_ScrollDown(TextLayout *tl) {
     if (tl->dirty) {
         TextLayout_Recalc(tl, 0);
     }
     // check if the end of the document is already reached.
     for (int i=0; i<tl->height; i++) {
         if (tl->cache[i].src == NULL) {
-            return;
+            return false;
         }
     }
     VisualLine *first_line = &tl->first_line;
@@ -92,16 +95,20 @@ void TextLayout_ScrollDown(TextLayout *tl) {
     if (first_line->src == tl->tb->current_line) {
         length += tl->tb->gap.position + tl->tb->gap.text.length - tl->tb->gap.overlap;
         tl->dirty = true;
+        return true;
     }
     if (first_line->offset + tl->width < length) {
         first_line->offset += tl->width;
         tl->dirty = true;
+        return true;
     }
     else if (first_line->src->next) {
         first_line->src = first_line->src->next;
         first_line->offset = 0;
         tl->dirty = true;
+        return true;
     }
+    return false;
 }
 
 static void increase_capacity(TextLayout *tl) {
