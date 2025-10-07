@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 99)
 
 # Compiler-Warnungen aktivieren (für GCC/Clang)
 if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wall -Wextra -Werror)
+    add_compile_options(-Wall -Wextra)
 endif()
 
 # Alle C-Dateien im Spielsrc sammeln

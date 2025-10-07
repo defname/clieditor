@@ -20,7 +20,7 @@
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
 
-#define TESTFILE "/tmp/test.txt"
+const char *TESTFILE =  "/home/cypher/projekte/clieditor/README.md";
 
 
 TextBuffer tb;

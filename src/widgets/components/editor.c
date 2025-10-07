@@ -29,7 +29,7 @@ static void draw_cursor(Editor *editor, Canvas *canvas) {
     UTF8String_Init(&cursor);
     char c = ' ';
     if (editor->cursor_visible) {
-        c = '|';
+        c = '_';
     }
     UTF8String_FromStr(&cursor, &c, 1);
     draw_text(&cursor, canvas, 0, 1);
@@ -65,16 +65,21 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
         if (line->src == editor->tb->current_line) {
             Style s = canvas->current_style;
             canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+            draw_text(&line->src->text, canvas, line->offset, line_length);
+            draw_spaces(canvas, editor->tl.width - line_length);
+            /*
             if (cursor_y == y) {
                 draw_text(&line->src->text, canvas, line->offset, cursor_x);
-                draw_cursor(editor, canvas);
-                draw_text(&line->src->text, canvas, cursor_x, line_length - cursor_x);
+                //draw_cursor(editor, canvas);
+                (void)draw_cursor;
+                draw_text(&line->src->text, canvas, line->offset+cursor_x, line_length - cursor_x);
                 draw_spaces(canvas, editor->tl.width - line_length);
             }
             else {
                 draw_text(&line->src->text, canvas, line->offset, line_length);
                 draw_spaces(canvas, editor->tl.width - line_length);
             }
+            */
             canvas->current_style.bg = s.bg;
         }
         else {
@@ -88,7 +93,7 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     (void)self;
-    //TextLayout *tl = &AS_EDITOR(self)->tl;
+    TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
 
     if (ch.length == 1) {
@@ -129,14 +134,14 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         return true;
     }
     else if (key == ESC_PAGE_DOWN) {
+        TextLayout_ScrollDown(tl);
         return true;
     }
     else if (key == ESC_PAGE_UP) {
-        
+        TextLayout_ScrollUp(tl);
         return true;
     }
     else if (key == ESC_SHIFT_PAGE_DOWN) {
-        
         return true;
     }
     else if (key == ESC_SHIFT_PAGE_UP) {
