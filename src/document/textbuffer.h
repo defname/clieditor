@@ -46,8 +46,8 @@
  * the result is
  * "I love terminals."
  */
-#ifndef TEXTBUFFER_H
-#define TEXTBUFFER_H
+#ifndef TEXTextBufferUFFER_H
+#define TEXTextBufferUFFER_H
 
 #include "common/utf8string.h"
 #include "io/file.h"
@@ -71,14 +71,14 @@ typedef struct _TextBuffer {
     size_t line_pos;
 } TextBuffer;
 
-void TB_Init(TextBuffer *tb);
-void TB_Deinit(TextBuffer *tb);
-void TB_ReInit(TextBuffer *tb);
+void TextBuffer_Init(TextBuffer *tb);
+void TextBuffer_Deinit(TextBuffer *tb);
+void TextBuffer_ReInit(TextBuffer *tb);
 
-void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
-void TB_MergeGap(TextBuffer *tb);
+void TextBuffer_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
+void TextBuffer_MergeGap(TextBuffer *tb);
 
-Line *TB_GetFirstLine(const TextBuffer *tb);
-Line *TB_GetLastLine(const TextBuffer *tb);
+Line *TextBuffer_GetFirstLine(const TextBuffer *tb);
+Line *TextBuffer_GetLastLine(const TextBuffer *tb);
 
 #endif
