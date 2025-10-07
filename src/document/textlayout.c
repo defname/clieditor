@@ -52,7 +52,7 @@ void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int offset) {
     tl->dirty = true;
 }
 
-void TextLayout_ScrollUp(TextLayout *tl) {
+bool TextLayout_ScrollUp(TextLayout *tl) {
     if (tl->first_line.offset >= tl->width) {
         tl->first_line.offset -= tl->width;
         tl->dirty = true;
@@ -132,7 +132,7 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
         return;
     }
 
-    if (tl->cache_capacity < tl->height) {
+    if (tl->cache_capacity < (size_t)tl->height) {
         increase_capacity(tl);
     }
 
@@ -167,7 +167,7 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
             current->src = last->src->next;
             current->offset = 0;
         } else {  // reset rest of cache
-            for (int i=y; i<tl->cache_capacity; i++) {
+            for (size_t i=y; i<tl->cache_capacity; i++) {
                 VisualLine_Init(&tl->cache[i], NULL, 0);
             }
             break;
@@ -185,7 +185,23 @@ VisualLine *TextLayout_GetVisualLine(TextLayout *tl, int y) {
     if (tl->dirty) {
         TextLayout_Recalc(tl, 0);
     }
+    if (tl->cache[y].src == NULL) {
+        return NULL;
+    }
     return &tl->cache[y];
+}
+
+int TextLayout_GetVisualLineLength(TextLayout *tl, int y) {
+    VisualLine *line = TextLayout_GetVisualLine(tl, y);
+    if (!line) {
+        return -1;
+    }
+    if (line->offset + tl->width < (int)line->src->text.length) {
+        return tl->width;
+    }
+    else {
+        return line->src->text.length - line->offset;
+    }
 }
 
 int get_cursor_position_in_line(const TextBuffer *tb) {
@@ -207,7 +223,6 @@ int TextLayout_GetCursorX(TextLayout *tl) {
     if (tl->dirty) {
         TextLayout_Recalc(tl, 0);
     }
-    Line *current = tl->tb->current_line;
     int position_in_line = get_cursor_position_in_line(tl->tb);
     if (position_in_line < 0) {
         logFatal("Not sure if this can happen");

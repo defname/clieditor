@@ -71,6 +71,11 @@ void TextLayout_Recalc(TextLayout *tl, int start_y);
 VisualLine *TextLayout_GetVisualLine(TextLayout *tl, int y);
 
 /**
+ * @brief Return the length of the line at y position. (-1 if not on screen or out of document)
+ */
+int TextLayout_GetVisualLineLength(TextLayout *tl, int y);
+
+/**
  * @brief Return the x position of the cursor with repect to gap properties
  */
 int TextLayout_GetCursorX(TextLayout *tl);

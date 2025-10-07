@@ -3,12 +3,17 @@
 
 #include "display/widget.h"
 #include "document/textbuffer.h"
+#include "document/textlayout.h"
+#include "document/textedit.h"
 #include "io/timer.h"
 
 typedef struct {
     Widget base;
+
     TextBuffer *tb;
-    Line *first_line;
+    TextLayout tl;
+    TextEdit te;
+    
     uint8_t cursor_timer;
     bool cursor_visible;
 } Editor;

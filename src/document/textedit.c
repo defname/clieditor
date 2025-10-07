@@ -7,7 +7,7 @@ void TextEdit_Init(TextEdit *te, TextBuffer *tb, TextLayout *tl) {
         return;
     }
     te->tb = tb;
-    te->tl == tl;
+    te->tl = tl;
 }
 void TextEdit_Deinit(TextEdit *te) {
     te->tb = NULL;
@@ -55,7 +55,7 @@ void TextEdit_MoveUp(TextEdit *te) {
     TextBuffer_MergeGap(tb);
 
     int cursor_x = TextLayout_GetCursorX(tl);
-    int cursor_y = TextLayout_GetCurostY(tl);
+    int cursor_y = TextLayout_GetCursorY(tl);
 
     if (cursor_y == 0) {
         // try to scroll up 
@@ -82,7 +82,7 @@ void TextEdit_MoveDown(TextEdit *te) {
     TextBuffer_MergeGap(tb);
 
     int cursor_x = TextLayout_GetCursorX(tl);
-    int cursor_y = TextLayout_GetCurostY(tl);
+    int cursor_y = TextLayout_GetCursorY(tl);
 
     if (cursor_y == tl->height-1) {
         // try to scroll down 
@@ -93,7 +93,7 @@ void TextEdit_MoveDown(TextEdit *te) {
         }
         cursor_y--;
     }
-    VisualLine *line_below = TextLayout_GetVisualLine(tl, cursor_y - 1);
+    VisualLine *line_below = TextLayout_GetVisualLine(tl, cursor_y + 1);
     if (!line_below) {
         tb->gap.position = tb->current_line->text.length;
         return;

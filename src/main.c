@@ -20,6 +20,9 @@
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
 
+#define TESTFILE "/tmp/test.txt"
+
+
 TextBuffer tb;
 
 static void parse_arguments(int argc, char *argv[]) {
@@ -29,6 +32,7 @@ static void parse_arguments(int argc, char *argv[]) {
     } else {
         // No file provided, could set a default or leave it empty.
         Config_SetFilename(NULL);
+        Config_SetFilename(TESTFILE);
     }
 }
 
@@ -60,7 +64,7 @@ static void finish() {  // called automatically (set with atexit())
     Timer_Deinit();
     App_Deinit();
     Config_Deinit();
-    TB_Deinit(&tb);
+    TextBuffer_Deinit(&tb);
     Input_Deinit();
     Screen_Deinit();
     Terminal_Deinit();
@@ -90,7 +94,7 @@ int main(int argc, char *argv[]) {
     Screen_Draw();
     Screen_HideCursor();
 
-    TB_Init(&tb);
+    TextBuffer_Init(&tb);
 
     const char * fn = Config_GetFilename();
     if (strcmp(fn, "") != 0) {
@@ -98,7 +102,7 @@ int main(int argc, char *argv[]) {
         file = File_Open(fn, FILE_ACCESS_READ);
 
         if (file) {
-            TB_LoadFromFile(&tb, file);
+            TextBuffer_LoadFromFile(&tb, file);
             File_Close(file);
         }
     }
