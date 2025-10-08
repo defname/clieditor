@@ -178,3 +178,10 @@ char UTF8_AsASCII(UTF8Char ch) {
     }
     return '\0';
 }
+
+int UTF8_GetWidth(UTF8Char ch) {
+    uint32_t cp = UTF8Char_ToCodepoint(ch);
+    int w = wcwidth(cp);
+    if (w < 0) w = 1; // fallback
+    return w;
+}

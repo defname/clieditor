@@ -120,6 +120,21 @@ void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t 
     b->length = len_b;
 }
 
+size_t UTF8String_Length(const UTF8String *string) {
+    return string->length;
+}
+
+int UTF8String_SubStringWidth(const UTF8String *string, size_t start, size_t end) {
+    int w = 0;
+    for (size_t i=start; i<end; i++) {
+        if (i >= string->length) {
+            break;
+        }
+        w += UTF8_GetWidth(string->chars[i]);
+    }
+    return w;
+}
+
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     size_t new_length = str1->length + str2->length;
     if (new_length > str1->capacity) {

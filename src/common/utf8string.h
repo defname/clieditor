@@ -23,6 +23,11 @@ void UTF8String_IncreaseCapacity(UTF8String *string);
 UTF8String *UTF8String_Create();
 void UTF8String_Destroy(UTF8String *string);
 
+// Properties
+size_t UTF8String_Length(const UTF8String *string);
+int UTF8String_SubStringWidth(const UTF8String *string, size_t start, size_t end);
+int UTF8String_Width(const UTF8String *string);
+
 // Conversion
 char *UTF8String_ToStr(const UTF8String *string);  // return value needs to be freed by the caller
 
