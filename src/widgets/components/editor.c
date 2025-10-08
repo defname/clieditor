@@ -65,12 +65,10 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
         if (line->src == editor->tb->current_line) {
             Style s = canvas->current_style;
             canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
-            draw_text(&line->src->text, canvas, line->offset, line_length);
-            draw_spaces(canvas, editor->tl.width - line_length);
-            /*
+                        
             if (cursor_y == y) {
                 draw_text(&line->src->text, canvas, line->offset, cursor_x);
-                //draw_cursor(editor, canvas);
+                draw_cursor(editor, canvas);
                 (void)draw_cursor;
                 draw_text(&line->src->text, canvas, line->offset+cursor_x, line_length - cursor_x);
                 draw_spaces(canvas, editor->tl.width - line_length);
@@ -79,7 +77,7 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
                 draw_text(&line->src->text, canvas, line->offset, line_length);
                 draw_spaces(canvas, editor->tl.width - line_length);
             }
-            */
+            
             canvas->current_style.bg = s.bg;
         }
         else {

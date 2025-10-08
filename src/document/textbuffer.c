@@ -13,7 +13,6 @@ void Gap_Deinit(Gap *gap) {
 
 void TextBuffer_Init(TextBuffer *tb) {
     tb->gap.position = 0;
-    tb->line_pos = 0;
     tb->current_line = Line_Create();
     tb->line_count = 1;
     Gap_Init(&tb->gap);
@@ -63,6 +62,20 @@ void TextBuffer_MergeGap(TextBuffer *tb) {
     // reset the gap
     tb->gap.text.length = 0;
     tb->gap.overlap = 0;
+}
+
+void TextBuffer_InsertLineAfterCurrent(TextBuffer *tb, Line *new_line) {
+    Line_InsertAfter(tb->current_line, new_line);
+    tb->line_count++;
+}
+
+bool TextBuffer_DeleteLine(TextBuffer *tb, Line *line) {
+    if (!line || line == tb->current_line) {
+        return false;
+    }
+    Line_Delete(line);
+    tb->line_count--;
+    return true;
 }
 
 Line *TextBuffer_GetFirstLine(const TextBuffer *tb) {

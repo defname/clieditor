@@ -68,7 +68,6 @@ typedef struct _TextBuffer {
     Gap gap;
 
     size_t line_count;
-    size_t line_pos;
 } TextBuffer;
 
 void TextBuffer_Init(TextBuffer *tb);
@@ -77,6 +76,9 @@ void TextBuffer_ReInit(TextBuffer *tb);
 
 void TextBuffer_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
 void TextBuffer_MergeGap(TextBuffer *tb);
+
+void TextBuffer_InsertLineAfterCurrent(TextBuffer *tb, Line *new_line);
+bool TextBuffer_DeleteLine(TextBuffer *tb, Line *line);
 
 Line *TextBuffer_GetFirstLine(const TextBuffer *tb);
 Line *TextBuffer_GetLastLine(const TextBuffer *tb);
