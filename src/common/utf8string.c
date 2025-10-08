@@ -135,6 +135,10 @@ int UTF8String_SubStringWidth(const UTF8String *string, size_t start, size_t end
     return w;
 }
 
+int UTF8String_Width(const UTF8String *string) {
+    return UTF8String_SubstringWidth(string, 0, string->length);
+}
+
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {
     size_t new_length = str1->length + str2->length;
     if (new_length > str1->capacity) {
