@@ -113,7 +113,7 @@ bool UTF8_EqualToChar(UTF8Char a, char b) {
     return a.bytes[0] == b;
 }
 
-uint32_t UTF8Char_ToCodepoint(UTF8Char ch) {
+uint32_t UTF8_ToCodepoint(UTF8Char ch) {
     if (ch.length == 0) return INVALID_CODEPOINT;
 
     uint32_t cp = 0;
@@ -145,17 +145,27 @@ uint32_t UTF8Char_ToCodepoint(UTF8Char ch) {
 }
 
 bool UTF8_IsPrintable(UTF8Char ch) {
+    // An invalid character is not printable.
     if (ch.length == 0) {
         return false;
     }
+
+    // For single-byte characters, isprint() is fast and correct.
     if (ch.length == 1) {
         return isprint(ch.bytes[0]);
     }
-    uint32_t codepoint = UTF8Char_ToCodepoint(ch); // helper that decodes UTF8Char
+
+    // For multi-byte characters, we check the Unicode codepoint properties
+    // to avoid locale-dependency issues with wcwidth().
+    uint32_t codepoint = UTF8_ToCodepoint(ch);
     if (codepoint == INVALID_CODEPOINT) {
         return false;
     }
-    return wcwidth((wchar_t)codepoint) > 0;
+
+    // Check if the codepoint falls into common non-printable Unicode categories.
+    // C0 controls (U+0000 to U+001F) and C1 controls (U+007F to U+009F).
+    // This also covers the ASCII control characters handled by isprint().
+    return (codepoint >= 0x20) && (codepoint != 0x7F) && (codepoint < 0x80 || codepoint > 0x9F);
 }
 
 bool UTF8_IsSpace(UTF8Char ch) {
@@ -180,7 +190,7 @@ char UTF8_AsASCII(UTF8Char ch) {
 }
 
 int UTF8_GetWidth(UTF8Char ch) {
-    uint32_t cp = UTF8Char_ToCodepoint(ch);
+    uint32_t cp = UTF8_ToCodepoint(ch);
     int w = wcwidth(cp);
     if (w < 0) w = 1; // fallback
     return w;
