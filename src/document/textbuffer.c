@@ -11,15 +11,14 @@ void Gap_Deinit(Gap *gap) {
     UTF8String_Deinit(&gap->text);
 }
 
-void TB_Init(TextBuffer *tb) {
+void TextBuffer_Init(TextBuffer *tb) {
     tb->gap.position = 0;
-    tb->line_pos = 0;
     tb->current_line = Line_Create();
     tb->line_count = 1;
     Gap_Init(&tb->gap);
 }
 
-void TB_Deinit(TextBuffer *tb) {
+void TextBuffer_Deinit(TextBuffer *tb) {
     Line *start = tb->current_line;
     while (start->prev) {
         start = start->prev;
@@ -33,17 +32,17 @@ void TB_Deinit(TextBuffer *tb) {
     Gap_Deinit(&tb->gap);
 }
 
-void TB_ReInit(TextBuffer *tb) {
-    TB_Deinit(tb);
-    TB_Init(tb);
+void TextBuffer_ReInit(TextBuffer *tb) {
+    TextBuffer_Deinit(tb);
+    TextBuffer_Init(tb);
 }
 
-void TB_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after) {
+void TextBuffer_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after) {
     UTF8String_Split(&tb->current_line->text, before, after, tb->gap.position);
     UTF8String_Shorten(before, tb->gap.position - tb->gap.overlap);
 }
 
-void TB_MergeGap(TextBuffer *tb) {
+void TextBuffer_MergeGap(TextBuffer *tb) {
     UTF8String *line = &tb->current_line->text;
     // split the line at cursor position
     UTF8String a, b;
@@ -65,7 +64,33 @@ void TB_MergeGap(TextBuffer *tb) {
     tb->gap.overlap = 0;
 }
 
-Line *TB_GetFirstLine(const TextBuffer *tb) {
+void TextBuffer_InsertLineAfterCurrent(TextBuffer *tb, Line *new_line) {
+    Line_InsertAfter(tb->current_line, new_line);
+    tb->line_count++;
+}
+
+void TextBuffer_InsertLineAtTop(TextBuffer *tb, Line *new_line) {
+    Line *top = TextBuffer_GetFirstLine(tb);
+    Line_InsertBefore(top, new_line);
+    tb->line_count++;
+}
+
+void TextBuffer_InsertLineAtBottom(TextBuffer *tb, Line *new_line) {
+    Line *bottom = TextBuffer_GetLastLine(tb);
+    Line_InsertAfter(bottom, new_line);
+    tb->line_count++;
+}
+
+bool TextBuffer_DeleteLine(TextBuffer *tb, Line *line) {
+    if (!line || line == tb->current_line) {
+        return false;
+    }
+    Line_Delete(line);
+    tb->line_count--;
+    return true;
+}
+
+Line *TextBuffer_GetFirstLine(const TextBuffer *tb) {
     Line *current = tb->current_line;
     while (current->prev) {
         current = current->prev;
@@ -73,7 +98,7 @@ Line *TB_GetFirstLine(const TextBuffer *tb) {
     return current;
 }
 
-Line *TB_GetLastLine(const TextBuffer *tb) {
+Line *TextBuffer_GetLastLine(const TextBuffer *tb) {
     Line *current = tb->current_line;
     while (current->next) {
         current = current->next;

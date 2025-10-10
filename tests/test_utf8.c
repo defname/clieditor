@@ -1,103 +1,111 @@
-// 1. Binde das Test-Framework ein.
-// Da acutest.h im selben Verzeichnis liegt, ist kein Pfad nötig.
-// WICHTIG: Dies muss vor allen anderen Includes stehen, die main() verwenden könnten.
-#include "acutest.h"
+#include <locale.h>
 
-#include <unistd.h>
+// Initialize locale for every test to ensure wcwidth and other functions work correctly with UTF-8
+#define TEST_INIT setlocale(LC_ALL, "");
+
+#include "acutest.h"
+#include "common/utf8.h"
 #include <string.h>
 
-// Inkludiere die C-Datei direkt, um auch `static` Funktionen testen zu können.
-#include "common/utf8.c" // Inkludiert auch utf8.h
-
-
-// --- Deine Test-Funktionen ---
-
-void test_get_char_length(void) {
-    TEST_CASE("ASCII");
-    TEST_CHECK(get_char_length('A') == 1);
-
-    TEST_CASE("2-byte sequence");
-    TEST_CHECK(get_char_length(0xc3) == 2); // Example: 'Ã'
-
-    TEST_CASE("3-byte sequence");
-    TEST_CHECK(get_char_length(0xe2) == 3); // Example: '€'
-
-    TEST_CASE("4-byte sequence");
-    TEST_CHECK(get_char_length(0xf0) == 4); // Example: Emoji
-
-    TEST_CASE("Invalid start byte");
-    TEST_CHECK(get_char_length(0x80) == 0); // Continuation byte
-    TEST_CHECK(get_char_length(0xff) == 0); // Invalid
+// Helper function to compare UTF8Char structs
+static bool compare_utf8_char(UTF8Char a, const unsigned char* bytes, char length) {
+    if (a.length != length) return false;
+    return memcmp(a.bytes, bytes, length) == 0;
 }
 
-void test_from_string(void) {
-    const char* str = "H€llo"; // H=1, €=3, l=1, l=1, o=1
+void test_get_char_from_string(void) {
+    UTF8Char ch;
 
-    TEST_CASE("GetCharFromString");
-    UTF8Char h = UTF8_GetCharFromString(&str[0]);
-    TEST_CHECK(h.length == 1 && h.bytes[0] == 'H');
+    // 1-byte character (ASCII)
+    ch = UTF8_GetCharFromString("A");
+    TEST_CHECK(ch.length == 1);
+    TEST_CHECK(ch.bytes[0] == 'A');
 
-    UTF8Char euro = UTF8_GetCharFromString(&str[1]);
-    TEST_CHECK(euro.length == 3 && (unsigned char)euro.bytes[0] == 0xe2);
+    // 2-byte character
+    ch = UTF8_GetCharFromString("ü"); // U+00FC -> C3 BC
+    unsigned char u_umlaut[] = {0xC3, 0xBC};
+    TEST_CHECK(compare_utf8_char(ch, u_umlaut, 2));
+
+    // 3-byte character
+    ch = UTF8_GetCharFromString("€"); // U+20AC -> E2 82 AC
+    unsigned char euro[] = {0xE2, 0x82, 0xAC};
+    TEST_CHECK(compare_utf8_char(ch, euro, 3));
+
+    // 4-byte character
+    ch = UTF8_GetCharFromString("😊"); // U+1F60A -> F0 9F 98 8A
+    unsigned char smiley[] = {0xF0, 0x9F, 0x98, 0x8A};
+    TEST_CHECK(compare_utf8_char(ch, smiley, 4));
+
+    // Invalid sequence (should be detected as invalid)
+    ch = UTF8_GetCharFromString("\x80"); // Fortsetzungsbyte am Anfang
+    TEST_CHECK(UTF8_Equal(ch, utf8_invalid));
 }
 
 void test_equality(void) {
-    UTF8Char a = {.bytes = {'A'}, .length = 1};
-    UTF8Char a_copy = {.bytes = {'A'}, .length = 1};
-    UTF8Char b = {.bytes = {'B'}, .length = 1};
-    UTF8Char euro = {.bytes = {(char)0xe2, (char)0x82, (char)0xac}, .length = 3};
-    UTF8Char invalid = { .bytes = {0}, .length = 0 };
+    UTF8Char ch_A1 = UTF8_GetCharFromString("A");
+    UTF8Char ch_A2 = UTF8_GetCharFromString("A");
+    UTF8Char ch_B = UTF8_GetCharFromString("B");
+    UTF8Char ch_ue = UTF8_GetCharFromString("ü");
 
-    TEST_CHECK(UTF8_Equal(a, a_copy) == true);
-    TEST_CHECK(UTF8_Equal(a, b) == false);
-    TEST_CHECK(UTF8_Equal(a, euro) == false);
+    // Equality
+    TEST_CHECK(UTF8_Equal(ch_A1, ch_A2));
+    TEST_CHECK(UTF8_Equal(ch_ue, UTF8_GetCharFromString("ü")));
 
-    TEST_CHECK(UTF8_EqualToChar(a, 'A') == true);
-    TEST_CHECK(UTF8_EqualToChar(a, 'B') == false);
-    TEST_CHECK(UTF8_EqualToChar(euro, 'A') == false);
-    TEST_CHECK(UTF8_EqualToChar(invalid, '\0') == false);
+    // Inequality
+    TEST_CHECK(!UTF8_Equal(ch_A1, ch_B));
+    TEST_CHECK(!UTF8_Equal(ch_A1, ch_ue));
+
+    // Equality with char
+    TEST_CHECK(UTF8_EqualToChar(ch_A1, 'A'));
+    TEST_CHECK(!UTF8_EqualToChar(ch_A1, 'B'));
+    TEST_CHECK(!UTF8_EqualToChar(ch_ue, 'u')); // 'ü' ist nicht 'u'
 }
 
-void test_io_functions(void) {
-    int pipefd[2];
-    TEST_ASSERT(pipe(pipefd) == 0);
-
-    int read_fd = pipefd[0];
-    int write_fd = pipefd[1];
-
-    UTF8Char euro = {.bytes = {(char)0xe2, (char)0x82, (char)0xac}, .length = 3};
-
-    ssize_t written = UTF8_PutChar(write_fd, euro);
-    TEST_CHECK(written == 3);
-
-    close(read_fd);
-    close(write_fd);
+void test_codepoint_conversion(void) {
+    TEST_CHECK(UTF8_ToCodepoint(UTF8_GetCharFromString("A")) == 0x41);
+    TEST_CHECK(UTF8_ToCodepoint(UTF8_GetCharFromString("ü")) == 0xFC);
+    TEST_CHECK(UTF8_ToCodepoint(UTF8_GetCharFromString("€")) == 0x20AC);
+    TEST_CHECK(UTF8_ToCodepoint(UTF8_GetCharFromString("😊")) == 0x1F60A);
+    TEST_CHECK(UTF8_ToCodepoint(utf8_invalid) == INVALID_CODEPOINT);
 }
 
-void test_read_zero(void) {
-    int pipefd[2];
-    TEST_ASSERT(pipe(pipefd) == 0);
+void test_char_properties(void) {
+    UTF8Char ch_A = UTF8_GetCharFromString("A");
+    UTF8Char ch_ue = UTF8_GetCharFromString("ü");
+    UTF8Char ch_tab = UTF8_GetCharFromString("\t");
+    UTF8Char ch_space = UTF8_GetCharFromString(" ");
+    UTF8Char ch_emoji = UTF8_GetCharFromString("😊");
+    UTF8Char ch_nul = UTF8_GetCharFromString("\0");
 
-    int read_fd = pipefd[0];
-    int write_fd = pipefd[1];
+    // IsASCII / AsASCII tests
+    TEST_CHECK(UTF8_IsASCII(ch_A));
+    TEST_CHECK(!UTF8_IsASCII(ch_ue));
+    TEST_CHECK(UTF8_AsASCII(ch_A) == 'A');
+    TEST_CHECK(UTF8_AsASCII(ch_ue) == '\0'); // Non-ASCII returns 0
 
-    UTF8Char zero = {.bytes = {'\0'}, .length = 1};
+    // IsSpace tests
+    TEST_CHECK(UTF8_IsSpace(ch_space));
+    TEST_CHECK(UTF8_IsSpace(ch_tab));
+    TEST_CHECK(!UTF8_IsSpace(ch_A));
 
-    ssize_t written = UTF8_PutChar(write_fd, zero);
-    TEST_CHECK(written == 1);
+    // IsPrintable tests
+    TEST_CHECK(UTF8_IsPrintable(ch_A));
+    TEST_CHECK(UTF8_IsPrintable(ch_ue));
+    TEST_CHECK(!UTF8_IsPrintable(ch_tab)); // Control characters are not printable
+    TEST_CHECK(!UTF8_IsPrintable(ch_nul));
 
-    close(read_fd);
-    close(write_fd);
+    // GetWidth (Assumption: Emoji has width 2, rest 1)
+    TEST_CHECK(UTF8_GetWidth(ch_A) == 1);
+    TEST_CHECK(UTF8_GetWidth(ch_ue) == 1);
+    TEST_CHECK(UTF8_GetWidth(ch_emoji) == 2);
+    TEST_CHECK(UTF8_GetWidth(ch_tab) == 1); // Breite von Steuerzeichen ist oft 1
 }
 
-// 2. Erstelle eine Liste aller Tests, die in dieser Datei ausgeführt werden sollen.
-// `acutest` generiert daraus automatisch die `main`-Funktion.
+
 TEST_LIST = {
-    { "get_char_length", test_get_char_length },
-    { "from_string", test_from_string },
-    { "equality", test_equality },
-    { "io_functions", test_io_functions },
-    { "read_zero", test_read_zero },
-    // Weitere Tests hier}
-    { NULL, NULL } // Markiert das Ende der Liste
+    { "UTF8_GetCharFromString", test_get_char_from_string },
+    { "UTF8_Equal / UTF8_EqualToChar", test_equality },
+    { "UTF8_ToCodepoint", test_codepoint_conversion },
+    { "UTF8 Character Properties", test_char_properties },
+    { NULL, NULL }
 };

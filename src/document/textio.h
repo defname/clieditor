@@ -5,7 +5,7 @@
 #include "io/file.h"
 
 
-void TB_LoadFromFile(TextBuffer *tb, File *file);
-void TB_SaveToFile(const TextBuffer *tb, File *file);
+void TextBuffer_LoadFromFile(TextBuffer *tb, File *file);
+void TextBuffer_SaveToFile(const TextBuffer *tb, File *file);
 
 #endif

@@ -4,7 +4,7 @@
 void Config_Init();
 void Config_Deinit();
 
-#define FILENAME_MAX_LENGTH 32
+#define FILENAME_MAX_LENGTH 256
 
 void Config_SetFilename(const char *filename);
 const char* Config_GetFilename();
