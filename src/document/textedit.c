@@ -57,6 +57,11 @@ void TextEdit_MoveUp(TextEdit *te) {
     int cursor_x = TextLayout_GetCursorX(tl);
     int cursor_y = TextLayout_GetCursorY(tl);
 
+    if (cursor_y < 0) {
+        // TODO
+        logFatal("Debug msg...");
+    }
+
     if (cursor_y == 0) {
         // try to scroll up 
         if (!TextLayout_ScrollUp(tl)) {
