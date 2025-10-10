@@ -42,6 +42,18 @@ static void rebuild_positions(Line *line) {
     }
 }
 
+void Line_InsertBefore(Line *line, Line *new_line) {
+    if (line->prev) {
+        Line_InsertAfter(line->prev, new_line);
+    }
+    else {
+        new_line->prev = NULL;
+        new_line->next = line;
+        line->prev = new_line;
+        new_line->position = line->position - LINE_POSITION_STEP;
+    }
+}
+
 void Line_InsertAfter(Line *line, Line *new_line) {
     if (!line || !new_line) {
         logWarn("Invalid parameters for Line_InsertAfter.");
@@ -58,7 +70,7 @@ void Line_InsertAfter(Line *line, Line *new_line) {
             rebuild_positions(line);
             diff = third->position - line->position;
         }
-        new_line->position = diff / 2;
+        new_line->position = line->position + diff / 2;
     }
     else {
         new_line->position = line->position + LINE_POSITION_STEP;

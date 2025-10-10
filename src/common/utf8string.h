@@ -28,6 +28,10 @@ size_t UTF8String_Length(const UTF8String *string);
 int UTF8String_SubstringWidth(const UTF8String *string, size_t start, size_t end);
 int UTF8String_Width(const UTF8String *string);
 
+// Equality
+bool UTF8String_Equal(const UTF8String *a, const UTF8String *b);
+bool UTF8String_EqualStr(const UTF8String *a, const char *b);
+
 // Conversion
 char *UTF8String_ToStr(const UTF8String *string);  // return value needs to be freed by the caller
 

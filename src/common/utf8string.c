@@ -124,7 +124,7 @@ size_t UTF8String_Length(const UTF8String *string) {
     return string->length;
 }
 
-int UTF8String_SubStringWidth(const UTF8String *string, size_t start, size_t end) {
+int UTF8String_SubstringWidth(const UTF8String *string, size_t start, size_t end) {
     int w = 0;
     for (size_t i=start; i<end; i++) {
         if (i >= string->length) {
@@ -137,6 +137,28 @@ int UTF8String_SubStringWidth(const UTF8String *string, size_t start, size_t end
 
 int UTF8String_Width(const UTF8String *string) {
     return UTF8String_SubstringWidth(string, 0, string->length);
+}
+
+bool UTF8String_Equal(const UTF8String *a, const UTF8String *b) {
+    if (!a || !b || a->length != b->length) {
+        return false;
+    }
+    for (int i=0; i<a->length; i++) {
+        if (!UTF8_Equal(a->chars[i], b->chars[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool UTF8String_EqualStr(const UTF8String *a, const char *b) {
+    if (!a || !b || a->length != strlen(b)) {
+        return false;
+    }
+    const char *a_str = UTF8String_ToStr(a);
+    int cmp = strncmp(a_str, b, a->length);
+    free(a_str);
+    return cmp == 0;
 }
 
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2) {

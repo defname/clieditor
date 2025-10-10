@@ -16,6 +16,7 @@ typedef struct _Line {
 
 Line *Line_Create();
 void Line_Destroy(Line *l);
+void Line_InsertBefore(Line *line, Line *new_line);
 void Line_InsertAfter(Line *line, Line *new_line);
 void Line_Delete(Line *line);
 
