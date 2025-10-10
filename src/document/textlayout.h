@@ -15,9 +15,11 @@
 typedef struct _VisualLine {
     Line *src;
     int offset;     //< where does the virtual line start. offset in characters
+    int length;     //< how many characters are used
+    int width;      //< how many characters are needed to render this line
 } VisualLine;
 
-void VisualLine_Init(VisualLine *vl, Line *src, int offset);
+void VisualLine_Init(VisualLine *vl);
 void VisualLine_Deinit(VisualLine *vl);
 
 
@@ -30,7 +32,10 @@ typedef struct _TextLayout {
     // This properties can and should be manipulated by the user
     int width;
     int height;
-    VisualLine first_line;
+    int tabstop;
+
+    Line *first_line;           //< not necessarily completely visible
+    int first_visual_line_idx;  //< cache idx;
 
     // This is created automatically
     VisualLine *cache;
@@ -45,6 +50,12 @@ void TextLayout_Deinit(TextLayout *tl);
 
 void TextLayout_SetDimensions(TextLayout *tl, int display_w, int display_h);
 void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int offset);
+
+/**
+ * @brief Return the width of a tab character at position x
+ */
+int TextLayout_CalcTabWidth(TextLayout *tl, int x_pos);
+
 /**
  * @brief Scroll one line up. Return true if actually scrolled.
  */
