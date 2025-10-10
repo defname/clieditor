@@ -143,7 +143,7 @@ bool UTF8String_Equal(const UTF8String *a, const UTF8String *b) {
     if (!a || !b || a->length != b->length) {
         return false;
     }
-    for (int i=0; i<a->length; i++) {
+    for (size_t i=0; i<a->length; i++) {
         if (!UTF8_Equal(a->chars[i], b->chars[i])) {
             return false;
         }
@@ -152,11 +152,11 @@ bool UTF8String_Equal(const UTF8String *a, const UTF8String *b) {
 }
 
 bool UTF8String_EqualStr(const UTF8String *a, const char *b) {
-    if (!a || !b || a->length != strlen(b)) {
+    if (!a || !b) {
         return false;
     }
-    const char *a_str = UTF8String_ToStr(a);
-    int cmp = strncmp(a_str, b, a->length);
+    char *a_str = UTF8String_ToStr(a);
+    int cmp = strcmp(a_str, b);
     free(a_str);
     return cmp == 0;
 }
