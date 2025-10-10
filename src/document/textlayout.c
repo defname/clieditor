@@ -247,7 +247,7 @@ int TextLayout_GetVisualLineLength(TextLayout *tl, int y) {
     }
 }
 
-int get_cursor_position_in_line(const TextBuffer *tb) {
+int get_cursor_idx_in_line(const TextBuffer *tb) {
     if (!tb) {
         return 0;
     }
@@ -267,7 +267,7 @@ int TextLayout_GetCursorX(TextLayout *tl) {
     if (tl->dirty) {
         TextLayout_Recalc(tl, -tl->first_visual_line_idx);
     }
-    int position_in_line = get_cursor_position_in_line(tl->tb);
+    int position_in_line = get_cursor_idx_in_line(tl->tb);
     if (position_in_line < 0) {
         logFatal("Not sure if this can happen");
     }
@@ -284,7 +284,7 @@ int TextLayout_GetCursorY(TextLayout *tl) {
     }
 
     Line *cursor_line = tl->tb->current_line;
-    int cursor_pos_in_line = get_cursor_position_in_line(tl->tb);
+    int cursor_pos_in_line = get_cursor_idx_in_line(tl->tb);
 
     // Quick check: Is the cursor's source line completely above the visible area?
     if (cursor_line->position < tl->first_line->position) {
@@ -297,19 +297,20 @@ int TextLayout_GetCursorY(TextLayout *tl) {
     }
 
     // Iterate through the visible lines to find the cursor
-    for (int y = tl->first_visual_line_idx; y < tl->first_visual_line_idx + tl->height; y++) {
-        VisualLine *vl = &tl->cache[y];
+    for (int cache_idx = tl->first_visual_line_idx; cache_idx < tl->first_visual_line_idx + tl->height; cache_idx++) {
+        VisualLine *vl = &tl->cache[cache_idx];
         if (!vl->src) break; // End of document reached
 
         if (vl->src == cursor_line) {
-            // The cursor is on this visual line if its position is within the character range [offset, offset + length).
-            // The special case is when the cursor is at the very end of the line (offset + length),
-            // it still belongs to the current visual line.
-            bool is_at_end_of_line = (cursor_pos_in_line == vl->offset + vl->length);
-            bool is_within_line = (cursor_pos_in_line >= vl->offset && cursor_pos_in_line < vl->offset + vl->length);
+            // if the line is the end of the line the cursor can be at the last position (behind the last char)
+            bool line_ends_here = (vl->offset + vl->length == (int)vl->src->text.length);
+            bool is_at_end_of_line = (line_ends_here && cursor_pos_in_line == (int)vl->src->text.length);
+            // otherwise (if the line is broken and the cursor is not at the total end of the line)
+            // the cursor will go to the beginning of the next line when reaching behind the last char of a visual line
+            bool is_within_visual_line = (cursor_pos_in_line >= vl->offset && cursor_pos_in_line < vl->offset + vl->length);
 
-            if (is_within_line || is_at_end_of_line) {
-                return y - tl->first_visual_line_idx;
+            if (is_within_visual_line || is_at_end_of_line) {
+                return cache_idx - tl->first_visual_line_idx;
             }
         }
     }
