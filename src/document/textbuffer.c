@@ -69,6 +69,18 @@ void TextBuffer_InsertLineAfterCurrent(TextBuffer *tb, Line *new_line) {
     tb->line_count++;
 }
 
+void TextBuffer_InsertLineAtTop(TextBuffer *tb, Line *new_line) {
+    Line *top = TextBuffer_GetFirstLine(tb);
+    Line_InsertBefore(top, new_line);
+    tb->line_count++;
+}
+
+void TextBuffer_InsertLineAtBottom(TextBuffer *tb, Line *new_line) {
+    Line *bottom = TextBuffer_GetLastLine(tb);
+    Line_InsertAfter(bottom, new_line);
+    tb->line_count++;
+}
+
 bool TextBuffer_DeleteLine(TextBuffer *tb, Line *line) {
     if (!line || line == tb->current_line) {
         return false;
