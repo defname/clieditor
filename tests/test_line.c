@@ -88,10 +88,23 @@ void test_rebuild_positions(void) {
     Line_Destroy(line3);
 }
 
+void test_delete(void) {
+    Line *line1 = Line_Create();
+    Line *line2 = Line_Create();
+    Line *line3 = Line_Create();
+    
+    Line_InsertAfter(line1, line2);
+    Line_InsertAfter(line2, line3);
+    Line_Delete(line2);
+    TEST_CHECK(line1->next == line3);
+    TEST_CHECK(line3->prev == line1);
+}
+
 TEST_LIST = {
     { "Line: Create", test_create },
     { "Line: Insert before", test_insert_before },
     { "Line: Insert after", test_insert_after },
     { "Line: Rebuild positions", test_rebuild_positions },
+    { "Line: Delete", test_delete },
     { NULL, NULL }
 };
