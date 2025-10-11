@@ -94,6 +94,16 @@ void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int offset);
 int TextLayout_CalcTabWidth(TextLayout *tl, int x_pos);
 
 /**
+ * @brief Beginning of document reached
+ */
+bool TextLayout_AtTop(TextLayout *tl);
+
+/**
+ * @brief End of document reached
+ */
+bool TextLayout_AtBottom(TextLayout *tl);
+
+/**
  * @brief Scroll one line up. Return true if actually scrolled.
  */
 bool TextLayout_ScrollUp(TextLayout *tl);
