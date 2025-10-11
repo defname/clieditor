@@ -53,12 +53,18 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     }
     // check for shortcuts
     if (ch.length > 0) {
-        for (size_t i=0; i<menu->entry_count; i++) {
-            if (UTF8_Equal(ch, menu->entries[i].shortcut)) {
+        for (size_t i = 0; i < menu->entry_count; i++) {
+            UTF8Char shortcut = menu->entries[i].shortcut;
+            if (shortcut.length == 0) {
+                continue;
+            }
+            if (UTF8_Equal(ch, shortcut)) {
                 MenuEntry *entry = &menu->entries[i];
                 Callback_Call(&entry->callback, self);
+                return true;
             }
         }
+    }
     }
 
     return true;
