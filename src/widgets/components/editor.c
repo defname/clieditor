@@ -110,6 +110,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             return true;
         }
         else if (c == KEY_BACKSPACE) {
+            TextEdit_Backspace(te);
             return true;
         }
         else if (c == KEY_TAB) {
@@ -117,6 +118,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         }
     }
     if (UTF8_IsPrintable(ch)) {
+        TextEdit_InsertChar(te, ch);
         return true;
     }
     else if (key == ESC_CURSOR_LEFT) {

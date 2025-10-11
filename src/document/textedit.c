@@ -113,9 +113,39 @@ void TextEdit_MoveDown(TextEdit *te) {
 }
 
 // --- Editing ---
-void TextEdit_InsertChar(TextEdit *te, char c);
-void TextEdit_DeleteChar(TextEdit *te);      // delete at cursor
-void TextEdit_Backspace(TextEdit *te);       // delete befoTextBuffer_MergeGap(te->tb);re cursor
+void TextEdit_InsertChar(TextEdit *te, UTF8Char ch) {
+    UTF8String_AddChar(&te->tb->current_line->text, ch);
+    te->tl->dirty = true;
+}
+
+void TextEdit_DeleteChar(TextEdit *te) {
+
+}
+
+void TextEdit_Backspace(TextEdit *te) {
+    TextBuffer *tb = te->tb;
+    te->tl->dirty = true;
+    if (tb->gap.text.length > 0) {
+        UTF8String_Shorten(&tb->current_line->text, tb->gap.position - 1);
+        return;
+    }
+    if (tb->gap.position - tb->gap.overlap > 0) {
+        tb->gap.overlap++;
+        return;
+    }
+    // gap length is 0 and gap overlap is at max
+    TextBuffer_MergeGap(tb);
+    // so the newline needs to be deleted
+    // this means to concat the current line to the previous line
+    if (tb->current_line->prev) {
+        return;  // no prev line... nothing to do
+    }
+    tb->current_line = tb->current_line->prev;
+    tb->gap.position = tb->current_line->text.length;
+    UTF8String_Concat(&tb->current_line->text, &tb->current_line->next->text);
+    Line_Delete(tb->current_line->next);
+}
+
 void TextEdit_Newline(TextEdit *te);
 
 // --- Optional convenience ---
