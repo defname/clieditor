@@ -25,6 +25,6 @@ void TextEdit_Backspace(TextEdit *te);       // delete before cursor
 void TextEdit_Newline(TextEdit *te);
 
 // --- Optional convenience ---
-void TextEdit_InsertString(TextEdit *te, const char *text);
+void TextEdit_InsertString(TextEdit *te, UTF8String *string);  // string should not contain newlines!
 
 #endif

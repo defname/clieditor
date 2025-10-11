@@ -175,5 +175,8 @@ void TextEdit_Newline(TextEdit *te) {
 }
 
 // --- Optional convenience ---
-void TextEdit_InsertString(TextEdit *te, const char *text);
+void TextEdit_InsertString(TextEdit *te, UTF8String *string) {
+    UTF8String_Concat(&te->tb->gap.text, string);
+    te->tl->dirty = true;
+}
 
