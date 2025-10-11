@@ -115,12 +115,40 @@ static void editor_draw(const Widget *self, Canvas *canvas) {
     }
 }
 
+static void scroll_down(TextLayout *tl, TextEdit *te) {
+    if (TextLayout_AtBottom(tl)) {
+        return;
+    }
+    CursorLayoutInfo cursor;
+    TextLayout_GetCursorLayoutInfo(tl, &cursor);
+    if (cursor.y == 0) {
+        TextEdit_MoveDown(te);
+    }
+    TextLayout_ScrollDown(tl);
+}
+
+static void scroll_up(TextLayout *tl, TextEdit *te) {
+    if (TextLayout_AtTop(tl)) {
+        return;
+    }
+    CursorLayoutInfo info;
+    TextLayout_GetCursorLayoutInfo(tl, &info);
+    if (info.y == tl->height - 1) {
+        TextEdit_MoveUp(te);
+    }
+    TextLayout_ScrollUp(tl);
+}
+
 // widget->ops->on_input() function
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     (void)self;
     TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
+
+    CursorLayoutInfo cursor;
+    TextLayout_GetCursorLayoutInfo(tl, &cursor);
+
 
     if (ch.length == 1) {
         char c = ch.bytes[0];
@@ -168,11 +196,15 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         return true;
     }
     else if (key == ESC_PAGE_DOWN) {
-        TextLayout_ScrollDown(tl);
+        for (int i=0; i<5; i++) {
+            scroll_down(tl, te);
+        }
         return true;
     }
     else if (key == ESC_PAGE_UP) {
-        TextLayout_ScrollUp(tl);
+        for (int i=0; i<5; i++) {
+            scroll_up(tl, te);
+        }
         return true;
     }
     else if (key == ESC_SHIFT_PAGE_DOWN) {
