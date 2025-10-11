@@ -6,6 +6,8 @@ The goal was to use **no third-party libraries** like `ncurses`.
 
 **Still absolutely unfinished and work in progress**
 
+![Screenshot](assets/screenshot.png)
+
 ## Features
 - A handwritten widget system with a status bar, main menu, notifications, and an editor widget forming the core of the UI.
 - UTF-8 support
