@@ -152,10 +152,18 @@ int main(int argc, char *argv[]) {
     
     
     MenuEntry entries[] = {
-        { .text = "Save", Callback_New(onMenuClick, "save") },
-        { .text = "Exit", Callback_New(onMenuClick, "exit") },
+        {
+            .text = "Save",
+            .shortcut = UTF8_GetCharFromString("s"),
+            .callback = Callback_New(onMenuClick, "save")
+        },
+        {
+            .text = "Exit",
+            .shortcut = UTF8_GetCharFromString("q"),
+            .callback = Callback_New(onMenuClick, "exit")
+        },
     };
-    Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), (Callback){NULL, NULL});
+    Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), "CliEditor", (Callback){NULL, NULL});
     Widget_Hide(AS_WIDGET(menu));
 
     Widget_SortTreeByZIndex(AS_WIDGET(&app));
