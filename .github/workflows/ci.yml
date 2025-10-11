@@ -22,6 +22,6 @@ jobs:
       - name: Build
         run: cmake --build build -- -j$(nproc)
 
-#      - name: Run tests
-#        working-directory: build
-#        run: ctest --output-on-failure
+      - name: Run tests
+        working-directory: build/tests/
+        run: ctest --output-on-failure
