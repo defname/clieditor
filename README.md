@@ -1,64 +1,65 @@
 # clieditor
 
-A simple, terminal-based text editor written in C from scratch. This project is an exercise in building a terminal user interface (TUI) application, managing low-level terminal I/O, and structuring a C application in a modular way.
+A simple, terminal-based text editor written in C from scratch.  
+This project is an exercise in building a terminal user interface (TUI) application, managing low-level terminal I/O, and structuring a C application in a modular way.  
+The goal was to use **no third-party libraries** like `ncurses`.
 
-## Core Architecture
+**Still absolutely unfinished and work in progress**
 
-The editor is built on a layered architecture, where higher-level components depend on lower-level ones, but not the other way around. This separation of concerns makes the codebase easier to understand, maintain, and extend.
+## Features
+- A handwritten widget system with a status bar, main menu, notifications, and an editor widget forming the core of the UI.
+- UTF-8 support
+- Line wrapping with correct handling of wide characters and tabs
+- A timer system for timed events such as cursor blinking and notifications
 
-The main data flow is as follows:
-1.  **Input**: The `io` layer reads raw byte sequences from the terminal.
-2.  **Processing**: The input is passed up to the `widgets` layer, where the active widget (e.g., the editor view) interprets the input and updates its state.
-3.  **Data Model Update**: The widget may modify the core data model (e.g., the text in the `document` layer).
-4.  **Drawing**: The widget tree is recursively drawn onto an abstract `Canvas` provided by the `display` layer. This is a "back-buffer" that holds the desired state of the screen.
-5.  **Rendering**: The `Screen` module (in the `io` layer) compares the `Canvas` to its previous state and generates the minimal set of ANSI escape codes needed to update the physical terminal screen.
+## Design Overview
+The code is organized into modules, each typically consisting of a data structure and a set of functions operating on it.
 
-This can be visualized as a stack:
+### User Interface
+The UI is built as a tree of widgets, all inheriting from the base `Widget` module.  
+The root of the widget tree is the `App` widget.  
+If a widget has focus, all its ancestors also have focus.  
+User input is passed from the root down to the deepest focused widget until one handles it.  
+Widgets can define handlers for common events such as input, drawing, or parent resize events.
 
-```
-┌───────────────────┐
-│      Widgets      │ (UI components like Editor, BottomBar)
-└───────────────────┘
-         │
-         ▼
-┌───────────────────┐
-│      Document     │ (The actual text data model)
-└───────────────────┘
-         │
-         ▼
-┌───────────────────┐
-│      Display      │ (Abstract drawing: Canvas, Cell, Style)
-└───────────────────┘
-         │
-         ▼
-┌───────────────────┐
-│         IO        │ (Terminal setup, input, and screen rendering)
-└───────────────────┘
-         │
-         ▼
-┌───────────────────┐
-│       Common      │ (Universal helpers: UTF-8, logging)
-└───────────────────┘
-```
+### Drawing
+Each widget draws itself onto a `Canvas`, which consists of `Cell`s.  
+Canvases are layered and clipped together, and finally compared to the special `Screen` canvas.  
+Only changed `Cell`s are written to the `Terminal`, the module that directly interacts with the terminal device.
+
+### Editor
+The editor itself is composed of several tightly integrated modules:
+- **`TextBuffer`** — holds the complete text as a doubly-linked list of `Line`s, with a gap buffer for efficient editing.  
+- **`TextLayout`** — calculates which lines are visible on screen, where wrapping occurs, how tabs expand and where the cursor visually is on screen. It's also responsible also for scrolling.
+- **`TextEdit`** — handles text modifications like inserting or deleting characters in the buffer and moving the cursor.  
+The `Editor` widget brings these parts together and manages user interaction and rendering.
 
 ## Directory Structure
 
-The `src/` directory is organized by functional layers:
-
 ### `common/`
-Contains fundamental, reusable modules that have no dependencies on any other part of the editor, such as UTF-8 string handling and logging utilities.
+Fundamental, reusable modules with no dependencies on the rest of the editor, e.g., UTF-8 utilities and logging.
 
 ### `io/`
-Handles all direct interaction with the outside world (the operating system, terminal, and file system). This is the only layer that contains platform-specific code, like reading from `stdin` or writing ANSI escape codes to the screen.
+Handles all direct interaction with the system — terminal I/O, file reading, etc.  
+This is the only layer with platform-specific code.
 
 ### `display/`
-Provides the abstract, platform-independent graphics and UI framework. It knows *what* to draw, but not *how* to render it on a specific terminal. This includes the abstract `Canvas` and the base `Widget` structure.
+Abstract rendering layer — defines *what* to draw (via `Canvas`, `Cell`, and `Widget`), but not *how* it’s shown on screen.
 
 ### `document/`
-Contains the core data model of the application, completely independent of the UI. Its main responsibility is managing the text buffer.
+The core data model of the editor. Manages text independently of the UI.
 
 ### `widgets/`
-Contains all concrete, instantiable UI components that are built upon the base `Widget` from the `display` layer. Examples include the main editor view, status bars, and labels. The `App` widget forms the root of the UI tree.
+All concrete UI components, like the editor view, status bar, or labels.  
+The `App` widget forms the root of the widget hierarchy.
 
-### `main.c` (root of `src/`)
-The entry point of the application, responsible for initializing all systems and running the main loop.
+### `main.c`
+Entry point of the application. Initializes all systems, loads the file, and runs the main loop.
+
+## License 
+
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
+
+You may obtain a copy of the license at:
+
+https://www.gnu.org/licenses/gpl-3.0.html
