@@ -118,6 +118,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             return true;
         }
         else if (c == KEY_TAB) {
+            TextEdit_InsertChar(te, UTF8_GetCharFromString("\t"));
             return true;
         }
     }
