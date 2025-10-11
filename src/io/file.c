@@ -84,4 +84,5 @@ void File_WriteLine(File *file, const UTF8String *line) {
     fputs(str, file->fp);
     free(str);
     fputc('\n', file->fp);
+    fflush(file->fp);
 }

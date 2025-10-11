@@ -16,6 +16,7 @@
 #include "common/config.h"
 #include "common/colors.h"
 #include "common/callback.h"
+#include "common/logging.h"
 
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
@@ -54,6 +55,18 @@ static void onMenuClick(void *menu, void *entry) {
     (void)entry;
     if (strcmp(entry, "exit") == 0) {
         exit(0);
+    }
+    if (strcmp(entry, "save") == 0) {
+        File *file = File_Open(Config_GetFilename(), FILE_ACCESS_WRITE);
+        if (!file) {
+            // Show error message
+            // TODO
+            logFatal("Cannot open file");
+            return;
+        }
+        TextBuffer_SaveToFile(&tb, file);
+        File_Close(file);
+        Widget_Hide(AS_WIDGET(menu));
     }
 }
 

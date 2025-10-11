@@ -23,7 +23,8 @@ void TextBuffer_LoadFromFile(TextBuffer *tb, File *file) {
     }
 }
 
-void TextBuffer_SaveToFile(const TextBuffer *tb, File *file) {
+void TextBuffer_SaveToFile(TextBuffer *tb, File *file) {
+    TextBuffer_MergeGap(tb);
     Line *current = TextBuffer_GetFirstLine(tb);
     while (current) {
         File_WriteLine(file, &current->text);
