@@ -33,15 +33,18 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     if (key == ESC_ESCAPE) {
         Callback_Call(&menu->on_close, self);
         Widget_Hide(self);
+        return true;
     }
     else if (key == ESC_CURSOR_UP) {
         if (menu->selected_entry > 0) {
             menu->selected_entry--;
+            return true;
         }
     }
     else if (key == ESC_CURSOR_DOWN) {
         if (menu->selected_entry < menu->entry_count - 1) {
             menu->selected_entry++;
+            return true;
         }
     }
     else if (UTF8_IsASCII(ch)) {
@@ -49,6 +52,7 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         if (c == KEY_ENTER || c == ' ') {
             MenuEntry *entry = &menu->entries[menu->selected_entry];
             Callback_Call(&entry->callback, self);
+            return true;
         }
     }
     // check for shortcuts
@@ -65,9 +69,8 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             }
         }
     }
-    }
 
-    return true;
+    return false;
 }
 
 static void on_resize(Widget *self, int new_parent_width, int new_parent_height) {
