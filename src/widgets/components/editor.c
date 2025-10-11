@@ -7,6 +7,7 @@
 #include "common/colors.h"
 #include "document/textedit.h"
 
+// timer callback function
 static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
     Editor *data = (Editor*)user_data;
     data->cursor_visible = !data->cursor_visible;
@@ -62,10 +63,17 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
         draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
     }
+
     int x = line->width;
-    bool has_cursor = (line == cursor.line && line->length == cursor.idx && editor->cursor_visible);
+
+    bool has_cursor = (line == cursor.line && line->length == cursor.idx);
     if (has_cursor) {
-        draw_char(&editor->tl, canvas, utf8_space, x, has_cursor);
+        if (x == editor->tl.width) {
+            y_offset++;
+            x = 0;
+            Canvas_MoveCursor(canvas, 0, y + y_offset);
+        }
+        draw_char(&editor->tl, canvas, utf8_space, x,  editor->cursor_visible);
         x++;
     }
     for ( ; x<editor->tl.width; x++) {
