@@ -98,6 +98,8 @@ void test_delete(void) {
     Line_Delete(line2);
     TEST_CHECK(line1->next == line3);
     TEST_CHECK(line3->prev == line1);
+    Line_Destroy(line1);
+    Line_Destroy(line3);
 }
 
 TEST_LIST = {
