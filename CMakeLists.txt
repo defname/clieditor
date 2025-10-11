@@ -5,11 +5,23 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME} C)
 set(CMAKE_C_STANDARD 99)
 
-# Compiler-Warnungen aktivieren (für GCC/Clang)
-if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Debug' as none was specified.")
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: Debug Release." FORCE)
+endif()
+
+# Compiler warnings and build-type specific flags (for GCC/Clang)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra)
-    add_compile_options(-fsanitize=address,leak,undefined -fno-omit-frame-pointer -g)
-    add_link_options(-fsanitize=address,leak,undefined)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "Debug build: Enabling sanitizers.")
+        add_compile_options(-fsanitize=address,leak,undefined -fno-omit-frame-pointer -g)
+        add_link_options(-fsanitize=address,leak,undefined)
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        message(STATUS "Release build: Enabling optimizations.")
+        add_compile_options(-O3 -DNDEBUG)
+    endif()
 endif()
 
 # Alle C-Dateien im Spielsrc sammeln
