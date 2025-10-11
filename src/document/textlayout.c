@@ -409,8 +409,9 @@ int TextLayout_GetCursorLayoutInfo(TextLayout *tl, CursorLayoutInfo *info) {
 
         if (vl->src == cursor_line) {
             // if the line is the end of the line the cursor can be at the last position (behind the last char)
-            bool line_ends_here = (vl->offset + vl->length == (int)vl->src->text.length);
-            bool is_at_end_of_line = (line_ends_here && cursor_idx_in_line == (int)vl->src->text.length);
+            int src_line_length = (int)vl->src->text.length + (int)tl->tb->gap.text.length - (int)tl->tb->gap.overlap;
+            bool line_ends_here = (vl->offset + vl->length == src_line_length);
+            bool is_at_end_of_line = (line_ends_here && cursor_idx_in_line == src_line_length);
             // otherwise (if the line is broken and the cursor is not at the total end of the line)
             // the cursor will go to the beginning of the next line when reaching behind the last char of a visual line
             bool is_within_visual_line = (cursor_idx_in_line >= vl->offset && cursor_idx_in_line < vl->offset + vl->length);
