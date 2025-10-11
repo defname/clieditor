@@ -66,6 +66,7 @@ void Widget_AddChild(Widget *self, Widget *child);
 void Widget_RemoveChild(Widget *self, Widget *child);
 Widget *Widget_LCP(const Widget *a, const Widget *b);
 
+void Widget_SortTreeByZIndex(Widget *root);
 void Widget_SetZIndex(Widget *self, int z_index);
 
 void Widget_Draw(Widget *self, Canvas *canvas);

@@ -2,9 +2,11 @@
 #define APP_H
 
 #include "display/widget.h"
+#include "widgets/primitives/notification.h"
 
 typedef struct {
     Widget base;
+    Notification *notification;
 } App;
 
 extern App app;

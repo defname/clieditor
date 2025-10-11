@@ -13,6 +13,7 @@
 #include "widgets/components/bottombar.h"
 #include "widgets/app.h"
 #include "widgets/components/editor.h"
+#include "widgets/primitives/notification.h"
 #include "common/config.h"
 #include "common/colors.h"
 #include "common/callback.h"
@@ -61,12 +62,14 @@ static void onMenuClick(void *menu, void *entry) {
         if (!file) {
             // Show error message
             // TODO
-            logFatal("Cannot open file");
+            Notification_Notify(app.notification, "Cannot open file for writing.", NOTIFICATION_ERROR);
+            Widget_Hide(AS_WIDGET(menu));
             return;
         }
         TextBuffer_SaveToFile(&tb, file);
         File_Close(file);
         Widget_Hide(AS_WIDGET(menu));
+        Notification_Notify(app.notification, "File saved", NOTIFICATION_SUCCESS);
     }
 }
 
@@ -109,17 +112,6 @@ int main(int argc, char *argv[]) {
 
     TextBuffer_Init(&tb);
 
-    const char * fn = Config_GetFilename();
-    if (strcmp(fn, "") != 0) {
-        File *file;        
-        file = File_Open(fn, FILE_ACCESS_READ);
-
-        if (file) {
-            TextBuffer_LoadFromFile(&tb, file);
-            File_Close(file);
-        }
-    }
-
     App_Init(Screen_GetWidth(), Screen_GetHeight());
  
     Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
@@ -146,7 +138,24 @@ int main(int argc, char *argv[]) {
     Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), (Callback){NULL, NULL});
     Widget_Hide(AS_WIDGET(menu));
 
+    Widget_SortTreeByZIndex(AS_WIDGET(&app));
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
+
+    // Try to load file
+    const char * fn = Config_GetFilename();
+    if (strcmp(fn, "") != 0) {
+        File *file;        
+        file = File_Open(fn, FILE_ACCESS_READ);
+
+        if (file) {
+            TextBuffer_LoadFromFile(&tb, file);
+            File_Close(file);
+        }
+        else {
+            Notification_Notify(app.notification, "Cannot open file for reading.", NOTIFICATION_WARNING);
+        }
+    }
+
 
     /************************************
      * Main loop                        *
