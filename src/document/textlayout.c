@@ -75,7 +75,7 @@ int VisualLine_GetWidth(const VisualLine *vl) {
 
 int VisualLine_GetCharX(const VisualLine *vl, int idx) {
     if (!vl || idx < 0 || idx >= vl->length) {
-        logWarn("Invalid arguments to VisualLine_GetCharX");
+        logFatal("Invalid arguments to VisualLine_GetCharX");
         return 0;
     }
     return vl->char_x[idx];
@@ -83,7 +83,7 @@ int VisualLine_GetCharX(const VisualLine *vl, int idx) {
 
 UTF8Char VisualLine_GetChar(const VisualLine *vl, int i) {
     if (!vl || i < 0) {
-        logWarn("Invalid arguments to VisualLine_GetChar");
+        logFatal("Invalid arguments to VisualLine_GetChar");
         return utf8_invalid;
     }
     int idx = i + vl->offset;
@@ -91,22 +91,22 @@ UTF8Char VisualLine_GetChar(const VisualLine *vl, int i) {
         if (idx < (int)vl->src->text.length) {
             return vl->src->text.chars[idx];
         }
-        logWarn("Index out of range in VisualLine_GetChar");
+        logFatal("Index out of range in VisualLine_GetChar");
         return utf8_invalid;
     }
     // the index is before the gap
     if (idx < (int)vl->gap->position - (int)vl->gap->overlap) {
-        return vl->gap->text.chars[idx];
+        return vl->src->text.chars[idx];
     }
     // index is in the gap
     if (idx < (int)vl->gap->position - (int)vl->gap->overlap + (int)vl->gap->text.length) {
         return vl->gap->text.chars[idx - vl->gap->position + vl->gap->overlap];
     }
     // index is after the gap but within the total length of the line
-    if (idx < (int)vl->length + (int)vl->gap->text.length - (int)vl->gap->overlap) {
+    if (i < (int)vl->length) {
         return vl->src->text.chars[idx - vl->gap->text.length + vl->gap->overlap];
     }
-    logWarn("Index out of range in VisualLine_GetChar");
+    logFatal("Index out of range in VisualLine_GetChar");
     return utf8_invalid;
     
 }
@@ -265,6 +265,7 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, TextLayout 
     int i = offset;
 
     const Gap *gap = NULL;
+    vl->gap = NULL;
     int text_length = line->text.length;
     if (line == tb->current_line) {
         gap = &tb->gap;
@@ -277,12 +278,21 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, TextLayout 
             break;
         }
         UTF8Char ch;
-        if (idx_is_in_gap(gap, i)) {
-            ch = gap->text.chars[i - gap->position + gap->overlap];
+        if (gap) {
+            if (i < (int)gap->position - (int)gap->overlap) {
+                ch = line->text.chars[i];
+            }
+            else if (i < (int)gap->position - (int)gap->overlap + (int)gap->text.length) {
+                ch = gap->text.chars[i - gap->position + gap->overlap];
+            }
+            else {
+                ch = line->text.chars[i - gap->text.length + gap->overlap];
+            }
         }
         else {
             ch = line->text.chars[i];
         }
+
         
         int char_w;
         if (UTF8_EqualToChar(ch, '\t')) {
@@ -318,7 +328,11 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
         }
         VisualLine *prev = &tl->cache[cache_idx - 1];
         size_t new_offset = prev->offset + prev->length;
-        if (new_offset >= prev->src->text.length) {  // prev line consumed src completely
+        int text_length = prev->src->text.length;
+        if (prev->src == tl->tb->current_line) {
+            text_length += tl->tb->gap.text.length - tl->tb->gap.overlap;
+        }
+        if (new_offset >= text_length) {  // prev line consumed src completely
             Line *next_src = prev->src->next;
             if (!next_src) {  // end of document reached
                 break;

@@ -107,9 +107,11 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     if (ch.length == 1) {
         char c = ch.bytes[0];
         if (c == KEY_ENTER) {
+            TextEdit_Newline(te);
             return true;
         }
         else if (c == KEY_BACKSPACE) {
+            TextEdit_Backspace(te);
             return true;
         }
         else if (c == KEY_TAB) {
@@ -117,6 +119,11 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
         }
     }
     if (UTF8_IsPrintable(ch)) {
+        TextEdit_InsertChar(te, ch);
+        return true;
+    }
+    else if (key == ESC_DELETE) {
+        TextEdit_DeleteChar(te);
         return true;
     }
     else if (key == ESC_CURSOR_LEFT) {

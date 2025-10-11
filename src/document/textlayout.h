@@ -14,7 +14,7 @@
  */
 typedef struct _VisualLine {
     Line *src;
-    Gap *gap;       //< pointer to the gap if it's relevant for this visual line
+    const Gap *gap;       //< pointer to the gap if it's relevant for this visual line
     int offset;     //< where does the virtual line start. offset in characters
     int length;     //< how many characters are used
     int width;      //< how many cells are needed to render this line

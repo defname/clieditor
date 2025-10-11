@@ -422,17 +422,26 @@ void test_gap_sensitivity(void) {
      TestFixture f;
     setup_fixture(&f, 10, 5);
     const char *lines[] = {
-        "0\t234"
+        "0\t2",
+        "0123456789abcdef",
+        "ABCDEF"
     };
-    add_lines(&f.tb, lines, 1);
+    add_lines(&f.tb, lines, 3);
+
+    TextLayout_Recalc(&f.tl, 0);
+    TEST_CHECK(f.tl.cache[0].length == 3);
+
     f.tl.tabstop = 4;
     f.tb.gap.position = 0;
+    f.tb.gap.overlap = 0;
     UTF8String_FromStr(&f.tb.gap.text, "abc", 3);
 
     TextLayout_Recalc(&f.tl, 0);
     TEST_CHECK(f.tl.cache[0].gap != NULL);
     TEST_CHECK(f.tl.cache[0].src == f.tb.current_line);
-    TEST_CHECK(f.tl.cache[0].length == 8);
+    TEST_CHECK(f.tl.cache[0].length == 6);  // "a", "b", "c", "0", "\t", "2"
+    TEST_CHECK(f.tl.cache[0].width == 9);
+
     TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0] == 'a');
     TEST_MSG("%c", VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0]);
     TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 3).bytes[0] == '0');
@@ -441,8 +450,20 @@ void test_gap_sensitivity(void) {
     f.tb.gap.overlap = 1;
     TextLayout_Recalc(&f.tl, 0);
     TEST_CHECK(f.tl.cache[0].gap != NULL);
-    TEST_CHECK(f.tl.cache[0].length == 7);
+    TEST_CHECK(f.tl.cache[0].length == 5);
     TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 1).bytes[0] == 'a');
+
+    f.tb.current_line = f.tb.current_line->next;
+    f.tb.gap.position = 3;
+    f.tb.gap.overlap = 1;
+    UTF8String_FromStr(&f.tb.gap.text, "", 0);
+
+    TextLayout_Recalc(&f.tl, 0);
+    TEST_CHECK(f.tl.cache[0].gap == NULL);
+    TEST_CHECK(f.tl.cache[1].gap != NULL);
+    TEST_CHECK(f.tl.cache[2].gap != NULL);
+    TEST_CHECK(f.tl.cache[3].gap == NULL);
+
     teardown_fixture(&f);
 }
 
