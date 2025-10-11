@@ -196,7 +196,13 @@ bool TextLayout_AtTop(TextLayout *tl) {
 }
 
 bool TextLayout_AtBottom(TextLayout *tl) {
-    if (!tl || tl->cache_capacity < (size_t)tl->height) {
+    if (!tl) {
+        return true;
+    }
+    if (tl->dirty) {
+        TextLayout_Recalc(tl, -tl->first_visual_line_idx);
+    }
+    if (tl->cache_capacity < (size_t)tl->height) {
         return true;
     }
     return tl->cache[tl->first_visual_line_idx + tl->height - 1].src == NULL;
