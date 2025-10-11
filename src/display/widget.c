@@ -54,6 +54,7 @@ void Widget_Destroy(Widget *self) {
     // 1. Destroy all children recursively
     for (int i=0; i<self->children_count; i++) {
         Widget_Destroy(self->children[i]);
+        self->children[i] = NULL;
     }
     // 2. Call the widget's specific destructor (if it exists) to free its data
     if (self->ops && self->ops->destroy) {

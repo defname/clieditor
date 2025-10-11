@@ -31,6 +31,10 @@ void App_Init(int width, int height) {
 }
 
 void App_Deinit() {
+    for (int i=0; i<app.base.children_count; i++) {
+        Widget_Destroy(app.base.children[i]);
+        app.base.children[i] = NULL;
+    }
     Widget_Deinit(&app.base);
 }
 

@@ -16,7 +16,10 @@ static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
 
 // widget->ops->free() function
 static void editor_Destroy(Widget *self) {
-    Timer_Stop(AS_EDITOR(self)->cursor_timer);
+    Editor *editor = AS_EDITOR(self);
+    Timer_Stop(editor->cursor_timer);
+    TextLayout_Deinit(&editor->tl);
+    TextEdit_Deinit(&editor->te);
 }
 
 
