@@ -114,7 +114,7 @@ void TextEdit_MoveDown(TextEdit *te) {
 
 // --- Editing ---
 void TextEdit_InsertChar(TextEdit *te, UTF8Char ch) {
-    UTF8String_AddChar(&te->tb->current_line->text, ch);
+    UTF8String_AddChar(&te->tb->gap.text, ch);
     te->tl->dirty = true;
 }
 
@@ -126,7 +126,7 @@ void TextEdit_Backspace(TextEdit *te) {
     TextBuffer *tb = te->tb;
     te->tl->dirty = true;
     if (tb->gap.text.length > 0) {
-        UTF8String_Shorten(&tb->current_line->text, tb->gap.position - 1);
+        UTF8String_Shorten(&tb->gap.text, tb->gap.text.length - 1);
         return;
     }
     if (tb->gap.position - tb->gap.overlap > 0) {
@@ -137,7 +137,7 @@ void TextEdit_Backspace(TextEdit *te) {
     TextBuffer_MergeGap(tb);
     // so the newline needs to be deleted
     // this means to concat the current line to the previous line
-    if (tb->current_line->prev) {
+    if (!tb->current_line->prev) {
         return;  // no prev line... nothing to do
     }
     tb->current_line = tb->current_line->prev;
