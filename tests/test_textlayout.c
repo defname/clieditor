@@ -418,6 +418,34 @@ void test_cursor_position2(void) {
     teardown_fixture(&f);
 }
 
+void test_gap_sensitivity(void) {
+     TestFixture f;
+    setup_fixture(&f, 10, 5);
+    const char *lines[] = {
+        "0\t234"
+    };
+    add_lines(&f.tb, lines, 1);
+    f.tl.tabstop = 4;
+    f.tb.gap.position = 0;
+    UTF8String_FromStr(&f.tb.gap.text, "abc", 3);
+
+    TextLayout_Recalc(&f.tl, 0);
+    TEST_CHECK(f.tl.cache[0].gap != NULL);
+    TEST_CHECK(f.tl.cache[0].src == f.tb.current_line);
+    TEST_CHECK(f.tl.cache[0].length == 8);
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0] == 'a');
+    TEST_MSG("%c", VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0]);
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 3).bytes[0] == '0');
+
+    f.tb.gap.position = 2;
+    f.tb.gap.overlap = 1;
+    TextLayout_Recalc(&f.tl, 0);
+    TEST_CHECK(f.tl.cache[0].gap != NULL);
+    TEST_CHECK(f.tl.cache[0].length == 7);
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 1).bytes[0] == 'a');
+    teardown_fixture(&f);
+}
+
 TEST_LIST = {
     { "TextLayout: Init and Dimensions", test_layout_init_and_dimensions },
     { "TextLayout: Recalc (Simple, no wrap)", test_recalc_simple_no_wrap },
@@ -428,5 +456,6 @@ TEST_LIST = {
     { "TextLayout: Scrolling Down Edge Cases", test_scrolling_down },
     { "TextLayout: Scrolling Up Edge Cases", test_scrolling_up },
     { "TextLayout: Cursor Position Advanced", test_cursor_position2 },
+    { "TextLayout: Gap sensitivity", test_gap_sensitivity },
     { NULL, NULL }
 };
