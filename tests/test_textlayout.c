@@ -148,7 +148,7 @@ void test_recalc_wide_chars_and_tabs(void) {
     VisualLine* vl0 = TextLayout_GetVisualLine(&f.tl, 0);
     TEST_ASSERT(vl0 != NULL);
     TEST_CHECK(vl0->length == 9); // H,i,\t,😊,\t,(,1,0,) -> 9 characters
-    TEST_CHECK(vl0->width == 11);
+    TEST_CHECK(vl0->width == 12);
     TEST_MSG("Expected width 11, got %d", vl0->width);
 
     teardown_fixture(&f);
@@ -162,24 +162,44 @@ void test_cursor_position(void) {
     f.tb.current_line = f.tb.current_line->next; // Cursor on line "abc..."
 
     // Cursor at the beginning of line 1 (visual line 1)
+    CursorLayoutInfo info;
     f.tb.gap.position = 0;
     TextLayout_Recalc(&f.tl, 0);
-    TEST_CHECK(TextLayout_GetCursorY(&f.tl) == 1);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.on_screen == 0);
+    TEST_CHECK(info.y == 1);
+    TEST_CHECK(info.x == 0);
+    TEST_CHECK(info.idx == 0);
+
+    f.tb.gap.position = 5;
+    TextLayout_Recalc(&f.tl, 0);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 1);
+    TEST_CHECK(info.x == 5);
+    TEST_CHECK(info.idx == 5);
 
     // Cursor in the middle of line 1 (visual line 1)
     f.tb.gap.position = 5;
     f.tl.dirty = true; // Force recalculation
-    TEST_CHECK(TextLayout_GetCursorY(&f.tl) == 1);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.on_screen == 0);
+    TEST_CHECK(info.y == 1);
+    TEST_CHECK(info.x == 5);
+    TEST_CHECK(info.idx == 5);
 
     // Move cursor to the 3rd line, which is wrapped
     UTF8String_FromStr(&f.tb.current_line->next->text, "This is a very long line.", 25);
     f.tb.current_line = f.tb.current_line->next;
     f.tb.gap.position = 15; // "very |l|ong line"
     f.tl.dirty = true;
-    TextLayout_Recalc(&f.tl, 0);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
     // Visual lines: "0123456789", "abcdefghij", "This is a ", "very long ", "line."
     // Cursor should be on visual line 3 (index 3)
-    TEST_CHECK(TextLayout_GetCursorY(&f.tl) == 3);
+    TEST_CHECK(info.on_screen == 0);
+    TEST_CHECK(info.y == 3);
+    TEST_CHECK(info.x == 5);
+    TEST_MSG("%d", info.x);
+    TEST_CHECK(info.idx == 5);
 
     teardown_fixture(&f);
 }
@@ -198,8 +218,7 @@ void test_scrolling(void) {
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->src->position == 0);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->offset == 0);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->length == 6);  // "Line 0"
-    TEST_MSG("Expected length 6, got %d (%s)", TextLayout_GetVisualLine(&f.tl, 0)->length, UTF8String_ToStr(&TextLayout_GetVisualLine(&f.tl, 0)->src->text));
-    
+        
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->src != TextLayout_GetVisualLine(&f.tl, 1)->src);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 1)->offset == 0);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 2)->offset == 10);
@@ -218,8 +237,7 @@ void test_scrolling(void) {
     // New state: "ps", "Line 2", "Line 3"
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->src->position == 1*LINE_POSITION_STEP);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->offset == 10);
-    TEST_MSG("Expected offset 10, got %d", TextLayout_GetVisualLine(&f.tl, 0)->offset);
-
+    
     // 3. Scroll Up: Back to the beginning of the wrapped line
     TEST_CHECK(TextLayout_ScrollUp(&f.tl) == true);
 
@@ -337,14 +355,78 @@ void test_scrolling_up(void) {
     teardown_fixture(&f);
 }
 
+void test_cursor_position2(void) {
+    TestFixture f;
+    setup_fixture(&f, 10, 5);
+    const char *lines[] = {
+        "0\t45678901234",
+        "\t\t89",
+        "0123456789",
+        "\t12345"
+    };
+    add_lines(&f.tb, lines, 4);
+    f.tl.tabstop = 4;
+    f.tl.first_visual_line_idx = 1;
+
+    // VisualLines in cache
+    // "0\t456789", "01234", "0123", "0123456789", "\t12345"
+
+    // 0   1
+    f.tb.gap.position = 8;
+    TextLayout_Recalc(&f.tl, -1);
+    TEST_CHECK(f.tl.cache[0].char_x[0] == 0); // "0"
+    TEST_CHECK(f.tl.cache[0].char_x[1] == 1); // "\t"
+    TEST_CHECK(f.tl.cache[0].char_x[2] == 4); // "4"
+
+
+    CursorLayoutInfo info;
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.on_screen == 0);
+    TEST_CHECK(info.y == 0);
+    TEST_CHECK(info.x == 0);
+    TEST_MSG("%d", info.x);
+    TEST_CHECK(info.idx == 0);
+
+    f.tb.gap.position = 1;
+    TextLayout_Recalc(&f.tl, -1);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.on_screen == -1);
+
+    TEST_CHECK(TextLayout_ScrollUp(&f.tl));
+    TEST_ASSERT(f.tl.first_visual_line_idx == 0);
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.on_screen == 0);
+    TEST_CHECK(info.y == 0);
+    TEST_CHECK(info.x == 1);
+    TEST_CHECK(info.idx == 1);
+
+
+    f.tb.gap.position = 2;
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 0);
+    TEST_CHECK(info.x == 4);
+    TEST_CHECK(info.idx == 2);
+
+    f.tb.current_line = f.tb.current_line->next; // "\t\t78"
+    f.tb.gap.position = 4;  // end of line
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 2);
+    TEST_CHECK(info.x == 10);
+    TEST_MSG("%d", info.x);
+    TEST_CHECK(info.idx == 4);
+
+    teardown_fixture(&f);
+}
+
 TEST_LIST = {
     { "TextLayout: Init and Dimensions", test_layout_init_and_dimensions },
     { "TextLayout: Recalc (Simple, no wrap)", test_recalc_simple_no_wrap },
     { "TextLayout: Recalc (Line Wrapping)", test_recalc_line_wrapping },
     { "TextLayout: Recalc (Wide Chars and Tabs)", test_recalc_wide_chars_and_tabs },
-    { "TextLayout: Cursor Position (Y)", test_cursor_position },
+    { "TextLayout: Cursor Position", test_cursor_position },
     { "TextLayout: Scrolling (Up/Down)", test_scrolling },
     { "TextLayout: Scrolling Down Edge Cases", test_scrolling_down },
     { "TextLayout: Scrolling Up Edge Cases", test_scrolling_up },
+    { "TextLayout: Cursor Position Advanced", test_cursor_position2 },
     { NULL, NULL }
 };

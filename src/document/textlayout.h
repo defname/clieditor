@@ -16,11 +16,28 @@ typedef struct _VisualLine {
     Line *src;
     int offset;     //< where does the virtual line start. offset in characters
     int length;     //< how many characters are used
-    int width;      //< how many characters are needed to render this line
+    int width;      //< how many cells are needed to render this line
+    int *char_x;    //< x positions of the characters of this visual line
 } VisualLine;
 
-void VisualLine_Init(VisualLine *vl);
+void VisualLine_Init(VisualLine *vl, int screen_width);
 void VisualLine_Deinit(VisualLine *vl);
+void VisualLine_Reset(VisualLine *vl, int screen_width);
+void VisualLine_Resize(VisualLine *vl, int screen_width);
+
+int VisualLine_GetOffsetForX(VisualLine *vl, int x);
+
+
+/**
+ * @brief Holds all relevant information about the cursor posiition.
+ */
+typedef struct _CursorLayoutInfo {
+    int on_screen;      //< -1 if it's above screen, 1 if it's below screen and 0 if it's on screen
+    int x;              //< x position on the screen (with respect to wide characters and tab, might be equal to screen width if a line is exactly as wide)
+    int y;              //< y position on screen
+    int idx;            //< idx in the VisualLine
+    VisualLine *line;   //< VisualLine the cursor is in
+} CursorLayoutInfo;
 
 
 /**
@@ -87,16 +104,11 @@ VisualLine *TextLayout_GetVisualLine(TextLayout *tl, int y);
 int TextLayout_GetVisualLineLength(TextLayout *tl, int y);
 
 /**
- * @brief Return the x position of the cursor with repect to gap properties
- */
-int TextLayout_GetCursorX(TextLayout *tl);
-
-/**
- * @brief Return the y position of the cursor on screen.
+ * @brief Place all relevant information about the cursor position in info.
  * 
- * If the cursor is above the screen return -1 if the cursor is below screen return tl->height.
+ * @returns -1 if the cursor is above the screen, 1 if it's below the screen and 0 if it's on screen.
  */
-int TextLayout_GetCursorY(TextLayout *tl);
+int TextLayout_GetCursorLayoutInfo(TextLayout *tl, CursorLayoutInfo *info);
 
 
 #endif
