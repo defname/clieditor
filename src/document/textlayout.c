@@ -2,19 +2,55 @@
 #include "common/logging.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 
-void VisualLine_Init(VisualLine *vl) {
+void VisualLine_Init(VisualLine *vl, int screen_width) {
+    if (screen_width <= 0) {
+        logFatal("Invalid screen_width for VisualLine.");
+    }
+    vl->char_x = malloc(sizeof(int) * (size_t)screen_width);
+    if (!vl->char_x) {
+        logFatal("Cannot allocate memory for char_x in VisualLine.");
+    }
+    VisualLine_Reset(vl, screen_width);
+}
+
+void VisualLine_Deinit(VisualLine *vl) {
+    if (vl->char_x) {
+        free(vl->char_x);
+    }
     vl->src = NULL;
     vl->offset = 0;
     vl->length = 0;
     vl->width = 0;
+    vl->char_x = NULL;
 }
 
-void VisualLine_Deinit(VisualLine *vl) {
-    VisualLine_Init(vl);
+void VisualLine_Reset(VisualLine *vl, int screen_width) {
+    vl->src = NULL;
+    vl->offset = 0;
+    vl->length = 0;
+    vl->width = 0;
+    if (!vl->char_x) {
+        logFatal("No memory allocated for char_x in VisualLine.");
+    }
+    memset(vl->char_x, 0, sizeof(int) * screen_width);
 }
 
+void VisualLine_Resize(VisualLine *vl, int screen_width) {
+    vl->char_x = realloc(vl->char_x, sizeof(int) * (size_t)screen_width);
+    VisualLine_Reset(vl, screen_width);
+}
+
+int VisualLine_GetOffsetForX(VisualLine *vl, int x) {
+    for (int i = 0; i < vl->length; i++) {
+        if (vl->char_x[i] >= x) {
+            return i;
+        }
+    }
+    return vl->length;
+}
 
 void TextLayout_Init(TextLayout *tl, const TextBuffer *tb, int display_width, int display_height) {
     tl->width = display_width;
@@ -32,6 +68,9 @@ void TextLayout_Init(TextLayout *tl, const TextBuffer *tb, int display_width, in
 
 void TextLayout_Deinit(TextLayout *tl) {
     if (tl->cache) {
+        for (size_t i = 0; i < tl->cache_capacity; i++) {
+            VisualLine_Deinit(&tl->cache[i]);
+        }
         free(tl->cache);
     }
     tl->cache = NULL;
@@ -45,6 +84,9 @@ void TextLayout_Deinit(TextLayout *tl) {
 void TextLayout_SetDimensions(TextLayout *tl, int display_width, int display_height) {
     tl->width = display_width;
     tl->height = display_height;
+    for (size_t i=0; i<tl->cache_capacity; i++) {
+        VisualLine_Resize(&tl->cache[i], display_width);
+    }
     tl->dirty = true;
 }
 
@@ -55,11 +97,11 @@ void TextLayout_SetFirstLine(TextLayout *tl, Line *line, int fist_visual_line_id
 }
 
 static int calc_tab_width(int x_pos, int tabstop) {
-    return (x_pos + 1) % tabstop;
+    return tabstop - (x_pos % tabstop);
 }
 
 int TextLayout_CalcTabWidth(TextLayout *tl, int x_pos) {
-    return calc_tab_width(x_pos, tl->width);
+    return calc_tab_width(x_pos, tl->tabstop);
 }
 
 static int first_line_height(const TextLayout *tl) {
@@ -133,6 +175,7 @@ static void increase_cache_capacity(TextLayout *tl) {
     if (!tl) {
         return;
     }
+    size_t old_capacity = tl->cache_capacity;
     if (tl->cache_capacity <= (size_t)tl->height) {
         tl->cache_capacity = tl->height * 2;
     }
@@ -144,9 +187,9 @@ static void increase_cache_capacity(TextLayout *tl) {
         logFatal("Cannot allocate memory for VisualLine cache.");
     }
     tl->cache = new_cache;
-    // initialize new
-    for (size_t i=0; i<tl->cache_capacity; i++) {
-        VisualLine_Init(&tl->cache[i]);
+    // initialize only the new part of the cache
+    for (size_t i = old_capacity; i < tl->cache_capacity; i++) {
+        VisualLine_Init(&tl->cache[i], tl->width);
     }
 }
 
@@ -155,9 +198,9 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, int width, 
     vl->src = line;
     vl->offset = offset;
     int w = 0;
-    size_t i = offset;
+    int i = offset;
     while (1) {
-        if (i >= line->text.length) {
+        if (i >= (int)line->text.length) {
             break;
         }
         UTF8Char ch = line->text.chars[i];
@@ -171,6 +214,7 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, int width, 
         if (w + char_w > width) {
             break;
         }
+        vl->char_x[i-offset] = w;
         w += char_w;
         i++;
     }
@@ -209,7 +253,7 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
     }
      // clear rest of cache if there is no next line
     for ( ; cache_idx<(int)tl->cache_capacity; cache_idx++) {
-        VisualLine_Init(&tl->cache[cache_idx]);
+        VisualLine_Reset(&tl->cache[cache_idx], tl->width);
     }
     tl->dirty = false;
 }
@@ -259,23 +303,8 @@ int get_cursor_idx_in_line(const TextBuffer *tb) {
     return pos;
 }
 
-int TextLayout_GetCursorX(TextLayout *tl) {
-    // TODO!!!
-    if (!tl) {
-        return 0;
-    }
-    if (tl->dirty) {
-        TextLayout_Recalc(tl, -tl->first_visual_line_idx);
-    }
-    int position_in_line = get_cursor_idx_in_line(tl->tb);
-    if (position_in_line < 0) {
-        logFatal("Not sure if this can happen");
-    }
-    int cursor_x = position_in_line % tl->width;
-    return cursor_x;
-}
 
-int TextLayout_GetCursorY(TextLayout *tl) {
+int TextLayout_GetCursorLayoutInfo(TextLayout *tl, CursorLayoutInfo *info) {
     if (!tl || !tl->tb) {
         return -1; // Not on screen if layout/buffer is invalid
     }
@@ -283,8 +312,14 @@ int TextLayout_GetCursorY(TextLayout *tl) {
         TextLayout_Recalc(tl, -tl->first_visual_line_idx);
     }
 
+    info->on_screen = -1;
+    info->x = 0;
+    info->y = 0;
+    info->idx = 0;
+    info->line = NULL;
+
     Line *cursor_line = tl->tb->current_line;
-    int cursor_pos_in_line = get_cursor_idx_in_line(tl->tb);
+    int cursor_idx_in_line = get_cursor_idx_in_line(tl->tb);
 
     // Quick check: Is the cursor's source line completely above the visible area?
     if (cursor_line->position < tl->first_line->position) {
@@ -292,7 +327,7 @@ int TextLayout_GetCursorY(TextLayout *tl) {
     }
     // If the cursor is in the same line as the first visible line, but in a wrapped
     // section that is scrolled off-screen above.
-    if (cursor_line == tl->first_line && cursor_pos_in_line < tl->cache[tl->first_visual_line_idx].offset) {
+    if (cursor_line == tl->first_line && cursor_idx_in_line < tl->cache[tl->first_visual_line_idx].offset) {
         return -1;
     }
 
@@ -304,17 +339,25 @@ int TextLayout_GetCursorY(TextLayout *tl) {
         if (vl->src == cursor_line) {
             // if the line is the end of the line the cursor can be at the last position (behind the last char)
             bool line_ends_here = (vl->offset + vl->length == (int)vl->src->text.length);
-            bool is_at_end_of_line = (line_ends_here && cursor_pos_in_line == (int)vl->src->text.length);
+            bool is_at_end_of_line = (line_ends_here && cursor_idx_in_line == (int)vl->src->text.length);
             // otherwise (if the line is broken and the cursor is not at the total end of the line)
             // the cursor will go to the beginning of the next line when reaching behind the last char of a visual line
-            bool is_within_visual_line = (cursor_pos_in_line >= vl->offset && cursor_pos_in_line < vl->offset + vl->length);
+            bool is_within_visual_line = (cursor_idx_in_line >= vl->offset && cursor_idx_in_line < vl->offset + vl->length);
 
             if (is_within_visual_line || is_at_end_of_line) {
-                return cache_idx - tl->first_visual_line_idx;
+
+                info->on_screen = 0;
+                info->idx = cursor_idx_in_line - vl->offset;
+                info->x = info->idx < vl->length ? vl->char_x[info->idx] : vl->width;
+                info->y = cache_idx - tl->first_visual_line_idx;
+                info->line = vl;
+
+                return 0;
             }
         }
     }
 
     // If the loop finishes without finding the cursor, it must be below the screen.
-    return tl->height;
+    info->on_screen = 1;
+    return 1;
 }

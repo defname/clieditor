@@ -54,26 +54,26 @@ void TextEdit_MoveUp(TextEdit *te) {
     TextLayout *tl = te->tl;
     TextBuffer_MergeGap(tb);
 
-    int cursor_x = TextLayout_GetCursorX(tl);
-    int cursor_y = TextLayout_GetCursorY(tl);
+    CursorLayoutInfo cursor;
+    int on_screen = TextLayout_GetCursorLayoutInfo(tl, &cursor);
 
-    if (cursor_y < 0) {
+    if (on_screen < 0) {
         // TODO
         logFatal("Debug msg...");
     }
 
-    if (cursor_y == 0) {
+    if (cursor.y == 0) {
         // try to scroll up 
         if (!TextLayout_ScrollUp(tl)) {
             // jump to the beginning of the line if scrolling was not possible (begin of document reached)
             tb->gap.position = 0;
             return;
         }
-        cursor_y = 1;
+        cursor.y = 1;
     }
-    VisualLine *line_above = TextLayout_GetVisualLine(tl, cursor_y - 1);
+    VisualLine *line_above = TextLayout_GetVisualLine(tl, cursor.y - 1);
     tb->current_line = line_above->src;
-    tb->gap.position = line_above->offset + cursor_x;
+    tb->gap.position = line_above->offset + VisualLine_GetOffsetForX(line_above, cursor.x);
     
     // fix position out of bounds
     if (tb->gap.position > tb->current_line->text.length) {
@@ -86,25 +86,25 @@ void TextEdit_MoveDown(TextEdit *te) {
     TextLayout *tl = te->tl;
     TextBuffer_MergeGap(tb);
 
-    int cursor_x = TextLayout_GetCursorX(tl);
-    int cursor_y = TextLayout_GetCursorY(tl);
+    CursorLayoutInfo cursor;
+   TextLayout_GetCursorLayoutInfo(tl, &cursor);
 
-    if (cursor_y == tl->height-1) {
+    if (cursor.y == tl->height-1) {
         // try to scroll down 
         if (!TextLayout_ScrollDown(tl)) {
             // jump to the end of the line if scrolling was not possible (end of document reached)
             tb->gap.position = tb->current_line->text.length;
             return;
         }
-        cursor_y--;
+        cursor.y--;
     }
-    VisualLine *line_below = TextLayout_GetVisualLine(tl, cursor_y + 1);
+    VisualLine *line_below = TextLayout_GetVisualLine(tl, cursor.y + 1);
     if (!line_below) {
         tb->gap.position = tb->current_line->text.length;
         return;
     }
     tb->current_line = line_below->src;
-    tb->gap.position = line_below->offset + cursor_x;
+    tb->gap.position = line_below->offset + VisualLine_GetOffsetForX(line_below, cursor.x);
 
     // fix position out of bounds
     if (tb->gap.position > tb->current_line->text.length) {

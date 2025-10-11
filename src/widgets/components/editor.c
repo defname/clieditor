@@ -18,72 +18,74 @@ static void editor_Destroy(Widget *self) {
     Timer_Stop(AS_EDITOR(self)->cursor_timer);
 }
 
-static void draw_text(const UTF8String *text, Canvas *canvas, int start, int length) {
-    for (int i=start; i<start + length; i++) {
-        Canvas_PutChar(canvas, text->chars[i]);
+
+void draw_char(TextLayout *tl, Canvas *canvas, UTF8Char ch, int x_pos, bool has_cursor) {
+    Style orig_style;
+    if (has_cursor) {
+        orig_style = canvas->current_style;
+        canvas->current_style.attributes |= STYLE_UNDERLINE;
+    }
+    if (UTF8_IsASCII(ch) && UTF8_AsASCII(ch) == '\t') {
+        int tabwidth = TextLayout_CalcTabWidth(tl, x_pos);
+        for (int i=0; i<tabwidth; i++) {
+            Canvas_PutChar(canvas, utf8_space);
+        }
+    }
+    else {
+        Canvas_PutChar(canvas, ch);
+    }
+    if (has_cursor) {
+        canvas->current_style = orig_style;
     }
 }
 
-static void draw_cursor(Editor *editor, Canvas *canvas) {
-    UTF8String cursor;
-    UTF8String_Init(&cursor);
-    char c = ' ';
-    if (editor->cursor_visible) {
-        c = '_';
-    }
-    UTF8String_FromStr(&cursor, &c, 1);
-    draw_text(&cursor, canvas, 0, 1);
-    UTF8String_Deinit(&cursor);
-}
+// draw line and return new y_offset (changes to one if the cursor wraps to the next line)
+static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
+    VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
 
-static void draw_spaces(Canvas *canvas, int n) {
-    if (n <= 0) {
-        return;
+    if (!line){
+        return y_offset;
     }
-    UTF8String s;
-    UTF8String_Init(&s);
-    UTF8String_Spaces(&s, n);
-    draw_text(&s, canvas, 0, n);
-    UTF8String_Deinit(&s);
+
+    Canvas_MoveCursor(canvas, 0, y + y_offset);
+
+    CursorLayoutInfo cursor;
+    TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
+
+    Style orig_style = canvas->current_style;;
+    if (line->src == editor->tb->current_line) {
+        canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+    }
+
+    for (int i=0; i<line->length; i++) {
+        UTF8Char ch = line->src->text.chars[line->offset + i];
+        bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
+        draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
+    }
+    int x = line->width;
+    bool has_cursor = (line == cursor.line && line->length == cursor.idx && editor->cursor_visible);
+    if (has_cursor) {
+        draw_char(&editor->tl, canvas, utf8_space, x, has_cursor);
+        x++;
+    }
+    for ( ; x<editor->tl.width; x++) {
+        draw_char(&editor->tl, canvas, utf8_space, x, false);
+    }
+
+    canvas->current_style = orig_style;
+    return y_offset;
 }
 
 // widget->ops->draw() function
 static void editor_draw(const Widget *self, Canvas *canvas) {
     Editor *editor = AS_EDITOR(self);
-
-    int cursor_y = TextLayout_GetCursorY(&editor->tl);
-    int cursor_x = TextLayout_GetCursorX(&editor->tl);
-
+    CursorLayoutInfo cursor;
+    TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
+    
     int y = 0;
-    for (y=0; y<editor->tl.height; y++) {
-        VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
-        int line_length = TextLayout_GetVisualLineLength(&editor->tl, y);
-        Canvas_MoveCursor(canvas, 0, y);
-        if (!line){
-            break;
-        }
-        if (line->src == editor->tb->current_line) {
-            Style s = canvas->current_style;
-            canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
-                        
-            if (cursor_y == y) {
-                draw_text(&line->src->text, canvas, line->offset, cursor_x);
-                draw_cursor(editor, canvas);
-                (void)draw_cursor;
-                draw_text(&line->src->text, canvas, line->offset+cursor_x, line_length - cursor_x);
-                draw_spaces(canvas, editor->tl.width - line_length);
-            }
-            else {
-                draw_text(&line->src->text, canvas, line->offset, line_length);
-                draw_spaces(canvas, editor->tl.width - line_length);
-            }
-            
-            canvas->current_style.bg = s.bg;
-        }
-        else {
-            draw_text(&line->src->text, canvas, line->offset, line_length);
-            draw_spaces(canvas, editor->tl.width - line_length);
-        }
+    int y_offset = 0;
+    for (y=0; y+y_offset<editor->tl.height; y++) {
+        y_offset = draw_visual_line(editor, canvas, y, y_offset);
     }
 }
 
