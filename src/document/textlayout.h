@@ -14,6 +14,7 @@
  */
 typedef struct _VisualLine {
     Line *src;
+    Gap *gap;       //< pointer to the gap if it's relevant for this visual line
     int offset;     //< where does the virtual line start. offset in characters
     int length;     //< how many characters are used
     int width;      //< how many cells are needed to render this line
@@ -25,7 +26,11 @@ void VisualLine_Deinit(VisualLine *vl);
 void VisualLine_Reset(VisualLine *vl, int screen_width);
 void VisualLine_Resize(VisualLine *vl, int screen_width);
 
-int VisualLine_GetOffsetForX(VisualLine *vl, int x);
+int VisualLine_GetOffsetForX(const VisualLine *vl, int x);
+int VisualLine_GetLength(const VisualLine *vl);
+int VisualLine_GetWidth(const VisualLine *vl);
+int VisualLine_GetCharX(const VisualLine *vl, int idx);
+UTF8Char VisualLine_GetChar(const VisualLine *vl, int idx);
 
 
 /**

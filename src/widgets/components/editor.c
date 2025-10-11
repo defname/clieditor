@@ -59,7 +59,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     }
 
     for (int i=0; i<line->length; i++) {
-        UTF8Char ch = line->src->text.chars[line->offset + i];
+        UTF8Char ch = VisualLine_GetChar(line, i);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
         draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
     }
