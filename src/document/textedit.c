@@ -119,7 +119,20 @@ void TextEdit_InsertChar(TextEdit *te, UTF8Char ch) {
 }
 
 void TextEdit_DeleteChar(TextEdit *te) {
-
+    TextBuffer *tb = te->tb;
+    te->tl->dirty = true;
+    TextBuffer_MergeGap(tb);
+    if (tb->gap.position - tb->gap.overlap + tb->gap.text.length < tb->current_line->text.length) {
+        tb->gap.position++;
+        tb->gap.overlap++;
+        return;
+    }
+    // cursor is at last position of current_line
+    if (!tb->current_line->next) {
+        return;  // no next line... nothing to do
+    }
+    UTF8String_Concat(&tb->current_line->text, &tb->current_line->next->text);
+    TextBuffer_DeleteLine(tb, tb->current_line->next);
 }
 
 void TextEdit_Backspace(TextEdit *te) {
@@ -143,10 +156,23 @@ void TextEdit_Backspace(TextEdit *te) {
     tb->current_line = tb->current_line->prev;
     tb->gap.position = tb->current_line->text.length;
     UTF8String_Concat(&tb->current_line->text, &tb->current_line->next->text);
-    Line_Delete(tb->current_line->next);
+    TextBuffer_DeleteLine(tb, tb->current_line->next);
 }
 
-void TextEdit_Newline(TextEdit *te);
+void TextEdit_Newline(TextEdit *te) {
+    TextBuffer *tb = te->tb;
+    TextBuffer_MergeGap(tb);
+    Line *new_line = Line_Create();
+    UTF8String dummy;
+    UTF8String_Init(&dummy);
+    UTF8String_Split(&tb->current_line->text, &dummy, &new_line->text, tb->gap.position);
+    UTF8String_Deinit(&dummy);
+    UTF8String_Shorten(&tb->current_line->text, tb->gap.position);
+    TextBuffer_InsertLineAfterCurrent(tb, new_line);
+    tb->current_line = new_line;
+    tb->gap.position = 0;
+    te->tl->dirty = true;
+}
 
 // --- Optional convenience ---
 void TextEdit_InsertString(TextEdit *te, const char *text);

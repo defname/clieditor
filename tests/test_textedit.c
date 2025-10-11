@@ -10,6 +10,14 @@
 #include "document/textedit.h"
 #include "document/line.h"
 
+// Helper to compare a UTF8String with a C-string
+static void check_string_equals(const UTF8String *s, const char *expected_cstr) {
+    char *actual_cstr = UTF8String_ToStr(s);
+    TEST_CHECK(strcmp(actual_cstr, expected_cstr) == 0);
+    TEST_MSG("Expected: '%s', Got: '%s'", expected_cstr, actual_cstr);
+    free(actual_cstr);
+}
+
 // --- Test Setup Helper Functions ---
 
 typedef struct {
@@ -31,11 +39,13 @@ static void add_lines(TextBuffer* tb, const char* lines[], int count) {
     // Replace the first, empty line
     UTF8String_FromStr(&tb->current_line->text, lines[0], strlen(lines[0]));
 
+    Line* current = tb->current_line;
     for (int i = 1; i < count; i++) {
         Line* new_line = Line_Create();
         UTF8String_FromStr(&new_line->text, lines[i], strlen(lines[i]));
-        TextBuffer_InsertLineAfterCurrent(tb, new_line);
-        tb->current_line = new_line;
+        Line_InsertAfter(current, new_line);
+        current = new_line;
+        tb->line_count++;
     }
     // Reset to first line
     tb->current_line = TextBuffer_GetFirstLine(tb);
@@ -104,25 +114,21 @@ void test_move_up_down_simple(void) {
     // Start at line 3, pos 7 ("long li|ne three")
     f.tb.current_line = TextBuffer_GetLastLine(&f.tb);
     f.tb.gap.position = 7;
-    TextLayout_Recalc(&f.tl, 0);
-    
-    TEST_ASSERT(f.tb.current_line->position == 2 * LINE_POSITION_STEP);
-    TEST_ASSERT(f.tl.first_visual_line_idx == 0);
-    //TEST_ASSERT(TextLayout_GetCursorY(&f.tl) == 2);
-    //TEST_ASSERT(TextLayout_GetCursorX(&f.tl) == 7);
+
+    CursorLayoutInfo info;
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 2);
+    TEST_CHECK(info.x == 7);
 
     // Move Up to "short"
     TextEdit_MoveUp(&f.te);
     TEST_CHECK(f.tb.current_line->position == 1 * LINE_POSITION_STEP); // On line "short"
     TEST_CHECK(f.tb.gap.position == 5); // Clamped to end of "short"
-    TEST_CHECK(f.tl.cache[1].src == f.tb.current_line);
-    TEST_CHECK(f.tl.cache[1].offset == 0);
-    TEST_CHECK(f.tl.cache[1].length == 5);
-    TEST_CHECK(f.tb.current_line->prev != NULL);
-    TEST_CHECK(f.tb.current_line->prev->position == 0);
-    //TEST_CHECK(TextLayout_GetCursorY(&f.tl) == 1);
-    //TEST_MSG("Expected cursor y == 1, but got %d", TextLayout_GetCursorY(&f.tl));
 
+    // Check new cursor position
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 1);
+    TEST_CHECK(info.x == 5);
 
     // Move Up to "long line one"
     TextEdit_MoveUp(&f.te);
@@ -155,20 +161,27 @@ void test_move_up_down_simple(void) {
 void test_move_up_down_with_wrapping(void) {
     TestFixture f;
     setup_fixture(&f, 10, 5); // Narrow view to force wrapping
-    const char* lines[] = {"0\t456789ABCDEFGHIJ"};
+    f.tl.tabstop = 4;
+    const char* lines[] = {"0\t23456789ABCDEFGHIJ"}; // "0\t", "23456789AB", "CDEFGHIJ"
     add_lines(&f.tb, lines, 1);
 
-    // Start at pos 15 ("...CDE|FGHIJ")
+    // Start at pos 12 ("...9AB|CDE...") -> visual line 1, x=2
     f.tb.gap.position = 12;
     TextLayout_Recalc(&f.tl, 0);
-    // Visual lines: "0123456789", "ABCDEFGHIJ"
-    // Cursor is on visual line 1, x-pos 5
-    //TEST_CHECK(TextLayout_GetCursorY(&f.tl) == 1);
+
+    CursorLayoutInfo info;
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 1);
+    TEST_CHECK(info.x == 4);
 
     // Move Up
     TextEdit_MoveUp(&f.te);
     TEST_CHECK(f.tb.current_line->position == 0); // Still on same logical line
-    TEST_CHECK(f.tb.gap.position == 2); // Moves to x-pos 5 on visual line 0
+    TEST_CHECK(f.tb.gap.position == 2); // Moves to x-pos 2 on visual line 1
+
+    TextLayout_GetCursorLayoutInfo(&f.tl, &info);
+    TEST_CHECK(info.y == 0);
+    TEST_CHECK(info.x == 4);
 
     // Move Down
     TextEdit_MoveDown(&f.te);
@@ -177,9 +190,59 @@ void test_move_up_down_with_wrapping(void) {
     teardown_fixture(&f);
 }
 
+void test_editing_functions(void) {
+    TestFixture f;
+    setup_fixture(&f, 80, 25);
+    const char* lines[] = {"line 1", "line 2"};
+    add_lines(&f.tb, lines, 2);
+
+    // --- Test InsertChar ---
+    f.tb.gap.position = 4; // "line| 1"
+    TextEdit_InsertChar(&f.te, UTF8_GetCharFromString("-"));
+    TextEdit_InsertChar(&f.te, UTF8_GetCharFromString("€"));
+    TextBuffer_MergeGap(&f.tb);
+    check_string_equals(&f.tb.current_line->text, "line-€ 1");
+
+    // --- Test Newline ---
+    f.tb.gap.position = 5; // "line-|€ 1"
+    TextEdit_Newline(&f.te);
+    TEST_CHECK(f.tb.line_count == 3);
+    check_string_equals(&f.tb.current_line->prev->text, "line-"); // Old line
+    check_string_equals(&f.tb.current_line->text, "€ 1");      // New current line
+    TEST_CHECK(f.tb.gap.position == 0);
+
+    // --- Test Backspace (join lines) ---
+    TextEdit_Backspace(&f.te); // At beginning of "€ 1"
+    TEST_CHECK(f.tb.line_count == 2);
+    check_string_equals(&f.tb.current_line->text, "line-€ 1");
+    TEST_CHECK(f.tb.gap.position == 5); // Cursor is now at "line-|€ 1"
+
+    // --- Test Backspace (delete char) ---
+    TextEdit_Backspace(&f.te); // Deletes '-'
+    TextBuffer_MergeGap(&f.tb);
+    check_string_equals(&f.tb.current_line->text, "line€ 1");
+    TEST_CHECK(f.tb.gap.position == 4);
+
+    // --- Test DeleteChar (delete char) ---
+    TextEdit_DeleteChar(&f.te); // Deletes '€'
+    TextBuffer_MergeGap(&f.tb);
+    check_string_equals(&f.tb.current_line->text, "line 1");
+    TEST_CHECK(f.tb.gap.position == 4);
+
+    // --- Test DeleteChar (join lines) ---
+    f.tb.gap.position = 6; // At end of "line 1"
+    TextEdit_DeleteChar(&f.te);
+    TEST_CHECK(f.tb.line_count == 1);
+    check_string_equals(&f.tb.current_line->text, "line 1line 2");
+    TEST_CHECK(f.tb.gap.position == 6);
+
+    teardown_fixture(&f);
+}
+
 TEST_LIST = {
     { "TextEdit: Move Left/Right (Simple)", test_move_left_right_simple },
     { "TextEdit: Move Up/Down (Simple & x-pos clamping)", test_move_up_down_simple },
     { "TextEdit: Move Up/Down (with Line Wrapping)", test_move_up_down_with_wrapping },
+    { "TextEdit: Editing Functions (Insert, BS, Del, NL)", test_editing_functions },
     { NULL, NULL }
 };
