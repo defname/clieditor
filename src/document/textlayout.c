@@ -5,10 +5,6 @@
 #include <string.h>
 
 
-static bool idx_is_in_gap(const Gap *gap, int i) {
-    return gap && i >= (int)gap->position - (int)gap->overlap && i < (int)gap->position + (int)gap->text.length;
-}
-
 void VisualLine_Init(VisualLine *vl, int screen_width) {
     if (screen_width <= 0) {
         logFatal("Invalid screen_width for VisualLine.");
@@ -332,7 +328,7 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
         if (prev->src == tl->tb->current_line) {
             text_length += tl->tb->gap.text.length - tl->tb->gap.overlap;
         }
-        if (new_offset >= text_length) {  // prev line consumed src completely
+        if ((int)new_offset >= text_length) {  // prev line consumed src completely
             Line *next_src = prev->src->next;
             if (!next_src) {  // end of document reached
                 break;
