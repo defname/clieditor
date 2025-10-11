@@ -27,6 +27,7 @@ static WidgetOps app_ops = {
 void App_Init(int width, int height) {
     Widget_Init(AS_WIDGET(&app), NULL, &app_ops);
     Widget_Focus(AS_WIDGET(&app));
+    app.notification = Notification_Create(AS_WIDGET(&app));
     App_onParentResize(width, height);
 }
 

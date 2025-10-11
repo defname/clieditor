@@ -15,7 +15,7 @@ static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
 }
 
 // widget->ops->free() function
-static void editor_Destroy(Widget *self) {
+static void editor_destroy(Widget *self) {
     Editor *editor = AS_EDITOR(self);
     Timer_Stop(editor->cursor_timer);
     TextLayout_Deinit(&editor->tl);
@@ -187,7 +187,7 @@ static void editor_on_blur(Widget *self) {
 }
 
 static WidgetOps editor_ops = {
-    .destroy = editor_Destroy,
+    .destroy = editor_destroy,
     .draw = editor_draw,
     .on_input = editor_handle_input,
     .on_resize = editor_handle_resize,

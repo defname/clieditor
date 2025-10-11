@@ -104,6 +104,16 @@ static int compare_children_z_index(const void *a, const void *b) {
     return w1->z_index - w2->z_index;
 }
 
+void Widget_SortTreeByZIndex(Widget *root) {
+    if (!root) {
+        return;
+    }
+    qsort(root->children, root->children_count, sizeof(Widget *), compare_children_z_index);
+    for (int i=0; i<root->children_count; i++) {
+        Widget_SortTreeByZIndex(root->children[i]);
+    }
+}
+
 void Widget_SetZIndex(Widget *self, int z_index) {
     self->z_index = z_index;
     if (self->parent) {

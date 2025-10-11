@@ -13,6 +13,7 @@
 #include "widgets/components/bottombar.h"
 #include "widgets/app.h"
 #include "widgets/components/editor.h"
+#include "widgets/primitives/notification.h"
 #include "common/config.h"
 #include "common/colors.h"
 #include "common/callback.h"
@@ -61,12 +62,14 @@ static void onMenuClick(void *menu, void *entry) {
         if (!file) {
             // Show error message
             // TODO
-            logFatal("Cannot open file");
+            Notification_Notify(app.notification, "Cannot open file for writing.", NOTIFICATION_ERROR);
+            Widget_Hide(AS_WIDGET(menu));
             return;
         }
         TextBuffer_SaveToFile(&tb, file);
         File_Close(file);
         Widget_Hide(AS_WIDGET(menu));
+        Notification_Notify(app.notification, "File saved", NOTIFICATION_SUCCESS);
     }
 }
 
@@ -110,6 +113,7 @@ int main(int argc, char *argv[]) {
     TextBuffer_Init(&tb);
 
     const char * fn = Config_GetFilename();
+    bool failure_on_file_load = false;
     if (strcmp(fn, "") != 0) {
         File *file;        
         file = File_Open(fn, FILE_ACCESS_READ);
@@ -117,6 +121,9 @@ int main(int argc, char *argv[]) {
         if (file) {
             TextBuffer_LoadFromFile(&tb, file);
             File_Close(file);
+        }
+        else {
+            failure_on_file_load = true;
         }
     }
 
@@ -128,17 +135,7 @@ int main(int argc, char *argv[]) {
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
     
-
-/*
-    Frame *frame = Frame_Create(AS_WIDGET(&app));
-    frame->base.x = 10;
-    frame->base.y = 10;
-    frame->base.width = 20;
-    frame->base.height = 5;
-
-    Widget_SetZIndex((Widget*)frame, 10);
-    App_SetFocus((Widget*)frame);
-*/
+    
     MenuEntry entries[] = {
         { .text = "Save", Callback_New(onMenuClick, "save") },
         { .text = "Exit", Callback_New(onMenuClick, "exit") },
@@ -146,7 +143,14 @@ int main(int argc, char *argv[]) {
     Menu *menu = Menu_Create(entries, sizeof(entries) / sizeof(MenuEntry), (Callback){NULL, NULL});
     Widget_Hide(AS_WIDGET(menu));
 
+    Widget_SortTreeByZIndex(AS_WIDGET(&app));
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
+
+
+    if (failure_on_file_load) {
+        Notification_Notify(app.notification, "Cannot open file for reading.", NOTIFICATION_WARNING);
+    }
+
 
     /************************************
      * Main loop                        *
