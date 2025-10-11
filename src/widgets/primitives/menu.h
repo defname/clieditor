@@ -18,12 +18,16 @@
 
 #include "display/widget.h"
 #include "common/callback.h"
+#include "common/utf8string.h"
+#include "common/utf8.h"
+
 
 #define MENU_BORDER_X 3
 #define MENU_BORDER_Y 1
 
 typedef struct _MenuEntry {
     const char *text;
+    UTF8Char shortcut;
     Callback callback;
 } MenuEntry;
 
@@ -32,12 +36,13 @@ typedef struct {
     MenuEntry *entries;
     size_t entry_count;
     size_t selected_entry;
+    UTF8String title;
     Callback on_close;
 } Menu;
 
 #define AS_MENU(w) ((Menu *)(w))
 
-void Menu_Init(Menu *menu, MenuEntry *entries, size_t entry_count, Callback on_close);
-Menu *Menu_Create(MenuEntry *entries, size_t entry_count, Callback on_close);
+void Menu_Init(Menu *menu, MenuEntry *entries, size_t entry_count, const char *title, Callback on_close);
+Menu *Menu_Create(MenuEntry *entries, size_t entry_count, const char *title, Callback on_close);
 
 #endif
