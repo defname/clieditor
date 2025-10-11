@@ -112,6 +112,21 @@ int main(int argc, char *argv[]) {
 
     TextBuffer_Init(&tb);
 
+    const char * fn = Config_GetFilename();
+    bool failure_on_file_load = false;
+    if (strcmp(fn, "") != 0) {
+        File *file;        
+        file = File_Open(fn, FILE_ACCESS_READ);
+
+        if (file) {
+            TextBuffer_LoadFromFile(&tb, file);
+            File_Close(file);
+        }
+        else {
+            failure_on_file_load = true;
+        }
+    }
+
     App_Init(Screen_GetWidth(), Screen_GetHeight());
  
     Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
@@ -120,17 +135,7 @@ int main(int argc, char *argv[]) {
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;
     
-
-/*
-    Frame *frame = Frame_Create(AS_WIDGET(&app));
-    frame->base.x = 10;
-    frame->base.y = 10;
-    frame->base.width = 20;
-    frame->base.height = 5;
-
-    Widget_SetZIndex((Widget*)frame, 10);
-    App_SetFocus((Widget*)frame);
-*/
+    
     MenuEntry entries[] = {
         { .text = "Save", Callback_New(onMenuClick, "save") },
         { .text = "Exit", Callback_New(onMenuClick, "exit") },
@@ -141,19 +146,9 @@ int main(int argc, char *argv[]) {
     Widget_SortTreeByZIndex(AS_WIDGET(&app));
     App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
 
-    // Try to load file
-    const char * fn = Config_GetFilename();
-    if (strcmp(fn, "") != 0) {
-        File *file;        
-        file = File_Open(fn, FILE_ACCESS_READ);
 
-        if (file) {
-            TextBuffer_LoadFromFile(&tb, file);
-            File_Close(file);
-        }
-        else {
-            Notification_Notify(app.notification, "Cannot open file for reading.", NOTIFICATION_WARNING);
-        }
+    if (failure_on_file_load) {
+        Notification_Notify(app.notification, "Cannot open file for reading.", NOTIFICATION_WARNING);
     }
 
 
