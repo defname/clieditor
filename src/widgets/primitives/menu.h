@@ -18,6 +18,9 @@
 
 #include "display/widget.h"
 #include "common/callback.h"
+#include "common/utf8string.h"
+#include "common/utf8.h"
+
 
 #define MENU_BORDER_X 3
 #define MENU_BORDER_Y 1

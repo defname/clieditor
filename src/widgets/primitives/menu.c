@@ -19,7 +19,7 @@
 #include "io/screen.h"
 #include "common/colors.h"
 #include "common/logging.h"
-#include "common/utf8string.h"
+
 
 static void destroy(Widget *self) {
     Menu *menu = AS_MENU(self);
@@ -51,11 +51,13 @@ static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             Callback_Call(&entry->callback, self);
         }
     }
-
-    for (size_t i=0; i<menu->entry_count; i++) {
-        if (UTF8_Equal(ch, menu->entries[i].shortcut)) {
-            MenuEntry *entry = &menu->entries[i];
-            Callback_Call(&entry->callback, self);
+    // check for shortcuts
+    if (ch.length > 0) {
+        for (size_t i=0; i<menu->entry_count; i++) {
+            if (UTF8_Equal(ch, menu->entries[i].shortcut)) {
+                MenuEntry *entry = &menu->entries[i];
+                Callback_Call(&entry->callback, self);
+            }
         }
     }
 
@@ -108,9 +110,14 @@ static void draw(const Widget *self, Canvas *canvas) {
             canvas->current_style.attributes |= STYLE_UNDERLINE;
         }
         Canvas_Write(canvas, &text);
-        int right_x = self->width - MENU_BORDER_X - 1;
-        Canvas_MoveCursor(canvas, right_x, y);
-        Canvas_PutChar(canvas, menu->entries[i].shortcut);
+        
+        // draw shortcut hint
+        if (menu->entries[i].shortcut.length > 0) {
+            int right_x = self->width - MENU_BORDER_X - 1;
+            Canvas_MoveCursor(canvas, right_x, y);
+            Canvas_PutChar(canvas, menu->entries[i].shortcut);
+        }
+
         if (i == menu->selected_entry) {
             canvas->current_style.attributes &= ~STYLE_UNDERLINE;
         }
