@@ -42,13 +42,13 @@ void test_equality(void) {
     UTF8String *s3 = UTF8String_Create();
 
     UTF8String_FromStr(s1, "Hello", 5);
-    const char *s1_c = UTF8String_ToStr(s1);
+    char *s1_c = UTF8String_ToStr(s1);
     TEST_ASSERT(strcmp(s1_c, "Hello") == 0);
     TEST_ASSERT(UTF8String_EqualStr(s1, s1_c));
     TEST_ASSERT(!UTF8String_EqualStr(s1, "Hello "));
     TEST_ASSERT(!UTF8String_EqualStr(s1, "Hellö"));
     TEST_ASSERT(!UTF8String_EqualStr(s1, "Helko"));
-
+    free(s1_c);
 
     UTF8String_FromStr(s1, "ü", 1);
     s1_c = UTF8String_ToStr(s1);
@@ -56,6 +56,7 @@ void test_equality(void) {
     TEST_ASSERT(UTF8String_EqualStr(s1, "ü"));
     char *test = UTF8String_ToStr(s1);
     free(test);
+    free(s1_c);
 
     UTF8String_FromStr(s1, "Hello\nWorld\0", 12);
     s1_c = UTF8String_ToStr(s1);
@@ -63,7 +64,8 @@ void test_equality(void) {
 
     UTF8String_FromStr(s2, "Hello\nWorld", 11);
     TEST_ASSERT(UTF8String_Equal(s1, s2));
-
+    
+    free(s1_c);
     UTF8String_Destroy(s1);
     UTF8String_Destroy(s2);
     UTF8String_Destroy(s3);
