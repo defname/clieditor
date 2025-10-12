@@ -54,8 +54,8 @@ void App_Deinit() {
     Widget_Deinit(&app.base);
 }
 
-bool App_HandleInput(EscapeSequence key, UTF8Char ch) {
-    return Widget_HandleInput(&app.base, key, ch);
+bool App_HandleInput(InputEvent input) {
+    return Widget_HandleInput(&app.base, input);
 }
 
 void App_Draw(Canvas *canvas) {

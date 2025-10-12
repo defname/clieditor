@@ -29,7 +29,7 @@ extern App app;
 void App_Init(int width, int height);
 void App_Deinit();
 
-bool App_HandleInput(EscapeSequence key, UTF8Char ch);
+bool App_HandleInput(InputEvent input);
 void App_Draw(Canvas *canvas);
 
 void App_onParentResize(int new_parent_width, int new_parent_height);

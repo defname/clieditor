@@ -26,43 +26,39 @@ static void destroy(Widget *self) {
     UTF8String_Deinit(&menu->title);
 }
 
-static bool on_input(Widget *self, EscapeSequence key, UTF8Char ch) {
-    (void)key;
-    (void)ch;
+static bool on_input(Widget *self, InputEvent input) {
+
     Menu *menu = AS_MENU(self);
-    if (key == ESC_ESCAPE) {
+    if (input.key == KEY_ESC) {
         Callback_Call(&menu->on_close, self);
         Widget_Hide(self);
         return true;
     }
-    else if (key == ESC_CURSOR_UP) {
+    else if (input.key == KEY_UP) {
         if (menu->selected_entry > 0) {
             menu->selected_entry--;
             return true;
         }
     }
-    else if (key == ESC_CURSOR_DOWN) {
+    else if (input.key == KEY_DOWN) {
         if (menu->selected_entry < menu->entry_count - 1) {
             menu->selected_entry++;
             return true;
         }
     }
-    else if (UTF8_IsASCII(ch)) {
-        char c = UTF8_AsASCII(ch);
-        if (c == KEY_ENTER || c == ' ') {
-            MenuEntry *entry = &menu->entries[menu->selected_entry];
-            Callback_Call(&entry->callback, self);
-            return true;
-        }
+    else if (input.key == KEY_ENTER || UTF8_Equal(input.ch, utf8_space)) {
+        MenuEntry *entry = &menu->entries[menu->selected_entry];
+        Callback_Call(&entry->callback, self);
+        return true;
     }
     // check for shortcuts
-    if (ch.length > 0) {
+    if (input.ch.length > 0) {
         for (size_t i = 0; i < menu->entry_count; i++) {
             UTF8Char shortcut = menu->entries[i].shortcut;
             if (shortcut.length == 0) {
                 continue;
             }
-            if (UTF8_Equal(ch, shortcut)) {
+            if (UTF8_Equal(input.ch, shortcut)) {
                 MenuEntry *entry = &menu->entries[i];
                 Callback_Call(&entry->callback, self);
                 return true;

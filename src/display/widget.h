@@ -33,7 +33,7 @@ typedef struct {
     // Draws the widget onto a target canvas.
     void (*draw)(const struct _Widget *self, Canvas *target);
     // Handles input. Returns true if the input was consumed.
-    bool (*on_input)(struct _Widget *self, EscapeSequence key, UTF8Char ch);
+    bool (*on_input)(struct _Widget *self, InputEvent input);
     // Handles resize events
     void (*on_resize)(struct _Widget *self, int new_parent_width, int new_parent_height);
     // Called (by App_SetFocus()) when the widget gains focus.
@@ -87,7 +87,7 @@ void Widget_SetZIndex(Widget *self, int z_index);
 void Widget_Draw(Widget *self, Canvas *canvas);
 void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height);
 
-bool Widget_HandleInput(Widget *self, EscapeSequence key, UTF8Char ch);
+bool Widget_HandleInput(Widget *self, InputEvent input);
 
 Widget *Widget_ChildHasFocus(Widget *self);
 void Widget_Focus(Widget *widget);
