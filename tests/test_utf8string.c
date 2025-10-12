@@ -235,6 +235,18 @@ void test_substring(void) {
     UTF8String_Destroy(a);
 }
 
+void test_format(void) {
+    UTF8String *s = UTF8String_Create();
+
+    UTF8String_Format(s, 14, "Hello %s", "World");
+    TEST_CHECK(UTF8String_EqualStr(s, "Hello World"));
+
+    UTF8String_Format(s, 8, "Hello %s", "World");
+    TEST_CHECK(UTF8String_EqualStr(s, "Hello W"));
+
+    UTF8String_Destroy(s);
+}
+
 TEST_LIST = {
     { "UTF8String: Creation and Conversion", test_creation_and_conversion },
     { "UTF8String: Equality", test_equality },
@@ -244,5 +256,6 @@ TEST_LIST = {
     { "UTF8String: Split", test_split },
     { "UTF8String: Width", test_string_width },
     { "UTF8String: Substring", test_substring },
+    { "UTF8String: Format", test_format },
     { NULL, NULL }
 };
