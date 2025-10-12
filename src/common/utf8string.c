@@ -17,6 +17,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include "common/logging.h"
 
@@ -115,6 +117,16 @@ void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
     UTF8String_Resize(dest, src->length); // Ensures dest has enough capacity
     memmove(dest->chars, src->chars, sizeof(UTF8Char) * src->length);
     dest->length = src->length;
+}
+
+void UTF8String_Format(UTF8String *str, size_t max_length, const char *format, ...) {
+    char tmp = malloc(sizeof(char) * max_length);
+    va_list args;
+    va_start(args, format);
+    int ret = vsnprintf(tmp, max_length, format, args);
+    va_end(args);
+    UTFString_FromStr(str, tmp, ret);
+    free(tmp);
 }
 
 void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t pos) {
