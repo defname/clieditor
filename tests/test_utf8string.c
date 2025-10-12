@@ -232,6 +232,7 @@ void test_substring(void) {
     TEST_CHECK(UTF8String_EqualStr(a, "Wor"));
 
     UTF8String_Destroy(s);
+    UTF8String_Destroy(a);
 }
 
 TEST_LIST = {
