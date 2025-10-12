@@ -23,6 +23,8 @@
 
 
 const UTF8Char utf8_space = { .bytes = {' '}, .length = 1 };
+const UTF8Char utf8_newline = { .bytes = {'\n'}, .length = 1 };
+const UTF8Char utf8_tab = { .bytes = {'\t'}, .length = 1 };
 const UTF8Char utf8_invalid = { .bytes = {0}, .length = 0 };
 
 

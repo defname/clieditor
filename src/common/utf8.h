@@ -35,6 +35,8 @@ typedef struct _UTF8Char {
 } UTF8Char;
 
 extern const UTF8Char utf8_space;
+extern const UTF8Char utf8_newline;
+extern const UTF8Char utf8_tab;
 extern const UTF8Char utf8_invalid;
 
 UTF8Char UTF8_GetCharFromString(const char *s); // Read an UTF8 character from a string

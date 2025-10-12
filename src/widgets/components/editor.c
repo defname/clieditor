@@ -35,6 +35,7 @@ static void editor_destroy(Widget *self) {
     Timer_Stop(editor->cursor_timer);
     TextLayout_Deinit(&editor->tl);
     TextEdit_Deinit(&editor->te);
+    TextSelection_Deinit(&editor->ts);
 }
 
 
@@ -61,31 +62,51 @@ void draw_char(TextLayout *tl, Canvas *canvas, UTF8Char ch, int x_pos, bool has_
 // draw line and return new y_offset (changes to one if the cursor wraps to the next line)
 static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
     VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
+    TextSelection *ts = &editor->ts;
 
     if (!line){
         return y_offset;
     }
 
+    // Move cursor to the start position
     Canvas_MoveCursor(canvas, 0, y + y_offset);
 
+    // get information about the cursor
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
 
-    Style orig_style = canvas->current_style;;
+    // change the style if it's the current line
+    Style orig_style = canvas->current_style;
+    uint8_t line_style_color;
     if (line->src == editor->tb->current_line) {
-        canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+        line_style_color = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+    }
+    else {
+        line_style_color = orig_style.bg;
     }
 
+    // draw the characters
     for (int i=0; i<line->length; i++) {
         UTF8Char ch = VisualLine_GetChar(line, i);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
+        if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
+            canvas->current_style.bg = Color_GetCodeById(COLOR_SECONDARY_BG);
+        }
+        else {
+            canvas->current_style.bg = line_style_color;
+        }
         draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
     }
 
+    canvas->current_style.bg = line_style_color;
+
+ 
     int x = line->width;
 
+    // if the cursor is behind the last character of the line draw it
     bool has_cursor = (line == cursor.line && line->length == cursor.idx);
     if (has_cursor) {
+        // if it goes out of screen wrap the line first
         if (x == editor->tl.width) {
             y_offset++;
             x = 0;
@@ -94,11 +115,15 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
         draw_char(&editor->tl, canvas, utf8_space, x,  editor->cursor_visible);
         x++;
     }
+
+    // fill the line with spaces (to overwrite artifacts from earlier draws)
     for ( ; x<editor->tl.width; x++) {
         draw_char(&editor->tl, canvas, utf8_space, x, false);
     }
 
+    // restore the previous style
     canvas->current_style = orig_style;
+
     return y_offset;
 }
 
@@ -143,13 +168,47 @@ static void scroll_up(TextLayout *tl, TextEdit *te) {
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     (void)self;
+    TextBuffer *tb = AS_EDITOR(self)->tb;
     TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
+    TextSelection *ts = &AS_EDITOR(self)->ts;
 
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(tl, &cursor);
 
+    // No Input
+    if ((UTF8_Equal(ch, utf8_invalid) && key == ESC_NONE)) {
+        return false;
+    }
 
+    // Selection
+    if (key == ESC_SHIFT_CURSOR_LEFT || key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
+        TextBuffer_MergeGap(te->tb);
+        TextSelection_Select(ts, tb->current_line, tb->gap.position);
+        switch (key) {
+            case ESC_SHIFT_CURSOR_LEFT:
+                TextEdit_MoveLeft(te);
+                break;
+            case ESC_SHIFT_CURSOR_RIGHT:
+                TextEdit_MoveRight(te);
+                break;
+            case ESC_SHIFT_CURSOR_UP:
+                TextEdit_MoveUp(te);
+                break;
+            case ESC_SHIFT_CURSOR_DOWN:
+                TextEdit_MoveDown(te);
+                break;
+            default:
+                break;
+        }
+        TextSelection_Select(ts, tb->current_line, tb->gap.position);
+        return true;
+    }
+    else {
+        TextSelection_Abort(ts);
+    }
+
+    // Everything else
     if (ch.length == 1) {
         char c = ch.bytes[0];
         if (c == KEY_ENTER) {
@@ -247,8 +306,10 @@ static WidgetOps editor_ops = {
 void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     Widget_Init(&self->base, parent, &editor_ops);
     self->tb = tb;
+    
     TextLayout_Init(&self->tl, tb,self->base.width, self->base.height);
     TextEdit_Init(&self->te, tb, &self->tl);
+    TextSelection_Init(&self->ts);
 
     self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
     Timer_Pause(self->cursor_timer);  // start when getting focus
