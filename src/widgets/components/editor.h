@@ -23,6 +23,11 @@
 #include "document/textselection.h"
 #include "io/timer.h"
 
+typedef enum {
+    EDITOR_MODE_INPUT,
+    EDITOR_MODE_SELECT
+} EditorMode;
+
 typedef struct {
     Widget base;
 
@@ -30,6 +35,8 @@ typedef struct {
     TextLayout tl;
     TextEdit te;
     TextSelection ts;
+
+    EditorMode mode;
     
     uint8_t cursor_timer;
     bool cursor_visible;

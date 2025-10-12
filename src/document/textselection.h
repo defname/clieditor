@@ -27,7 +27,9 @@ bool TextSelection_Started(TextSelection *ts);
 void TextSelection_Begin(TextSelection *ts, Line *line, int idx);
 void TextSelection_End(TextSelection *ts, Line *line, int idx);
 
-void TextSelection_Extract(TextSelection *ts, UTF8String *text);
+TextSelection TextSelection_Ordered(const TextSelection *ts);
 
+void TextSelection_Extract(TextSelection *ts, UTF8String *text);
+void TextSelection_Delete(TextSelection *ts, TextBuffer *tb);
 
 #endif

@@ -88,7 +88,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     // draw the characters
     for (int i=0; i<line->length; i++) {
         UTF8Char ch = VisualLine_GetChar(line, i);
-        bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
+        bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible && editor->mode == EDITOR_MODE_INPUT);
         if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
             canvas->current_style.bg = Color_GetCodeById(COLOR_SECONDARY_BG);
         }
@@ -104,7 +104,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     int x = line->width;
 
     // if the cursor is behind the last character of the line draw it
-    bool has_cursor = (line == cursor.line && line->length == cursor.idx);
+    bool has_cursor = (line == cursor.line && line->length == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
     if (has_cursor) {
         // if it goes out of screen wrap the line first
         if (x == editor->tl.width) {
@@ -164,73 +164,9 @@ static void scroll_up(TextLayout *tl, TextEdit *te) {
     TextLayout_ScrollUp(tl);
 }
 
-// widget->ops->on_input() function
-static bool editor_handle_input(Widget *self, InputEvent input) {
-    TextBuffer *tb = AS_EDITOR(self)->tb;
-    TextLayout *tl = &AS_EDITOR(self)->tl;
-    TextEdit *te = &AS_EDITOR(self)->te;
-    TextSelection *ts = &AS_EDITOR(self)->ts;
-
-    CursorLayoutInfo cursor;
-    TextLayout_GetCursorLayoutInfo(tl, &cursor);
-
-    // No Input
-    if ((UTF8_Equal(input.ch, utf8_invalid) && input.key == KEY_NONE)) {
-        return false;
-    }
-/*
-    // Selection
-    if (input.key == ESC_SHIFT_CURSOR_LEFT || input.key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
-        TextBuffer_MergeGap(te->tb);
-        TextSelection_Select(ts, tb->current_line, tb->gap.position);
-        switch (key) {
-            case ESC_SHIFT_CURSOR_LEFT:
-                TextEdit_MoveLeft(te);
-                break;
-            case ESC_SHIFT_CURSOR_RIGHT:
-                TextEdit_MoveRight(te);
-                break;
-            case ESC_SHIFT_CURSOR_UP:
-                TextEdit_MoveUp(te);
-                break;
-            case ESC_SHIFT_CURSOR_DOWN:
-                TextEdit_MoveDown(te);
-                break;
-            default:
-                break;
-        }
-        TextSelection_Select(ts, tb->current_line, tb->gap.position);
-        return true;
-    }
-    else {
-        TextSelection_Abort(ts);
-    }
-*/
-    // Everything else
-    if (input.ch.length == 1) {
-        char c = input.ch.bytes[0];
-        if (input.key == KEY_ENTER) {
-            TextEdit_Newline(te);
-            return true;
-        }
-        else if (input.key == KEY_BACKSPACE) {
-            TextEdit_Backspace(te);
-            return true;
-        }
-        else if (c == '\t') {
-            TextEdit_InsertChar(te, UTF8_GetCharFromString("\t"));
-            return true;
-        }
-    }
-    if (UTF8_IsPrintable(input.ch)) {
-        TextEdit_InsertChar(te, input.ch);
-        return true;
-    }
-    else if (input.key == KEY_DELETE) {
-        TextEdit_DeleteChar(te);
-        return true;
-    }
-    else if (input.key == KEY_LEFT) {
+static bool handle_input_cursor_movement(Editor *editor, InputEvent input) {
+    TextEdit *te = &editor->te;
+    if (input.key == KEY_LEFT) {
         TextEdit_MoveLeft(te);
         return true;
     }
@@ -246,7 +182,13 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
         TextEdit_MoveDown(te);
         return true;
     }
-    else if (input.key == KEY_PAGE_DOWN) {
+    return false;
+}
+
+static bool handle_input_scrolling(Editor *editor, InputEvent input) {
+    TextLayout *tl = &editor->tl;
+    TextEdit *te = &editor->te;
+    if (input.key == KEY_PAGE_DOWN) {
         for (int i=0; i<5; i++) {
             scroll_down(tl, te);
         }
@@ -257,6 +199,98 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
             scroll_up(tl, te);
         }
         return true;
+    }
+    return false;
+}
+
+static bool handle_input_text_editing(Editor *editor, InputEvent input) {
+    TextEdit *te = &editor->te;
+
+    switch (input.key) {
+        case KEY_ENTER:
+            TextEdit_Newline(te);
+            return true;
+        case KEY_BACKSPACE:
+            TextEdit_Backspace(te);
+            return true;
+        case KEY_DELETE:
+            TextEdit_DeleteChar(te);
+            return true;
+        case KEY_CHAR:
+            if (UTF8_IsPrintable(input.ch)) {
+                TextEdit_InsertChar(te, input.ch);
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
+// widget->ops->on_input() function
+static bool editor_handle_input(Widget *self, InputEvent input) {
+    Editor *editor = AS_EDITOR(self);
+    TextBuffer *tb = AS_EDITOR(self)->tb;
+    TextLayout *tl = &AS_EDITOR(self)->tl;
+    TextSelection *ts = &AS_EDITOR(self)->ts;
+
+    CursorLayoutInfo cursor;
+    TextLayout_GetCursorLayoutInfo(tl, &cursor);
+
+    // no Input
+    if (!InputEvent_IsValid(&input)) {
+        return false;
+    }
+
+    // selection
+    if (input.mods == KEY_MOD_SHIFT) {
+        TextBuffer_MergeGap(tb);
+        TextSelection_Select(ts, tb->current_line, tb->gap.position);
+        bool handled = false;
+        handled  = handled || handle_input_cursor_movement(editor, input);
+        handled = handled || handle_input_scrolling(editor, input);
+
+        if (handled) {
+            TextSelection_Select(ts, tb->current_line, tb->gap.position);
+            editor->mode = EDITOR_MODE_SELECT;
+            return true;
+        }
+    }
+    else if (editor->mode == EDITOR_MODE_SELECT) {
+        if (input.key == KEY_DELETE || input.key == KEY_BACKSPACE) {
+
+            // Check if the visible part of the layout is affected by the deletion.
+            // If the first visible line is within the selection range, it will be deleted.
+            bool layout_is_invalid = (tl->first_line->position >= ts->start->position &&
+                                      tl->first_line->position <= ts->end->position);
+
+            TextSelection_Delete(ts, tb);
+
+            // If the layout was pointing to deleted lines, reset it to a safe state.
+            if (layout_is_invalid) {
+                tl->first_line = tb->current_line; // current_line is now the start of the old selection
+                tl->first_visual_line_idx = 0;
+            }
+            TextSelection_Abort(ts);
+            editor->mode = EDITOR_MODE_INPUT;
+            
+            tl->dirty = true;
+            return true;
+        }
+
+        TextSelection_Abort(ts);
+        editor->mode = EDITOR_MODE_INPUT;
+    }
+
+    if (editor->mode == EDITOR_MODE_INPUT) {
+        bool input_handled = false;
+        input_handled = input_handled || handle_input_cursor_movement(editor, input);
+        input_handled = input_handled || handle_input_scrolling(editor, input);
+        input_handled = input_handled || handle_input_text_editing(editor, input);
+        if (input_handled) {
+            return true;
+        }
     }
     return false;
 }
@@ -295,6 +329,8 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     TextLayout_Init(&self->tl, tb,self->base.width, self->base.height);
     TextEdit_Init(&self->te, tb, &self->tl);
     TextSelection_Init(&self->ts);
+
+    self->mode = EDITOR_MODE_INPUT;
 
     self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
     Timer_Pause(self->cursor_timer);  // start when getting focus
