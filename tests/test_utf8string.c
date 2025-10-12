@@ -212,6 +212,28 @@ void test_string_width(void) {
     UTF8String_Destroy(s3);
 }
 
+void test_substring(void) {
+    UTF8String *s = UTF8String_Create();
+    UTF8String *a = UTF8String_Create();
+
+    UTF8String_FromStr(s, "Hello World", 11);
+
+    UTF8String_SubString(s, a, 0, 5);
+    TEST_CHECK(UTF8String_EqualStr(a, "Hello"));
+
+    UTF8String_SubString(s, a, 6, 5);
+    TEST_CHECK(UTF8String_EqualStr(a, "World"));
+
+    UTF8String_SubString(s, a, 6, 10);
+    TEST_CHECK(UTF8String_EqualStr(a, "World"));
+    
+
+    UTF8String_SubString(s, a, 6, 3);
+    TEST_CHECK(UTF8String_EqualStr(a, "Wor"));
+
+    UTF8String_Destroy(s);
+}
+
 TEST_LIST = {
     { "UTF8String: Creation and Conversion", test_creation_and_conversion },
     { "UTF8String: Equality", test_equality },
@@ -220,5 +242,6 @@ TEST_LIST = {
     { "UTF8String: Concat and Repeat", test_concat_and_repeat },
     { "UTF8String: Split", test_split },
     { "UTF8String: Width", test_string_width },
+    { "UTF8String: Substring", test_substring },
     { NULL, NULL }
 };

@@ -216,3 +216,15 @@ void UTF8String_Shorten(UTF8String *str, size_t n) {
     }
     str->length = n;
 }
+
+void UTF8String_SubString(const UTF8String *s, UTF8String *dest, size_t start, size_t length) {
+    if (start >= s->length) {
+        return;
+    }
+    if (start + length > s->length) {
+        length = s->length - start;
+    }
+    UTF8String_Resize(dest, length);
+    memmove(dest->chars, s->chars + start, sizeof(UTF8Char) * length);
+    dest->length = length;
+}

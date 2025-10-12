@@ -61,5 +61,6 @@ void UTF8String_Split(const UTF8String *s, UTF8String *a, UTF8String *b, size_t 
 void UTF8String_Repeat(UTF8String *str, size_t n);
 void UTF8String_Spaces(UTF8String *str, size_t n);
 void UTF8String_Shorten(UTF8String *str, size_t n);
+void UTF8String_SubString(const UTF8String *s, UTF8String *dest, size_t start, size_t length);
 
 #endif
