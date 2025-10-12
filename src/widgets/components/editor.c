@@ -262,8 +262,9 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
 
             // Check if the visible part of the layout is affected by the deletion.
             // If the first visible line is within the selection range, it will be deleted.
-            bool layout_is_invalid = (tl->first_line->position >= ts->start->position &&
-                                      tl->first_line->position <= ts->end->position);
+            TextSelection sel = TextSelection_Ordered(ts);
+            bool layout_is_invalid = (tl->first_line->position >= sel.start->position &&
+                                      tl->first_line->position <= sel.end->position);
 
             TextSelection_Delete(ts, tb);
 
