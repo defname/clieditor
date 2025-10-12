@@ -180,16 +180,12 @@ int main(int argc, char *argv[]) {
      ************************************/
     while (1) {
         Timer_Update();
-        EscapeSequence esc_seq = Input_Read();
+        InputEvent input = Input_Read();
         
-        if (!App_HandleInput(esc_seq, utf8_invalid)) {
-            if (esc_seq == ESC_ESCAPE) {
+        if (InputEvent_IsValid(&input) && !App_HandleInput(input)) {
+            if (input.key == KEY_ESC) {
                 Widget_FocusAndReturn(AS_WIDGET(menu), AS_WIDGET(&app));
             }
-        }
-        UTF8Char ch;
-        while ((ch = Input_GetChar()).length != 0) {
-            App_HandleInput(ESC_NONE, ch);
         }
 
         App_Draw(&screen.canvas);

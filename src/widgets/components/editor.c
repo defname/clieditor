@@ -165,9 +165,7 @@ static void scroll_up(TextLayout *tl, TextEdit *te) {
 }
 
 // widget->ops->on_input() function
-static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
-    (void)key;
-    (void)self;
+static bool editor_handle_input(Widget *self, InputEvent input) {
     TextBuffer *tb = AS_EDITOR(self)->tb;
     TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
@@ -177,12 +175,12 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     TextLayout_GetCursorLayoutInfo(tl, &cursor);
 
     // No Input
-    if ((UTF8_Equal(ch, utf8_invalid) && key == ESC_NONE)) {
+    if ((UTF8_Equal(input.ch, utf8_invalid) && input.key == KEY_NONE)) {
         return false;
     }
-
+/*
     // Selection
-    if (key == ESC_SHIFT_CURSOR_LEFT || key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
+    if (input.key == ESC_SHIFT_CURSOR_LEFT || input.key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
         TextBuffer_MergeGap(te->tb);
         TextSelection_Select(ts, tb->current_line, tb->gap.position);
         switch (key) {
@@ -207,70 +205,57 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     else {
         TextSelection_Abort(ts);
     }
-
+*/
     // Everything else
-    if (ch.length == 1) {
-        char c = ch.bytes[0];
-        if (c == KEY_ENTER) {
+    if (input.ch.length == 1) {
+        char c = input.ch.bytes[0];
+        if (c == '\n') {
             TextEdit_Newline(te);
             return true;
         }
-        else if (c == KEY_BACKSPACE) {
+        else if (c == 127) {
             TextEdit_Backspace(te);
             return true;
         }
-        else if (c == KEY_TAB) {
+        else if (c == '\t') {
             TextEdit_InsertChar(te, UTF8_GetCharFromString("\t"));
             return true;
         }
     }
-    if (UTF8_IsPrintable(ch)) {
-        TextEdit_InsertChar(te, ch);
+    if (UTF8_IsPrintable(input.ch)) {
+        TextEdit_InsertChar(te, input.ch);
         return true;
     }
-    else if (key == ESC_DELETE) {
+    else if (input.key == KEY_DELETE) {
         TextEdit_DeleteChar(te);
         return true;
     }
-    else if (key == ESC_CURSOR_LEFT) {
+    else if (input.key == KEY_LEFT) {
         TextEdit_MoveLeft(te);
         return true;
     }
-    else if (key == ESC_CURSOR_RIGHT) {
+    else if (input.key == KEY_RIGHT) {
         TextEdit_MoveRight(te);
         return true;
     }
-    else if (key == ESC_CURSOR_UP) {
+    else if (input.key == KEY_UP) {
         TextEdit_MoveUp(te);
         return true;
     }
-    else if (key == ESC_CURSOR_DOWN) {
+    else if (input.key == KEY_DOWN) {
         TextEdit_MoveDown(te);
         return true;
     }
-    else if (key == ESC_HOME) {
-        return true;
-    } 
-    else if (key == ESC_END) {
-        return true;
-    }
-    else if (key == ESC_PAGE_DOWN) {
+    else if (input.key == KEY_PAGE_DOWN) {
         for (int i=0; i<5; i++) {
             scroll_down(tl, te);
         }
         return true;
     }
-    else if (key == ESC_PAGE_UP) {
+    else if (input.key == KEY_PAGE_UP) {
         for (int i=0; i<5; i++) {
             scroll_up(tl, te);
         }
-        return true;
-    }
-    else if (key == ESC_SHIFT_PAGE_DOWN) {
-        return true;
-    }
-    else if (key == ESC_SHIFT_PAGE_UP) {
-        
         return true;
     }
     return false;
