@@ -46,13 +46,10 @@ static bool on_input(Widget *self, InputEvent input) {
             return true;
         }
     }
-    else if (UTF8_IsASCII(input.ch)) {
-        char c = UTF8_AsASCII(input.ch);
-        if (c == '\n' || c == ' ') {
-            MenuEntry *entry = &menu->entries[menu->selected_entry];
-            Callback_Call(&entry->callback, self);
-            return true;
-        }
+    else if (input.key == KEY_ENTER || UTF8_Equal(input.ch, utf8_space)) {
+        MenuEntry *entry = &menu->entries[menu->selected_entry];
+        Callback_Call(&entry->callback, self);
+        return true;
     }
     // check for shortcuts
     if (input.ch.length > 0) {

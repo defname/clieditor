@@ -209,11 +209,11 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
     // Everything else
     if (input.ch.length == 1) {
         char c = input.ch.bytes[0];
-        if (c == '\n') {
+        if (input.key == KEY_ENTER) {
             TextEdit_Newline(te);
             return true;
         }
-        else if (c == 127) {
+        else if (input.key == KEY_BACKSPACE) {
             TextEdit_Backspace(te);
             return true;
         }
