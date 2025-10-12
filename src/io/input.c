@@ -62,7 +62,14 @@ InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = { .bytes = {
 
 
 bool InputEvent_IsValid(const InputEvent *ev) {
-    return ev->key != KEY_NONE || (ev->key == KEY_CHAR &&ev->ch.length > 0);
+    if (ev->key == KEY_CHAR) {
+        return ev->ch.length > 0;
+    }
+    if (ev->key != KEY_NONE) {
+        return true;
+    }
+    // accept e.g. for chars with mods
+    return ev->ch.length > 0;
 }
 
 void Input_Init() {
@@ -302,6 +309,9 @@ InputEvent Input_Read() {
         // check if it is an utf8 multi byte character and read it
         char utf8_buf[5] = { c, 0, 0, 0, 0 };
         int l = get_utf8_length(c);
+        if (l == 0) {
+            return input_invalidevent;
+        }
         for (int i=1; i<l; i++) {
             ssize_t bytes_read = read(fd, &utf8_buf[i], 1);  // this should be more robust as trying to read all l-1 bytes at once
             if (bytes_read != 1) {
