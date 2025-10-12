@@ -35,6 +35,7 @@ static void editor_destroy(Widget *self) {
     Timer_Stop(editor->cursor_timer);
     TextLayout_Deinit(&editor->tl);
     TextEdit_Deinit(&editor->te);
+    TextSelection_Deinit(&editor->ts);
 }
 
 
@@ -145,11 +146,44 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)self;
     TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
+    TextSelection *ts = &AS_EDITOR(self)->ts;
 
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(tl, &cursor);
 
+    // No Input
+    if ((UTF8_Equal(ch, utf8_invalid) && key == ESC_NONE)) {
+        return false;
+    }
 
+    // Selection
+    if (key == ESC_SHIFT_CURSOR_LEFT || key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
+        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);
+        switch (key) {
+            case ESC_SHIFT_CURSOR_LEFT:
+                TextEdit_MoveLeft(te);
+                break;
+            case ESC_SHIFT_CURSOR_RIGHT:
+                TextEdit_MoveRight(te);
+                break;
+            case ESC_SHIFT_CURSOR_UP:
+                TextEdit_MoveUp(te);
+                break;
+            case ESC_SHIFT_CURSOR_DOWN:
+                TextEdit_MoveDown(te);
+                break;
+            default:
+                break;
+        }
+        TextLayout_GetCursorLayoutInfo(tl, &cursor);
+        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);TextEdit_MoveRight(te);
+        return true;
+    }
+    else {
+        TextSelection_Abort(ts);
+    }
+
+    // Everything else
     if (ch.length == 1) {
         char c = ch.bytes[0];
         if (c == KEY_ENTER) {
@@ -247,8 +281,10 @@ static WidgetOps editor_ops = {
 void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     Widget_Init(&self->base, parent, &editor_ops);
     self->tb = tb;
+    
     TextLayout_Init(&self->tl, tb,self->base.width, self->base.height);
     TextEdit_Init(&self->te, tb, &self->tl);
+    TextSelection_Init(&self->ts);
 
     self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
     Timer_Pause(self->cursor_timer);  // start when getting focus

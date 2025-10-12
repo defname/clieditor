@@ -20,6 +20,7 @@
 #include "document/textbuffer.h"
 #include "document/textlayout.h"
 #include "document/textedit.h"
+#include "document/textselection.h"
 #include "io/timer.h"
 
 typedef struct {
@@ -28,6 +29,7 @@ typedef struct {
     TextBuffer *tb;
     TextLayout tl;
     TextEdit te;
+    TextSelection ts;
     
     uint8_t cursor_timer;
     bool cursor_visible;
