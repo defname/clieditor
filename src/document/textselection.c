@@ -75,6 +75,12 @@ void TextSelection_End(TextSelection *ts, Line *line, int idx) {
     ts->end_idx = idx;
 }
 
+TextSelection TextSelection_Ordered(const TextSelection *ts) {
+    TextSelection o;
+    ordered(ts, &o.start, &o.start_idx, &o.end, &o.end_idx);
+    return o;
+}
+
 void TextSelection_Extract(TextSelection *ts, UTF8String *text) {
     if (!ts || !ts->start || !ts->end) {
         return;
@@ -106,4 +112,36 @@ void TextSelection_Extract(TextSelection *ts, UTF8String *text) {
     }
 
     UTF8String_Deinit(&dummy);
+}
+
+void TextSelection_Delete(TextSelection *ts, TextBuffer *tb) {
+    if (!ts || !ts->start || !ts->end) {
+        return;
+    }
+    TextSelection sel = TextSelection_Ordered(ts);
+
+    UTF8String end;
+    UTF8String_Init(&end);
+    UTF8String_SubString(&sel.end->text, &end, sel.end_idx, sel.end->text.length - sel.end_idx);
+
+    if (sel.start == sel.end) {
+        UTF8String_Shorten(&sel.start->text, sel.start_idx);
+        UTF8String_Concat(&sel.start->text, &end);
+    }
+    else {
+        tb->current_line = sel.start;  // cannot delete current line, so place it here
+        Line *current = sel.end;
+        current = current->prev;
+        TextBuffer_DeleteLine(tb, current->next);
+        while (current != sel.start) {
+            current = current->prev;
+            TextBuffer_DeleteLine(tb, current->next);
+        }
+        UTF8String_Shorten(&sel.start->text, sel.start_idx);
+        UTF8String_Concat(&sel.start->text, &end);
+    }
+
+    tb->gap.position = sel.start_idx;
+
+    UTF8String_Deinit(&end);
 }
