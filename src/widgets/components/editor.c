@@ -217,6 +217,10 @@ static bool handle_input_text_editing(Editor *editor, InputEvent input) {
             TextEdit_DeleteChar(te);
             return true;
         case KEY_CHAR:
+            if (UTF8_Equal(input.ch, utf8_tab)) {
+                TextEdit_InsertChar(te, utf8_tab);
+                return true;
+            }
             if (UTF8_IsPrintable(input.ch)) {
                 TextEdit_InsertChar(te, input.ch);
                 return true;
