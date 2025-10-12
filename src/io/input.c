@@ -116,6 +116,9 @@ static bool choose_key(char code, InputEvent *ev) {
         case '6':
             ev->key = KEY_PAGE_DOWN;
             break;
+        case '2':
+            ev->key = KEY_INSERT;
+            break;
         case '3':
             ev->key = KEY_DELETE;
             break;
