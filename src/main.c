@@ -37,19 +37,24 @@
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
 
-const char *TESTFILE =  "/home/cypher/projekte/clieditor/README.md";
+//const char *TESTFILE =  "/home/cypher/projekte/clieditor/README.md";
 
 
 TextBuffer tb;
+
+static void print_help(const char *program_name) {
+    fprintf(stderr, "Usage:\n  %s <filename>\n", program_name);
+    exit(0);
+}
 
 static void parse_arguments(int argc, char *argv[]) {
     // For now, we only handle a single filename argument.
     if (argc >= 2) {
         Config_SetFilename(argv[1]);
     } else {
+        print_help(argv[0]);
         // No file provided, could set a default or leave it empty.
         Config_SetFilename(NULL);
-        Config_SetFilename(TESTFILE);
     }
 }
 
