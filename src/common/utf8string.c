@@ -218,7 +218,8 @@ void UTF8String_Shorten(UTF8String *str, size_t n) {
 }
 
 void UTF8String_SubString(const UTF8String *s, UTF8String *dest, size_t start, size_t length) {
-    if (start >= s->length) {
+    if (!s || !dest || start >= s->length) {
+        dest->length = 0;
         return;
     }
     if (start + length > s->length) {
