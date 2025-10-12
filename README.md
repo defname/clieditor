@@ -8,6 +8,13 @@ The goal was to use **no third-party libraries** like `ncurses`.
 
 ![Screenshot](assets/screenshot.png)
 
+## Building
+Make sure to have `CMake` (you can also build it without though), a C compiler with the C standard library and POSIX C library available and run
+```
+cmake -B build
+cmake --build build
+```
+
 ## Features
 - A handwritten widget system with a status bar, main menu, notifications, and an editor widget forming the core of the UI.
 - UTF-8 support
@@ -57,6 +64,14 @@ The `App` widget forms the root of the widget hierarchy.
 
 ### `main.c`
 Entry point of the application. Initializes all systems, loads the file, and runs the main loop.
+
+## Questionable Design Choices
+
+### UTF8 Support
+I had no idea how UTF-8 actually worked in C, so I quickly threw together an `UTF8Char` struct and `UTF8String` containers built from it.
+To be fair, they turned out to be quite robust and easy to use — which is the good part.
+The bad part is that I now use at least 5 bytes per character, which blows up memory usage pretty fast.
+For example, the release build needs around *600 MB* to load a *100 MB* file, which seems… a bit much.
 
 ## License 
 
