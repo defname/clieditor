@@ -40,34 +40,36 @@
 #define INPUT_BUFFER_SIZE   24
 
 typedef enum {
-    ESC_ESCAPE,
-    ESC_CURSOR_UP,
-    ESC_CURSOR_DOWN,
-    ESC_CURSOR_RIGHT,
-    ESC_CURSOR_LEFT,
-    ESC_SHIFT_CURSOR_UP,
-    ESC_SHIFT_CURSOR_DOWN,
-    ESC_SHIFT_CURSOR_RIGHT,
-    ESC_SHIFT_CURSOR_LEFT,
-    ESC_HOME,
-    ESC_END,
-    ESC_PAGE_UP,
-    ESC_SHIFT_PAGE_UP,
-    ESC_PAGE_DOWN,
-    ESC_SHIFT_PAGE_DOWN,
-    ESC_DELETE,
-    ESC_NONE
-} EscapeSequence;
+    KEY_NONE,
+    KEY_CHAR,
+    KEY_ESC,
+    KEY_UP,
+    KEY_DOWN,
+    KEY_LEFT,
+    KEY_RIGHT,
+    KEY_HOME,
+    KEY_END,
+    KEY_PAGE_UP,
+    KEY_PAGE_DOWN,
+    KEY_DELETE,
+    KEY_INSERT,
+} KeyCode;
 
-#define KEY_ENTER       10
-#define KEY_BACKSPACE   127
-#define KEY_TAB         9
+#define KEY_MOD_ALT     1
+#define KEY_MOD_CTRL    2
+#define KEY_MOD_SHIFT   4
 
+typedef struct _InputEvent {
+    KeyCode key;
+    UTF8Char ch;
+    uint8_t mods;
+} InputEvent;
+
+bool InputEvent_IsValid(const InputEvent *ev);
 
 void Input_Init();
 void Input_Deinit();
-EscapeSequence Input_Read();
-UTF8Char Input_GetChar();
+InputEvent Input_Read();
 
 
 #endif

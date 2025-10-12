@@ -24,7 +24,6 @@
 #include "io/terminal.h"
 #include "common/logging.h"
 #include "common/buffer.h"
-
 /*
 CSI ::= ESC '['
 
@@ -56,50 +55,21 @@ Shift+Alt+Ctrl	8
 */
 
 
-//--------- Circular Buffer ----------
-#define BUFFER_MAX INPUT_BUFFER_SIZE
+InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = { .bytes = { 0 }, .length = 0 } };
 
 
-//-------------- Sequences -----------------
-// Flexible Verwaltung von Escape-Sequenzen.
-// Um eine neue Sequenz hinzuzufügen, einfach hier einen Eintrag ergänzen.
-typedef struct _EscapeSequenceMapping {
-    const char *sequence;
-    EscapeSequence code;
-} EscapeSequenceMapping;
-
-#define MAX_ESCAPE_SEQUENCES 20
 #define MAX_SEQUENCE_LEN    6
 
-static const EscapeSequenceMapping escape_mappings[] = {
-    {"\e[A", ESC_CURSOR_UP},
-    {"\e[B", ESC_CURSOR_DOWN},
-    {"\e[C", ESC_CURSOR_RIGHT},
-    {"\e[D", ESC_CURSOR_LEFT},
-    {"\e[H", ESC_HOME},
-    {"\e[F", ESC_END},
-    {"\e[5~", ESC_PAGE_UP},
-    {"\e[6~", ESC_PAGE_DOWN},
-    {"\e[3~", ESC_DELETE},
-    {"\e[1;2A", ESC_SHIFT_CURSOR_UP},
-    {"\e[1;2B", ESC_SHIFT_CURSOR_DOWN},
-    {"\e[1;2C", ESC_SHIFT_CURSOR_RIGHT},
-    {"\e[1;2D", ESC_SHIFT_CURSOR_LEFT},
-    {"\e[5;2~", ESC_SHIFT_PAGE_UP},
-    {"\e[6;2~", ESC_SHIFT_PAGE_DOWN},
-};
-static const size_t num_escape_mappings = sizeof(escape_mappings) / sizeof(escape_mappings[0]);
 
+bool InputEvent_IsValid(const InputEvent *ev) {
+    return ev->key != KEY_NONE || ev->ch.length > 0;
+}
 
-// main input buffer
-Buffer buffer;
 
 void Input_Init() {
-    Buffer_Init(&buffer, BUFFER_MAX, sizeof(char));
 }
 
 void Input_Deinit() {
-    Buffer_Deinit(&buffer);
 }
 
 // helper: read mit Timeout (ms)
@@ -120,38 +90,80 @@ static ssize_t read_with_timeout(int fd, unsigned char *c, int timeout_ms) {
     return read(fd, c, 1);
 }
 
-static void push_to_buffer(const unsigned char *s, size_t n) {
-    if (buffer.count + n > BUFFER_MAX) {
-        logError("Input buffer overflow on push. Sequence dropped.");
-        return;
+static bool choose_key(char code, InputEvent *ev) {
+    switch (code) {
+        case 'A':
+            ev->key = KEY_UP;
+            break;
+        case 'B':
+            ev->key = KEY_DOWN;
+            break;
+        case 'C':
+            ev->key = KEY_RIGHT;
+            break;
+        case 'D':
+            ev->key = KEY_LEFT;
+            break;
+        case 'H':
+            ev->key = KEY_HOME;
+            break;
+        case 'F':
+            ev->key = KEY_END;
+            break;
+        case '5':
+            ev->key = KEY_PAGE_UP;
+            break;
+        case '6':
+            ev->key = KEY_PAGE_DOWN;
+            break;
+        case '3':
+            ev->key = KEY_DELETE;
+            break;
+        default:
+            return false;
     }
-    for (size_t i=0; i<n; i++) {
-        Buffer_Enqueue(&buffer, &s[i]);
-    }
+    return true;
 }
 
-// initialize results with all indices of escape_mappings and return the number of entries
-size_t init_seq_results(size_t *results, size_t capacity) {
-    if (capacity < num_escape_mappings) {
-        logFatal("Results list too small.");
+static bool choose_mod(char code, InputEvent *ev) {
+    switch (code) {
+        case '2':
+            ev->mods |= KEY_MOD_ALT;
+            break;
+        case '5':
+            ev->mods |= KEY_MOD_SHIFT;
+            break;
+        case '7':
+            ev->mods |= KEY_MOD_ALT | KEY_MOD_SHIFT;
+            break;
+        case '8':
+            ev->mods |= KEY_MOD_ALT | KEY_MOD_CTRL;
+            break;
+        default:
+            return false;
     }
-    for (size_t i=0; i<num_escape_mappings; i++) {
-        results[i] = i;
-    }
-    return num_escape_mappings;
+    return true;
 }
 
-// filter results. discard all entries that differs from c at position idx
-size_t filter_seq_results(size_t *results, size_t count, size_t idx, unsigned char c) {
-    int new_count = 0;
-    for (size_t i=0; i<count; i++) {
-        const char *seq = escape_mappings[results[i]].sequence;
-        if (seq[idx] == c) {
-            results[new_count] = results[i];
-            new_count++;
+static InputEvent build_event_from_seq(const unsigned char *seq, size_t param_len, size_t intermediate_len) {
+    // if this function is used seq starts with "\e[", so seq[2] is the first param or final byte
+    InputEvent ev = input_invalidevent;
+
+    if ((param_len == 0 || param_len == 1) && intermediate_len == 0) {  // single key
+        if (choose_key(seq[2], &ev)) {
+            return ev;
         }
+        return input_invalidevent;
     }
-    return new_count;
+
+    if (param_len == 3 && seq[3] == ';') {
+        if (choose_key(seq[2], &ev) && choose_mod(seq[4], &ev)) {
+            return ev;
+        }
+        return input_invalidevent;
+    }
+
+    return ev;
 }
 
 
@@ -168,20 +180,22 @@ static bool is_final_byte(unsigned char c) {
 }
 
 // read an escape sequence. its assumed that the '\e' was already read!
-// the read sequence is written to seq, with max size of capacity
-// the number of bytes read is stored in seq_count.
-// the function returns true if a valid escape sequence was read, false otherwise
-bool read_escape_sequence(int fd, unsigned char *seq, size_t capacity, size_t *seq_count) {
-    seq[0] = '\e';
-    *seq_count = 1;
+InputEvent read_escape_sequence(int fd) {
+    unsigned char seq[MAX_SEQUENCE_LEN] = { '\e' };
+    size_t capacity = MAX_SEQUENCE_LEN;
+    size_t seq_count = 1;
 
     ssize_t bytes_read = read_with_timeout(fd, &seq[1], 50);
-    if (bytes_read != 1) {
-        return false;
+    if (bytes_read != 1) {  // single press  of escape button
+        return (InputEvent){ .key = KEY_ESC, .mods = 0, .ch = utf8_invalid };
     }
-    (*seq_count)++;  // bytes_read == 1
-    if (seq[1] != '[') {
-        return false;
+    (seq_count)++;  // bytes_read == 1
+    if (seq[1] != '[') {  // single byte escape sequence
+        return (InputEvent){
+            .key = KEY_NONE,
+            .mods = KEY_MOD_ALT,
+            .ch = (UTF8Char){ .bytes = { seq[1] }, .length = 1 }
+        };
     }
 
     // so far we read '\e' in the calling function Input_Read() and '['
@@ -190,91 +204,98 @@ bool read_escape_sequence(int fd, unsigned char *seq, size_t capacity, size_t *s
     // tmp_buf_count == 2
 
     enum { PARAMS, INTER, FINAL } state = PARAMS;
+    size_t param_len = 0;
+    size_t intermediate_len = 0;
 
-    while ((*seq_count)<capacity) {
+    while (seq_count < capacity) {
         unsigned char ch;
         // read byte from input
         bytes_read = read_with_timeout(fd, &ch, 100);
         if (bytes_read != 1) {
-            // Timeout, die Sequenz ist unvollständig
-            return false;
+            // timeout, the sequence is incomplete
+            return input_invalidevent;
         }
         if (state == PARAMS) {
             if (is_param_byte(ch)) {
-                seq[(*seq_count)++] = ch;
+                seq[seq_count++] = ch;
+                param_len++;
                 continue;
             }
             state++;
         }
         if (state == INTER) {
             if (is_intermediate_byte(ch)) {
-                seq[(*seq_count)++] = ch;
+                seq[seq_count++] = ch;
+                intermediate_len++;
                 continue;
             }
             state++;
         }
         if (state == FINAL) {
             if (is_final_byte(ch)) {
-                seq[(*seq_count)++] = ch;
-                return true;
+                seq[seq_count++] = ch;
+                return build_event_from_seq(seq, param_len, intermediate_len);
             }
-            seq[(*seq_count)++] = ch;
-            return false;
+            seq[seq_count++] = ch;
+            return input_invalidevent;
         }
     }
 
     logError("Read sequence exceeded capacity.");
-    return false;
+    return input_invalidevent;
 }
 
-EscapeSequence find_sequence(const unsigned char *seq, size_t n) {
-    for (size_t i=0; i<num_escape_mappings; i++) {
-        // Check for an exact match: the length must be the same AND the content must be the same.
-        if (strlen(escape_mappings[i].sequence) == n &&
-            strncmp(escape_mappings[i].sequence, (const char*)seq, n) == 0) {
-            return escape_mappings[i].code;
-        }
+
+static size_t get_utf8_length(unsigned char c) {
+    if (c <= 127) {  // ASCI character
+        return 1;
     }
-    return ESC_NONE;
+    else if ((c & 0b11100000) == 0b11000000) {
+        return 2;
+    }
+    else if ((c & 0b11110000) == 0b11100000) {
+        return 3;
+    }
+    else if ((c & 0b11111000) == 0b11110000) {
+        return 4;
+    }
+    // Invalid UTF-8 start byte.
+    return 0;
 }
 
-EscapeSequence Input_Read() {
-    if (buffer.count >= INPUT_BUFFER_SIZE) {
-        return ESC_NONE;
-    }
+
+InputEvent Input_Read() {
 
     int fd = terminal.fd_in;
 
+    // read the first byte
     unsigned char c;
     ssize_t byted_read = read(fd, &c, 1);
     if (byted_read != 1) {
-        return ESC_NONE;
+        return input_invalidevent;
     }
 
+    // if it is not the potential beginning of an escape sequence
     if (c != '\e') {
-        Buffer_Enqueue(&buffer, &c);
-        return ESC_NONE;
-    }
-
-    unsigned char seq_buffer[MAX_SEQUENCE_LEN];
-    size_t len = 0;
-    bool is_seq = read_escape_sequence(fd, seq_buffer, MAX_SEQUENCE_LEN, &len);
-
-    if (is_seq) {
-        EscapeSequence seq = find_sequence(seq_buffer, len);
-        if (seq != ESC_NONE) {
-            return seq;
+        // check if it is an utf8 multi byte character and read it
+        char utf8_buf[5] = { c, 0, 0, 0, 0 };
+        int l = get_utf8_length(c);
+        for (int i=1; i<l; i++) {
+            ssize_t bytes_read = read(fd, &utf8_buf[i], 1);  // this should be more robust as trying to read all l-1 bytes at once
+            if (bytes_read != 1) {
+                return input_invalidevent;
+            }
         }
-        logDebug("Unknown escape sequence: ESC%.*s", (int)len-1, (const char*)(seq_buffer+1));
-        return ESC_NONE;
+        InputEvent ev = {
+            .key = KEY_CHAR,
+            .mods = 0,
+            .ch = UTF8_GetCharFromString(utf8_buf)
+        };
+        return ev;
     }
-    push_to_buffer(seq_buffer + 1, len-1);
-    if (len > 1) {
-        return ESC_NONE;
-    }
-    return ESC_ESCAPE;
-}
 
-UTF8Char Input_GetChar() {
-    return UTF8_ReadCharFromBuf(&buffer);
+    // read the escape sequence
+    InputEvent ev = read_escape_sequence(fd);
+
+    return ev;
 }
