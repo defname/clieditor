@@ -62,31 +62,51 @@ void draw_char(TextLayout *tl, Canvas *canvas, UTF8Char ch, int x_pos, bool has_
 // draw line and return new y_offset (changes to one if the cursor wraps to the next line)
 static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
     VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
+    TextSelection *ts = &editor->ts;
 
     if (!line){
         return y_offset;
     }
 
+    // Move cursor to the start position
     Canvas_MoveCursor(canvas, 0, y + y_offset);
 
+    // get information about the cursor
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
 
-    Style orig_style = canvas->current_style;;
+    // change the style if it's the current line
+    Style orig_style = canvas->current_style;
+    uint8_t line_style_color;
     if (line->src == editor->tb->current_line) {
-        canvas->current_style.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+        line_style_color = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+    }
+    else {
+        line_style_color = orig_style.bg;
     }
 
+    // draw the characters
     for (int i=0; i<line->length; i++) {
         UTF8Char ch = VisualLine_GetChar(line, i);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible);
+        if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
+            canvas->current_style.bg = Color_GetCodeById(COLOR_SECONDARY_BG);
+        }
+        else {
+            canvas->current_style.bg = line_style_color;
+        }
         draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
     }
 
+    canvas->current_style.bg = line_style_color;
+
+ 
     int x = line->width;
 
+    // if the cursor is behind the last character of the line draw it
     bool has_cursor = (line == cursor.line && line->length == cursor.idx);
     if (has_cursor) {
+        // if it goes out of screen wrap the line first
         if (x == editor->tl.width) {
             y_offset++;
             x = 0;
@@ -95,11 +115,15 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
         draw_char(&editor->tl, canvas, utf8_space, x,  editor->cursor_visible);
         x++;
     }
+
+    // fill the line with spaces (to overwrite artifacts from earlier draws)
     for ( ; x<editor->tl.width; x++) {
         draw_char(&editor->tl, canvas, utf8_space, x, false);
     }
 
+    // restore the previous style
     canvas->current_style = orig_style;
+
     return y_offset;
 }
 
@@ -158,6 +182,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
 
     // Selection
     if (key == ESC_SHIFT_CURSOR_LEFT || key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
+        TextBuffer_MergeGap(te->tb);
         TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);
         switch (key) {
             case ESC_SHIFT_CURSOR_LEFT:
@@ -175,8 +200,9 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             default:
                 break;
         }
+        TextBuffer_MergeGap(te->tb);
         TextLayout_GetCursorLayoutInfo(tl, &cursor);
-        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);TextEdit_MoveRight(te);
+        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);
         return true;
     }
     else {

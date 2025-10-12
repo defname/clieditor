@@ -18,6 +18,10 @@ void TextSelection_Deinit(TextSelection *ts);
 void TextSelection_Select(TextSelection *ts, Line *line, int idx);
 void TextSelection_Abort(TextSelection *ts);
 
+bool TextSelection_IsSelected(TextSelection *ts, Line *line, int idx);
+
+
+
 bool TextSelection_Started(TextSelection *ts);
 
 void TextSelection_Begin(TextSelection *ts, Line *line, int idx);
