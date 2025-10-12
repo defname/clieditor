@@ -62,9 +62,8 @@ InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = { .bytes = {
 
 
 bool InputEvent_IsValid(const InputEvent *ev) {
-    return ev->key != KEY_NONE || ev->ch.length > 0;
+    return ev->key != KEY_NONE || (ev->key == KEY_CHAR &&ev->ch.length > 0);
 }
-
 
 void Input_Init() {
 }
@@ -164,15 +163,23 @@ static InputEvent build_event_from_seq(const unsigned char *seq, size_t param_le
     // if this function is used seq starts with "\e[", so seq[2] is the first param or final byte
     InputEvent ev = input_invalidevent;
 
+    size_t final_idx = 2 + param_len + intermediate_len;
+    if (final_idx >= MAX_SEQUENCE_LEN) {
+        return input_invalidevent;
+    }
+    unsigned char final_byte = seq[final_idx];
+    unsigned char key_token = final_byte == '~' ? seq[2] : final_byte;
+
+
     if ((param_len == 0 || param_len == 1) && intermediate_len == 0) {  // single key
-        if (choose_key(seq[2], &ev)) {
+        if (choose_key(key_token, &ev)) {
             return ev;
         }
         return input_invalidevent;
     }
 
-    if (param_len == 3 && seq[3] == ';') {
-        if (choose_key(seq[2], &ev) && choose_mod(seq[4], &ev)) {
+    if (param_len >= 3 && seq[3] == ';') {
+        if (choose_key(key_token, &ev) && choose_mod(seq[4], &ev)) {
             return ev;
         }
         return input_invalidevent;
@@ -306,6 +313,21 @@ InputEvent Input_Read() {
             .mods = 0,
             .ch = UTF8_GetCharFromString(utf8_buf)
         };
+        // set key for enter, backspace and keys that are delivered inconsistantly
+        if (l == 1) {
+            switch (c) {
+                case '\n':
+                case '\r':
+                    ev.key = KEY_ENTER;
+                    break;
+                case 127:
+                case '\b':
+                    ev.key = KEY_BACKSPACE;
+                    break;
+                default:
+                    break;
+            }
+        }
         return ev;
     }
 

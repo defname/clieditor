@@ -38,8 +38,13 @@
 
 typedef enum {
     KEY_NONE,
+    // character stored in InputEvent.ch
     KEY_CHAR,
+    // for convinience, also delivered as character
+    KEY_ENTER,
+    KEY_BACKSPACE,
     KEY_ESC,
+    // CSI escape sequences
     KEY_UP,
     KEY_DOWN,
     KEY_LEFT,
