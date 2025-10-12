@@ -129,18 +129,30 @@ static bool choose_key(char code, InputEvent *ev) {
 }
 
 static bool choose_mod(char code, InputEvent *ev) {
+    ev->mods = 0;
     switch (code) {
+        case '1':
+            return true;  // explicit "no modifiers"
         case '2':
-            ev->mods |= KEY_MOD_ALT;
-            break;
-        case '5':
             ev->mods |= KEY_MOD_SHIFT;
             break;
-        case '7':
+        case '3':
+            ev->mods |= KEY_MOD_ALT;
+            break;
+        case '4':
             ev->mods |= KEY_MOD_ALT | KEY_MOD_SHIFT;
             break;
-        case '8':
+        case '5':
+            ev->mods |= KEY_MOD_CTRL;
+            break;
+        case '6':
+            ev->mods |= KEY_MOD_CTRL | KEY_MOD_SHIFT;
+            break;
+        case '7':
             ev->mods |= KEY_MOD_ALT | KEY_MOD_CTRL;
+            break;
+        case '8':
+            ev->mods |= KEY_MOD_SHIFT | KEY_MOD_ALT | KEY_MOD_CTRL;
             break;
         default:
             return false;
