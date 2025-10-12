@@ -168,6 +168,7 @@ static void scroll_up(TextLayout *tl, TextEdit *te) {
 static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     (void)key;
     (void)self;
+    TextBuffer *tb = AS_EDITOR(self)->tb;
     TextLayout *tl = &AS_EDITOR(self)->tl;
     TextEdit *te = &AS_EDITOR(self)->te;
     TextSelection *ts = &AS_EDITOR(self)->ts;
@@ -183,7 +184,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
     // Selection
     if (key == ESC_SHIFT_CURSOR_LEFT || key == ESC_SHIFT_CURSOR_RIGHT || key == ESC_SHIFT_CURSOR_UP || key == ESC_SHIFT_CURSOR_DOWN) {
         TextBuffer_MergeGap(te->tb);
-        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);
+        TextSelection_Select(ts, tb->current_line, tb->gap.position);
         switch (key) {
             case ESC_SHIFT_CURSOR_LEFT:
                 TextEdit_MoveLeft(te);
@@ -200,9 +201,7 @@ static bool editor_handle_input(Widget *self, EscapeSequence key, UTF8Char ch) {
             default:
                 break;
         }
-        TextBuffer_MergeGap(te->tb);
-        TextLayout_GetCursorLayoutInfo(tl, &cursor);
-        TextSelection_Select(ts, cursor.line->src, cursor.line->offset + cursor.idx);
+        TextSelection_Select(ts, tb->current_line, tb->gap.position);
         return true;
     }
     else {
