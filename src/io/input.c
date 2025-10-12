@@ -81,10 +81,10 @@ static const EscapeSequenceMapping escape_mappings[] = {
     {"\e[5~", ESC_PAGE_UP},
     {"\e[6~", ESC_PAGE_DOWN},
     {"\e[3~", ESC_DELETE},
-    {"\e[A;2~", ESC_SHIFT_CURSOR_UP},
-    {"\e[B;2~", ESC_SHIFT_CURSOR_DOWN},
-    {"\e[C;2~", ESC_SHIFT_CURSOR_RIGHT},
-    {"\e[D;2~", ESC_SHIFT_CURSOR_LEFT},
+    {"\e[1;2A", ESC_SHIFT_CURSOR_UP},
+    {"\e[1;2B", ESC_SHIFT_CURSOR_DOWN},
+    {"\e[1;2C", ESC_SHIFT_CURSOR_RIGHT},
+    {"\e[1;2D", ESC_SHIFT_CURSOR_LEFT},
     {"\e[5;2~", ESC_SHIFT_PAGE_UP},
     {"\e[6;2~", ESC_SHIFT_PAGE_DOWN},
 };
@@ -265,7 +265,7 @@ EscapeSequence Input_Read() {
         if (seq != ESC_NONE) {
             return seq;
         }
-        logDebug("Unknown escape sequence: %.*s", (int)len, (const char*)seq_buffer);
+        logDebug("Unknown escape sequence: ESC%.*s", (int)len-1, (const char*)(seq_buffer+1));
         return ESC_NONE;
     }
     push_to_buffer(seq_buffer + 1, len-1);
