@@ -120,12 +120,12 @@ void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
 }
 
 void UTF8String_Format(UTF8String *str, size_t max_length, const char *format, ...) {
-    char tmp = malloc(sizeof(char) * max_length);
+    char *tmp = malloc(sizeof(char) * max_length);
     va_list args;
     va_start(args, format);
     int ret = vsnprintf(tmp, max_length, format, args);
     va_end(args);
-    UTFString_FromStr(str, tmp, ret);
+    UTF8String_FromStr(str, tmp, ret);
     free(tmp);
 }
 
