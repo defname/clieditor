@@ -277,7 +277,6 @@ void Widget_Update(Widget *self) {
         }
         Widget_Update(child);
     }
-    return false;
 }
 
 Widget *Widget_ChildHasFocus(Widget *self) {
