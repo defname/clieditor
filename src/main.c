@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     TextBuffer_Init(&tb);
 
     const char * fn = Config_GetFilename();
-    bool failure_on_file_load = false;
+    bool failure_on_file_load = false;  // the failure message can only be shown after initializing the widget system
     if (strcmp(fn, "") != 0) {
         File *file;        
         file = File_Open(fn, FILE_ACCESS_READ);
@@ -172,9 +172,10 @@ int main(int argc, char *argv[]) {
     Widget_Hide(AS_WIDGET(menu));
 
     Widget_SortTreeByZIndex(AS_WIDGET(&app));
-    App_onParentResize(Screen_GetWidth(), Screen_GetHeight());
+    App_onParentResize(Screen_GetWidth(), Screen_GetHeight());  // trigger on_resize on all widgets
 
 
+    // failure message from file load 
     if (failure_on_file_load) {
         Notification_Notify(app.notification, "Cannot open file for reading.", NOTIFICATION_WARNING);
     }
@@ -185,6 +186,7 @@ int main(int argc, char *argv[]) {
      ************************************/
     while (1) {
         Timer_Update();
+        
         InputEvent input = Input_Read();
         
         if (InputEvent_IsValid(&input) && !App_HandleInput(input)) {
