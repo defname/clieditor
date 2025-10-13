@@ -58,6 +58,10 @@ bool App_HandleInput(InputEvent input) {
     return Widget_HandleInput(&app.base, input);
 }
 
+void App_Update() {
+    Widget_Update(&app.base);
+}
+
 void App_Draw(Canvas *canvas) {
     Widget_Draw(&app.base, canvas);
 }

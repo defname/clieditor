@@ -54,6 +54,7 @@ char *UTF8String_ToStr(const UTF8String *string);  // return value needs to be f
 void UTF8String_AddChar(UTF8String *str, UTF8Char ch);
 void UTF8String_FromStr(UTF8String *str, const char *chstr, size_t length);
 void UTF8String_Copy(UTF8String *dest, const UTF8String *src);
+void UTF8String_Format(UTF8String *str, size_t max_length, const char *format, ...);
 
 // Manipulation
 void UTF8String_Concat(UTF8String *str1, const UTF8String *str2);

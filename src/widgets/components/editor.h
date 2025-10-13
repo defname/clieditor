@@ -47,4 +47,6 @@ typedef struct {
 void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb);
 Editor *Editor_Create(Widget *parent, TextBuffer *tb);
 
+void Editor_Resize(Editor *editor, int w, int h);
+
 #endif

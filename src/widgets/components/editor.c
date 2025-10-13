@@ -302,9 +302,7 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
 
 // widget->ops->on_resize() function
 static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
-    self->width = parent_w;
-    self->height = parent_h - 1;
-    TextLayout_SetDimensions(&AS_EDITOR(self)->tl, self->width, self->height);
+    // is called manually from the parent widget
 }
 
 static void editor_on_focus(Widget *self) {
@@ -352,4 +350,11 @@ Editor *Editor_Create(Widget *parent, TextBuffer *tb) {
     }
     Editor_Init(new, parent, tb);
     return new;
+}
+
+void Editor_Resize(Editor *editor, int w, int h) {
+    Widget *self = AS_WIDGET(editor);
+    self->width = w;
+    self->height = h;
+    TextLayout_SetDimensions(&AS_EDITOR(self)->tl, self->width, self->height);
 }
