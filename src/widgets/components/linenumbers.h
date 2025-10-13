@@ -4,7 +4,6 @@
 #include "display/widget.h"
 #include "document/textlayout.h"
 
-#define LINENUMBERS_MIN_DIGITS 3
 
 typedef struct _LineNumbers {
     Widget base;
@@ -16,6 +15,6 @@ typedef struct _LineNumbers {
 #define AS_LINENUMBERS(w) ((LineNumbers *)(w))
 
 void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl);
-LineNumbers *LineNumbers_Create(Widget *parent,TextLayout *tl);
+LineNumbers *LineNumbers_Create(Widget *parent, TextLayout *tl);
 
 #endif
