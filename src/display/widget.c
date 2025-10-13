@@ -262,6 +262,24 @@ bool Widget_HandleInput(Widget *self, InputEvent input) {
     return false;
 }
 
+void Widget_Update(Widget *self) {
+    if (!self) {
+        logError("Invalid widget.");
+        return;
+    }
+    if (self->ops && self->ops->update) {
+        self->ops->update(self);
+    }
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        Widget_Update(child);
+    }
+    return false;
+}
+
 Widget *Widget_ChildHasFocus(Widget *self) {
     for (int i=0; i<self->children_count; i++) {
         Widget *child = self->children[i];

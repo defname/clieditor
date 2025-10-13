@@ -13,6 +13,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+ /**
+ * widget.h
+ *
+ * This module defines the core of the widget system.
+ * Every widget "inherits" from `Widget` and may implement callbacks defined in `WidgetOps`.
+ *
+ * When a widget is created via `Widget_Create()`, it is inserted into the global widget tree.
+ * The functions defined in its `WidgetOps` structure are called automatically during the main loop.
+ *
+ * The main loop typically looks like this:
+ *
+ *     while (1) {
+ *         Widget_HandleInput(root);
+ *         Widget_Update(root);
+ *         Widget_Draw(root);
+ *     }
+ *     Widget_Destroy(root);
+ *
+ * Each function traverses the widget tree and calls the corresponding operation
+ * on every widget that provides it.
+ *
+ * Every widget is responsible for cleaning up its own allocated resources
+ * in its `destroy()` operation, but it must **not** destroy itself directly.
+ */
+
 #ifndef WIDGET_H
 #define WIDGET_H
 
@@ -32,6 +58,8 @@ struct _Widget;
 typedef struct {
     // Draws the widget onto a target canvas.
     void (*draw)(const struct _Widget *self, Canvas *target);
+    // Update the state of the widget
+    void (*update)(struct _Widget *self);
     // Handles input. Returns true if the input was consumed.
     bool (*on_input)(struct _Widget *self, InputEvent input);
     // Handles resize events
@@ -88,6 +116,8 @@ void Widget_Draw(Widget *self, Canvas *canvas);
 void Widget_onParentResize(Widget *self, int new_parent_width, int new_parent_height);
 
 bool Widget_HandleInput(Widget *self, InputEvent input);
+
+void Widget_Update(Widget *self);
 
 Widget *Widget_ChildHasFocus(Widget *self);
 void Widget_Focus(Widget *widget);
