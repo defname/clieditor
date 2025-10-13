@@ -121,11 +121,21 @@ void UTF8String_Copy(UTF8String *dest, const UTF8String *src) {
 
 void UTF8String_Format(UTF8String *str, size_t max_length, const char *format, ...) {
     char *tmp = malloc(sizeof(char) * max_length);
+    if (!tmp) {
+        logFatal("Cannot allocate memory for temporary string in UTF8String_Format.");
+    }
     va_list args;
     va_start(args, format);
     int ret = vsnprintf(tmp, max_length, format, args);
     va_end(args);
-    UTF8String_FromStr(str, tmp, ret);
+    if (ret < 0) {
+        logError("Encoding error in UTF8String_Format.");
+        str->length = 0;
+    }
+    else {
+        size_t written = (ret < (int)max_length) ? ret : max_length - 1;
+        UTF8String_FromStr(str, tmp, written);
+    }
     free(tmp);
 }
 
