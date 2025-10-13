@@ -164,13 +164,19 @@ static void scroll_up(TextLayout *tl, TextEdit *te) {
     TextLayout_ScrollUp(tl);
 }
 
-static bool handle_input_cursor_movement(Editor *editor, InputEvent input) {
+static bool handle_input_cursor_movement(Editor *editor, InputEvent input, CursorLayoutInfo cursor) {
     TextEdit *te = &editor->te;
     if (input.key == KEY_LEFT) {
+        if (cursor.y == 0 && cursor.idx == 0) {
+            scroll_up(te->tl, te);
+        }
         TextEdit_MoveLeft(te);
         return true;
     }
     else if (input.key == KEY_RIGHT) {
+        if (cursor.y == te->tl->height - 1 && cursor.idx == cursor.line->length) {
+            scroll_down(te->tl, te);
+        }
         TextEdit_MoveRight(te);
         return true;
     }
@@ -203,20 +209,30 @@ static bool handle_input_scrolling(Editor *editor, InputEvent input) {
     return false;
 }
 
-static bool handle_input_text_editing(Editor *editor, InputEvent input) {
+static bool handle_input_text_editing(Editor *editor, InputEvent input, CursorLayoutInfo cursor) {
     TextEdit *te = &editor->te;
 
     switch (input.key) {
         case KEY_ENTER:
+            if (cursor.y == te->tl->height - 1) {
+                scroll_down(te->tl, te);
+            }
             TextEdit_Newline(te);
             return true;
         case KEY_BACKSPACE:
+            if (cursor.y == 0 && cursor.idx == 0) {
+                scroll_up(te->tl, te);
+            }
             TextEdit_Backspace(te);
             return true;
         case KEY_DELETE:
             TextEdit_DeleteChar(te);
             return true;
         case KEY_CHAR:
+            if (cursor.y == te->tl->height - 1 && cursor.x == te->tl->width - 1) {
+                scroll_down(te->tl, te);
+            }
+            
             if (UTF8_Equal(input.ch, utf8_tab)) {
                 TextEdit_InsertChar(te, utf8_tab);
                 return true;
@@ -252,7 +268,7 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
         TextBuffer_MergeGap(tb);
         TextSelection_Select(ts, tb->current_line, tb->gap.position);
         bool handled = false;
-        handled  = handled || handle_input_cursor_movement(editor, input);
+        handled  = handled || handle_input_cursor_movement(editor, input, cursor);
         handled = handled || handle_input_scrolling(editor, input);
 
         if (handled) {
@@ -290,9 +306,9 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
 
     if (editor->mode == EDITOR_MODE_INPUT) {
         bool input_handled = false;
-        input_handled = input_handled || handle_input_cursor_movement(editor, input);
+        input_handled = input_handled || handle_input_cursor_movement(editor, input, cursor);
         input_handled = input_handled || handle_input_scrolling(editor, input);
-        input_handled = input_handled || handle_input_text_editing(editor, input);
+        input_handled = input_handled || handle_input_text_editing(editor, input, cursor);
         if (input_handled) {
             return true;
         }
