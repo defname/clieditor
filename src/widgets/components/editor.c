@@ -334,6 +334,19 @@ static void editor_on_blur(Widget *self) {
     data->cursor_visible = false;
 }
 
+// this is basically if the cursor gets lost during terminal window resize
+static void editor_update(Widget *self) {
+    Editor *editor = AS_EDITOR(self);
+    CursorLayoutInfo cursor;
+    int cursor_pos = TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
+    if (cursor_pos != 0) {
+        editor->tl.first_line = editor->tb->current_line;
+        editor->tl.first_visual_line_idx = 0;
+        editor->tl.dirty = true;
+        return;
+    }
+}
+
 static WidgetOps editor_ops = {
     .destroy = editor_destroy,
     .draw = editor_draw,
@@ -341,6 +354,7 @@ static WidgetOps editor_ops = {
     .on_resize = editor_handle_resize,
     .on_focus = editor_on_focus,
     .on_blur = editor_on_blur,
+    .update = editor_update,
 };
 
 
