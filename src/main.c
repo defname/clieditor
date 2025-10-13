@@ -27,7 +27,7 @@
 #include "io/timer.h"
 #include "widgets/components/bottombar.h"
 #include "widgets/app.h"
-#include "widgets/components/editor.h"
+#include "widgets/components/editorview.h"
 #include "widgets/primitives/notification.h"
 #include "common/config.h"
 #include "common/colors.h"
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
  
-    Editor *editor = Editor_Create(AS_WIDGET(&app), &tb);
+    EditorView *editor = EditorView_Create(AS_WIDGET(&app), &tb);
     Widget_Focus(AS_WIDGET(editor));
     (void)editor;
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
@@ -192,6 +192,8 @@ int main(int argc, char *argv[]) {
                 Widget_FocusAndReturn(AS_WIDGET(menu), AS_WIDGET(&app));
             }
         }
+
+        App_Update();
 
         App_Draw(&screen.canvas);
         Screen_Draw();
