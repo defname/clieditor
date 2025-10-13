@@ -318,6 +318,9 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
 
 // widget->ops->on_resize() function
 static void editor_handle_resize(Widget *self, int parent_w, int parent_h) {
+    (void)self;
+    (void)parent_w;
+    (void)parent_h;
     // is called manually from the parent widget
 }
 

@@ -133,7 +133,7 @@ void UTF8String_Format(UTF8String *str, size_t max_length, const char *format, .
         str->length = 0;
     }
     else {
-        size_t written = (ret < (int)max_length) ? ret : max_length - 1;
+        size_t written = (ret < (int)max_length) ? (size_t)ret : max_length - 1;
         UTF8String_FromStr(str, tmp, written);
     }
     free(tmp);
