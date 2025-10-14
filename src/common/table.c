@@ -218,7 +218,7 @@ TableValueType Table_Get(Table *table, const char *key, TableValue *value, Table
 
     TableSlot *slot = find_slot(table, key);
     if (slot->state == TABLE_SLOT_EMPTY) {
-        *value = (TableValue){ 0 };
+        *value = fallback;
         return TABLE_VALUE_TYPE_NONE;
     }
     *value = slot->value;
