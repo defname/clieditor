@@ -29,6 +29,7 @@
 #define TABLE_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define TABLE_INITIAL_CAPACITY 16
 #define TABLE_GROWTH_FACTOR 2
@@ -103,6 +104,10 @@ TableValueType Table_Get(const Table *table, const char *key, TableValue *value,
  */
 void Table_Delete(Table *table, const char *key);
 
+/**
+ * @brief Return true if the key exists in table.
+ */
+bool Table_Has(const Table *table, const char *key);
 
 void Table_SetInt(Table *table, const char *key, int value);
 void Table_SetStr(Table *table, const char *key, const char *value);  //< value of the string is copied with strdup(). So the caller is responisble for value

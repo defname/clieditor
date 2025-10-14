@@ -250,6 +250,18 @@ void Table_Delete(Table *table, const char *key) {
     // tombstones are counted to trigger rehash earlier and decrease probing
 }
 
+bool Table_Has(const Table *table, const char *key) {
+    if (!table) {
+        logFatal("Invalid table in Table_Has().");
+    }
+    if (!key) {
+        logWarn("Table_Has() was called with key == NULL.");
+        return false;
+    }
+    TableSlot *slot = find_slot(table, key);
+    return (slot->state == TABLE_SLOT_USED);
+}
+
 void Table_SetInt(Table *table, const char *key, int value) {
     Table_Set(table, key, TABLE_VALUE_TYPE_INT, (TableValue){ .int_value = value });
 }
