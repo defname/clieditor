@@ -280,6 +280,10 @@ void Table_SetStr(Table *table, const char *key, const char *value) {
 }
 
 void Table_SetTable(Table *table, const char *key, Table *value) {
+    if (table == value) {
+        logError("Cannot add table to itself.");
+        return;
+    }
     Table_Set(table, key, TABLE_VALUE_TYPE_TABLE, (TableValue){ .table_value = value });
 }
 
