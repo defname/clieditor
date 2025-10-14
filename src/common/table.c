@@ -212,18 +212,27 @@ TableValueType Table_Get(const Table *table, const char *key, TableValue *value,
     if (!table) {
         logFatal("Invalid table in Table_Get().");
     }
+    if (!value) {
+        logWarn("value == NULL in Table_Get(). Return value cannot be set.");
+    }
     if (!key) {
         logWarn("Table_Get() was called with key == NULL.");
-        *value = fallback;
+        if (value) {
+            *value = fallback;
+        }
         return TABLE_VALUE_TYPE_NONE;
     }
 
     TableSlot *slot = find_slot(table, key);
     if (slot->state == TABLE_SLOT_EMPTY) {
-        *value = fallback;
+        if (value) {
+            *value = fallback;
+        }
         return TABLE_VALUE_TYPE_NONE;
     }
-    *value = slot->value;
+    if (value) {
+        *value = slot->value;
+    }
     return slot->type;
 }
 
