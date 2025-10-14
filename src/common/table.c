@@ -9,10 +9,10 @@ void free_value(TableValue *value, TableValueType type) {
     if (!value) {
         return;
     }
-    if (type == TABLE_VALUE_TYPE_STRING) {
+    if (type == TABLE_VALUE_TYPE_STRING && value->string_value) {
         free(value->string_value);
     }
-    if (type == TABLE_VALUE_TYPE_TABLE) {
+    if (type == TABLE_VALUE_TYPE_TABLE && value->table_value) {
         Table_Destroy(value->table_value);
     }
 }
@@ -48,7 +48,7 @@ static uint32_t hash_string(const char *str) {
     return hash;
 }
 
-static TableSlot *find_slot(Table *table, const char *key) {
+static TableSlot *find_slot(const Table *table, const char *key) {
     if (!table || !key) {
         logFatal("Invalid table or key in find_slot()");
     }
@@ -137,6 +137,8 @@ static void increase_capacity(Table *table) {
     table->used = new_table->used;
 
     // free new table shallow
+    // Table_Destroy() is not used, cause the ownership of slots where transfered
+    // and the keys where freed seperately 
     free(new_table);
 }
 
@@ -206,7 +208,7 @@ void Table_Set(Table *table, const char*key, TableValueType type, TableValue val
     slot->value = value;  // potential pointers in value are copied and ownership is taken
 }
 
-TableValueType Table_Get(Table *table, const char *key, TableValue *value, TableValue fallback) {
+TableValueType Table_Get(const Table *table, const char *key, TableValue *value, TableValue fallback) {
     if (!table) {
         logFatal("Invalid table in Table_Get().");
     }
@@ -243,6 +245,9 @@ void Table_Delete(Table *table, const char *key) {
     slot->type = TABLE_VALUE_TYPE_NONE;;
     slot->value = (TableValue){ 0 };
     slot->state = TABLE_SLOT_TOMBSTONE;
+
+    // used is not decremented intentionally!
+    // tombstones are counted to trigger rehash earlier and decrease probing
 }
 
 void Table_SetInt(Table *table, const char *key, int value) {
