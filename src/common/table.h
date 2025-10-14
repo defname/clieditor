@@ -93,7 +93,7 @@ void Table_Set(Table *table, const char *key, TableValueType type, TableValue va
  * If key exists in the table return the value type and set value to the found value.
  * If the key does not exist return TABLE_VALUE_TYPE_NONE and set value to fallback.
  */
-TableValueType Table_Get(Table *table, const char *key, TableValue *value, TableValue fallback);
+TableValueType Table_Get(const Table *table, const char *key, TableValue *value, TableValue fallback);
 
 /**
  * @brief Delete the entry for key in table.
