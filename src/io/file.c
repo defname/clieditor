@@ -90,6 +90,32 @@ UTF8String *File_ReadLine(File *file) {
     return line;
 }
 
+char *File_Read(File *file) {
+    if (!file || !file->fp || file->access != FILE_ACCESS_READ) {
+        logError("Invalid file handle.");
+        return NULL;
+    }
+
+    // filesize
+    fseek(file->fp, 0, SEEK_END);
+    long size = ftell(file->fp);
+    rewind(file->fp);
+
+    // allocate memory
+    char *buffer = malloc(size + 1); // + "\0"
+    if (!buffer) {
+        return NULL;
+    }
+
+    // read file
+    size_t read_bytes = fread(buffer, 1, size, file->fp);
+
+    // add '\0' for termination
+    buffer[read_bytes] = '\0';
+
+    return buffer;
+}
+
 void File_WriteLine(File *file, const UTF8String *line) {
     if (!file || !file->fp || !line || file->access != FILE_ACCESS_WRITE) {
         logError("Invalid parameters for File_WriteLine.");

@@ -60,6 +60,11 @@ void File_Close(File *file);
 UTF8String *File_ReadLine(File *file);
 
 /**
+ * @brief Read whole file. Ownership is left to caller
+ */
+char *File_Read(File *file);
+
+/**
  * @brief Write a line to a file.
  */
 void File_WriteLine(File *file, const UTF8String *line);
