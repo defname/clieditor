@@ -17,7 +17,7 @@ void free_value(TableValue *value, TableValueType type) {
     }
 }
 
-void TableEntry_Init(TableSlot *slot) {
+void TableSlot_Init(TableSlot *slot) {
     slot->key = NULL;
     slot->value.int_value = 0;
     slot->value.string_value = NULL;
@@ -26,7 +26,7 @@ void TableEntry_Init(TableSlot *slot) {
     slot->state = TABLE_SLOT_EMPTY;
 }
 
-void TableEntry_Deinit(TableSlot *slot) {
+void TableSlot_Deinit(TableSlot *slot) {
     if (!slot) {
         return;
     }
@@ -34,14 +34,15 @@ void TableEntry_Deinit(TableSlot *slot) {
         free(slot->key);
     }
    free_value(&slot->value, slot->type);
+   TableSlot_Init(slot);
 }
 
 // djb2
 static uint32_t hash_string(const char *str) {
     uint32_t hash = 5381;
-    char c;
+    unsigned char c;
 
-    while ((c = *str++)) {
+    while ((c = (unsigned char)*str++)) {
         hash = ((hash << 5) + hash) + c;
     }
     return hash;
@@ -114,7 +115,7 @@ static void increase_capacity(Table *table) {
 
     // init new table slots
     for (size_t i=0; i<new_table->capacity; i++) {
-        TableEntry_Init(&new_table->slots[i]);
+        TableSlot_Init(&new_table->slots[i]);
     }
 
     // copy old slots to new table
@@ -155,7 +156,7 @@ void Table_Deinit(Table *table) {
     if (table->slots) {
         for (size_t i=0; i<table->capacity; i++) {
             TableSlot *entry = &table->slots[i];
-            TableEntry_Deinit(entry);
+            TableSlot_Deinit(entry);
         }
         free(table->slots);
     }
@@ -249,6 +250,10 @@ void Table_SetInt(Table *table, const char *key, int value) {
 }
 
 void Table_SetStr(Table *table, const char *key, const char *value) {
+    if (!value) {
+        logWarn("Table_SetStr() was called with value == NULL. value is set to empty string.");
+        value = "";
+    }
     char *copy = strdup(value);
     if (!copy) {
         logFatal("No memory for string copy in Table_SetStr().");

@@ -19,6 +19,11 @@
  * 
  * Simple implementation of a hashtable using the open addressing
  * with linear probing. For hashing the djb2 hash algorithm is used.
+ * 
+ * The load factor is calculated from all slots that are not empty
+ * (tombstones included). It's assumed that there not too many deletions
+ * occure. Otherwise the worst that can happen is that the used memory
+ * increases. That's the tradeoff for fast access through less probing.
  */
 #ifndef TABLE_H
 #define TABLE_H
@@ -58,8 +63,8 @@ typedef struct _TableEntry {
     TableSlotState state;
 } TableSlot;
 
-void TableEntry_Init(TableSlot *slot);
-void TableEntry_Deinit(TableSlot *slot);
+void TableSlot_Init(TableSlot *slot);
+void TableSlot_Deinit(TableSlot *slot);
 
 typedef struct _Table {
     TableSlot *slots;
