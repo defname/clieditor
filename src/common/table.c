@@ -84,16 +84,15 @@ static void shallow_copy_table(Table *dst, const Table *src) {
     if (!dst || !src) {
         return;
     }
-    if (dst->capacity < src->capacity) {
-        logFatal("Wrong use of copy_table. (dst->capacity < src->capacity)");
+    if (dst->capacity * TABLE_MAX_LOAD_FACTOR <= src->used) {
+        // this prevents a infinit loop when TableSet is called.
+        logFatal("Wrong use of copy_table. (dst->capacity too small)");
     }
-    size_t used = 0;
-    for (int i=0; i<src->capacity; i++) {
+    for (size_t i=0; i<src->capacity; i++) {
         TableSlot *src_slot = &src->slots[i];
         if (src_slot->state != TABLE_SLOT_USED) {
             continue;
         }
-        TableSlot *dst_slot = find_slot(dst, src_slot->key);
         // Table_Set() copies the key but not the char* string or a Table* in value, only the pointers)
         Table_Set(dst, src_slot->key, src_slot->type, src_slot->value);
     }
@@ -114,7 +113,7 @@ static void increase_capacity(Table *table) {
     }
 
     // init new table slots
-    for (int i=0; i<new_table->capacity; i++) {
+    for (size_t i=0; i<new_table->capacity; i++) {
         TableEntry_Init(&new_table->slots[i]);
     }
 
@@ -122,7 +121,7 @@ static void increase_capacity(Table *table) {
     shallow_copy_table(new_table, table);
 
     // free old table keys
-    for (int i=0; i<table->capacity; i++) {
+    for (size_t i=0; i<table->capacity; i++) {
         TableSlot *slot = &table->slots[i];
         if (slot->state == TABLE_SLOT_USED) {
             free(slot->key);
@@ -154,7 +153,7 @@ void Table_Deinit(Table *table) {
         return;
     }
     if (table->slots) {
-        for (int i=0; i<table->capacity; i++) {
+        for (size_t i=0; i<table->capacity; i++) {
             TableSlot *entry = &table->slots[i];
             TableEntry_Deinit(entry);
         }
@@ -183,6 +182,9 @@ void Table_Destroy(Table *table) {
 void Table_Set(Table *table, const char*key, TableValueType type, TableValue value) {
     if (!table || !key) {
         return;
+    }
+    if (table->used >= table->capacity * TABLE_MAX_LOAD_FACTOR) {
+        increase_capacity(table);
     }
     TableSlot *slot = find_slot(table, key);
     if (!slot) {
@@ -247,7 +249,12 @@ void Table_SetInt(Table *table, const char *key, int value) {
 }
 
 void Table_SetStr(Table *table, const char *key, const char *value) {
-    Table_Set(table, key, TABLE_VALUE_TYPE_STRING, (TableValue){ .string_value = value });
+    char *copy = strdup(value);
+    if (!copy) {
+        logFatal("No memory for string copy in Table_SetStr().");
+    }
+
+    Table_Set(table, key, TABLE_VALUE_TYPE_STRING, (TableValue){ .string_value = copy });
 }
 
 void Table_SetTable(Table *table, const char *key, Table *value) {

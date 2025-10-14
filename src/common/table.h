@@ -52,7 +52,7 @@ typedef enum {
 } TableSlotState;
 
 typedef struct _TableEntry {
-    const char *key;
+    char *key;
     TableValue value;
     TableValueType type;
     TableSlotState state;
@@ -100,7 +100,7 @@ void Table_Delete(Table *table, const char *key);
 
 
 void Table_SetInt(Table *table, const char *key, int value);
-void Table_SetStr(Table *table, const char *key, const char *value);
+void Table_SetStr(Table *table, const char *key, const char *value);  //< value of the string is copied with strdup(). So the caller is responisble for value
 void Table_SetTable(Table *table, const char *key, Table *value);
 
 
