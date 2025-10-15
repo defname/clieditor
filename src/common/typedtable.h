@@ -40,7 +40,7 @@ typedef struct _TypedValue {
     union {
         int number_value;
         char* string_value;
-        int boolean_value;
+        bool boolean_value;
         Table *table_value;
     } data;
 } TypedValue;
