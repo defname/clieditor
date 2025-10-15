@@ -58,7 +58,7 @@
 
 <LETTER>        ::= [a-zA-Z]
 <KEY_CHAR>      ::= <LETTER> | <DIGIT> | '.' | '-' | '_'
-<KEY>           ::= <LETTER> <KEY_CHAR>*
+<KEY>           ::= <KEY_CHAR> <KEY_CHAR>*
 
 *****************************************/
 #ifndef INIPARSER_H

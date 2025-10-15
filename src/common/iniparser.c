@@ -15,6 +15,7 @@
  */
 #include "iniparser.h"
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include "common/logging.h"
 #include "common/typedtable.h"
@@ -128,6 +129,9 @@ static char advance(IniParser *parser) {
 }
 
 static void set_error(IniParser *parser, const char *message) {
+    if (parser->error) {
+        return;
+    }
     parser->error = ParsingError_Create(parser->line, parser->column, message);
 }
 
@@ -170,6 +174,10 @@ static char *parse_barestring(IniParser *parser) {
     while (is_barechar(peek(parser)) && !is_at_end(parser)) {
         advance(parser);
         length++;
+    }
+    // strip whitespaces from end
+    while (is_whitespace(bare_str[length - 1])) {
+        length--;
     }
     return substr(bare_str, length);
 }
@@ -214,15 +222,16 @@ static void parse_value(IniParser *parser, const char *key) {
         advance(parser);
         TypedTable_SetString(parser->current_section, key, value);
     }
-    else if (is_barechar(peek(parser))) {
-        char *value = parse_barestring(parser);
-        TypedTable_SetString(parser->current_section, key, value);
-    }
+    // need to check for number value before barestring before a barestring can contain numbers
     else if (is_digit(peek(parser))) {
         char *value = parse_number(parser);
         int number = atoi(value);
         free(value);
         TypedTable_SetNumber(parser->current_section, key, number);
+    }
+    else if (is_barechar(peek(parser))) {
+        char *value = parse_barestring(parser);
+        TypedTable_SetString(parser->current_section, key, value);
     }
     else {
         TypedTable_SetStringCopy(parser->current_section, key, "");
@@ -234,6 +243,7 @@ static void parse_assignment(IniParser *parser) {
     skip_whitespace(parser);
     if (peek(parser) != '=') {
         set_error(parser, "Expected '='.");
+        free(key);
         return;
     }
     advance(parser);
@@ -243,6 +253,7 @@ static void parse_assignment(IniParser *parser) {
     parse_opt_comment(parser);
     if (!is_newline(peek(parser))) {
         set_error(parser, "Expected newline.");
+        return;
     }
     advance(parser);
 }
@@ -258,6 +269,7 @@ static void parse_section(IniParser *parser) {
     skip_whitespace(parser);
     if (peek(parser) != ']') {
         set_error(parser, "Expected ']'");
+        free(key);
         return;
     }
     advance(parser);
@@ -265,6 +277,10 @@ static void parse_section(IniParser *parser) {
     TypedTable_SetTable(parser->table, key, parser->current_section);
     free(key);
     parse_opt_comment(parser);
+    if (!is_newline(peek(parser))) {
+        set_error(parser, "Expected newline.");
+        return;
+    }
     advance(parser);
 }
 
@@ -324,19 +340,23 @@ void IniParser_Reset(IniParser *parser) {
 }
 
 Table *IniParser_Parse(IniParser *parser) {
-   IniParser_Reset(parser);
-   parser->table = Table_Create();
-   parser->current_section = parser->table;
-   parse_inifile(parser);
+    IniParser_Reset(parser);
+    if (!parser->text) {
+        set_error(parser, "No text to parse.");
+        return NULL;
+    }
+    parser->table = Table_Create();
+    parser->current_section = parser->table;
+    parse_inifile(parser);
 
-   if (parser->error) {
-       Table_Destroy(parser->table);
-       parser->table = NULL;
-       return NULL;
-   }
+    if (parser->error) {
+        Table_Destroy(parser->table);
+        parser->table = NULL;
+        return NULL;
+    }
 
-   // Success: Transfer ownership to the caller
-   Table *result_table = parser->table;
-   parser->table = NULL;
-   return result_table;
+    // Success: Transfer ownership to the caller
+    Table *result_table = parser->table;
+    parser->table = NULL;
+    return result_table;
 }
