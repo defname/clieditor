@@ -47,15 +47,54 @@ void ParsingError_Destroy(ParsingError *error) {
 
 /*********************************************/
 /* String helper functions                   */
+
 // create a new string from a substring 
 static char *substr(const char *str, size_t length) {
-    char *substr = malloc(length + 1);
-    if (!substr) {
+    char *out = malloc(length + 1);
+    if (!out) {
         logFatal("Cannot allocate memory in substr().");
     }
-    strncpy(substr, str, length);
-    substr[length] = '\0';
-    return substr;
+    memcpy(out, str, length);
+    out[length] = '\0';
+    return out;
+}
+
+// unescape string
+char *unescape(char  *str) {
+    size_t idx = 0;
+    size_t new_idx = 0;
+    for (;str[idx]; idx++, new_idx++) {
+        if (str[idx] == '\\') {
+            if (str[idx + 1] == '\0') {
+                break;
+            }
+            switch (str[idx + 1]) {
+                case 'n':
+                    str[new_idx] = '\n';
+                    break;
+                case 't':
+                    str[new_idx] = '\t';
+                    break;
+                case '"':
+                    str[new_idx] = '"';
+                    break;
+                case '\\':
+                    str[new_idx] = '\\';
+                    break;
+                default:
+                    str[new_idx++] = '\\';
+                    str[new_idx] = str[idx + 1];
+                    logWarn("Invalid escape sequence in unescape()");
+                    break;
+            }
+            idx++;
+        }
+        else {
+            str[new_idx] = str[idx];
+        }
+    }
+    str[new_idx] = '\0';
+    return str;
 }
 
 /*************************************/
@@ -142,6 +181,16 @@ static void skip_whitespace(IniParser *parser) {
     }
 }
 
+static void expect_newline(IniParser *parser) {
+    if (!is_newline(peek(parser)) && !is_at_end(parser)) {
+        set_error(parser, "Expected newline.");
+        return;
+    }
+    if (!is_at_end(parser)) {
+        advance(parser);
+    }
+}
+
 
 /***************************************/
 /* Parsing functions                   */
@@ -177,7 +226,7 @@ static char *parse_barestring(IniParser *parser) {
         length++;
     }
     // strip whitespaces from end
-    while (is_whitespace(bare_str[length - 1])) {
+    while (length > 0 && is_whitespace(bare_str[length - 1])) {
         length--;
     }
     return substr(bare_str, length);
@@ -190,7 +239,7 @@ static char *parse_string(IniParser *parser) {
         if (peek(parser) == '\\') {
             advance(parser);
             length++;
-            if (!is_any_of(peek(parser), "\"nrt\\")) {
+            if (!is_any_of(peek(parser), "\"nt\\")) {
                 set_error(parser, "Expected a valid escape sequence.");
                 return NULL;
             }
@@ -198,7 +247,7 @@ static char *parse_string(IniParser *parser) {
         advance(parser);
         length++;
     }
-    return substr(str, length);
+    return unescape(substr(str, length));
 }
 
 static char *parse_number(IniParser *parser) {
@@ -255,11 +304,7 @@ static void parse_assignment(IniParser *parser) {
     parse_value(parser, key);
     free(key);
     parse_opt_comment(parser);
-    if (!is_newline(peek(parser))) {
-        set_error(parser, "Expected newline.");
-        return;
-    }
-    advance(parser);
+    expect_newline(parser);
 }
 
 static void parse_section(IniParser *parser) {
@@ -281,11 +326,7 @@ static void parse_section(IniParser *parser) {
     TypedTable_SetTable(parser->table, key, parser->current_section);
     free(key);
     parse_opt_comment(parser);
-    if (!is_newline(peek(parser))) {
-        set_error(parser, "Expected newline.");
-        return;
-    }
-    advance(parser);
+    expect_newline(parser);
 }
 
 static void parse_expr(IniParser *parser) {
@@ -338,9 +379,22 @@ void IniParser_Reset(IniParser *parser) {
     }
     parser->error = NULL;
     parser->table = NULL;
+    parser->current_section = NULL;
     parser->current = parser->text;
     parser->line = 1;
     parser->column = 0;
+}
+
+void IniParser_SetText(IniParser *parser, const char *text) {
+    parser->text = text;
+}
+
+const char *IniParser_GetText(const IniParser *parser) {
+    return parser->text;
+}
+
+const ParsingError *IniParser_GetError(const IniParser *parser) {
+    return parser->error;
 }
 
 Table *IniParser_Parse(IniParser *parser) {

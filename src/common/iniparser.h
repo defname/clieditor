@@ -41,7 +41,7 @@
 
 <STRING>        ::= '"' <CHAR>* '"'
 <CHAR>          ::= [^\n\r"\\] | <ESCAPE>
-<ESCAPE>        ::= '\' ['"nrt\\]
+<ESCAPE>        ::= '\' ['"nt\\]
 
 <BARESTRING>    ::= <BARECHAR>+
 <BARECHAR>      ::= [^"#;\n\r\t]
@@ -64,7 +64,7 @@
 #ifndef INIPARSER_H
 #define INIPARSER_H
 
-#include "table.h"
+#include "typedtable.h"
 
 typedef struct _ParsingError {
     int line;
@@ -89,8 +89,22 @@ typedef struct {
 
 void IniParser_Init(IniParser *parser);
 void IniParser_Deinit(IniParser *parser);
-void IniParser_Reset(IniParser *parser);
 
+void IniParser_SetText(IniParser *parser, const char *text);
+const char *IniParser_GetText(const IniParser *parser);
+
+const ParsingError *IniParser_GetError(const IniParser *parser);
+
+/**
+ * @brief Run the parser.
+ * 
+ * Parse the text set by IniParser_SetText(). On success a TypedTable
+ * containing the sections and key/value pairs of the INI file is returned.
+ * If an error occurs NULL is returned. Error information are available via
+ * IniParser_GetError().
+ * 
+ * @returns NULL or the created (typed) Table. The ownership is transfered to the caller.
+ */
 Table *IniParser_Parse(IniParser *parser);
 
 #endif
