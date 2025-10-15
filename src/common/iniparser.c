@@ -341,6 +341,7 @@ static void parse_expr(IniParser *parser) {
     }
     else if (is_any_of(peek(parser), "#;")) {
        parse_text(parser);
+       expect_newline(parser);
     }
     else {
         set_error(parser, "Unexpected character.");
