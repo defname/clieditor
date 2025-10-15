@@ -19,6 +19,46 @@
  * 
  * Provides a easy way to read INI files into hash Tables.
  */
+
+/********** INI-File Grammar *************
+
+<INIFILE>       ::= <WS>* <EXPR>* <WS>*
+
+<EXPR>          ::= <COMMENT>
+                  | <SECTION>
+                  | <ASSIGNMENT>
+                  | <EMPTYLINE>
+
+<SECTION>       ::= '[' <WS>* <KEY> <WS>* ']' <WS>* <OPT_COMMENT>? '\n' <ASSIGNMENT>* 
+
+<ASSIGNMENT>    ::= <KEY> <WS>* '=' <WS>* <VALUE>? <WS>* <OPT_COMMENT>? '\n'
+
+<VALUE>         ::= <NUMBER>
+                  | <STRING>
+                  | <BARESTRING>
+
+<NUMBER>        ::= <DIGIT>+
+
+<STRING>        ::= '"' <CHAR>* '"'
+<CHAR>          ::= [^\n\r"\\] | <ESCAPE>
+<ESCAPE>        ::= '\' ['"nrt\\]
+
+<BARESTRING>    ::= <BARECHAR>+
+<BARECHAR>      ::= [^"#;\n\r\t]
+
+<COMMENT>       ::= <WS>* (';' | '#') <TEXT>* '\n'
+<OPT_COMMENT>   ::= <WS>* (';' | '#') <TEXT>*
+
+<TEXT>          ::= [^\n]*
+<DIGIT>         ::= [0-9]
+
+<EMPTYLINE>     ::= <WS>* '\n'
+
+<KEY>           ::= <BARECHAR>+
+
+<WS>            ::= (' ' | '\t')*
+
+*****************************************/
 #ifndef INIPARSER_H
 #define INIPARSER_H
 
