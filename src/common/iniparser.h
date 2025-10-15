@@ -22,12 +22,12 @@
 
 /********** INI-File Grammar *************
 
-<INIFILE>       ::= <WS>* <EXPR>* <WS>*
+<INIFILE>       ::= (<WS>* <EXPR>)* <WS>*
 
 <EXPR>          ::= <COMMENT>
                   | <SECTION>
                   | <ASSIGNMENT>
-                  | <EMPTYLINE>
+                  | <EMPTYLINE>)
 
 <SECTION>       ::= '[' <WS>* <KEY> <WS>* ']' <WS>* <OPT_COMMENT>? '\n' <ASSIGNMENT>* 
 
@@ -54,9 +54,11 @@
 
 <EMPTYLINE>     ::= <WS>* '\n'
 
-<KEY>           ::= <BARECHAR>+
+<WS>            ::= ' ' | '\t'
 
-<WS>            ::= (' ' | '\t')*
+<LETTER>        ::= [a-zA-Z]
+<KEY_CHAR>      ::= <LETTER> | <DIGIT> | '.' | '-' | '_'
+<KEY>           ::= <LETTER> <KEY_CHAR>*
 
 *****************************************/
 #ifndef INIPARSER_H
@@ -64,7 +66,31 @@
 
 #include "table.h"
 
-Table *IniParser_Parse(const char *ini);
-Table *IniParser_ParseFile(const char *filename);
+typedef struct _ParsingError {
+    int line;
+    int column;
+    char *message;
+} ParsingError;
+
+ParsingError *ParsingError_Create(int line, int column, const char *msg);
+void ParsingError_Destroy(ParsingError *error);
+
+
+typedef struct {
+    Table *table;
+    Table *current_section;
+
+    const char *text;
+    const char *current;
+    int line;
+    int column;
+    ParsingError *error;
+} IniParser;
+
+void IniParser_Init(IniParser *parser);
+void IniParser_Deinit(IniParser *parser);
+void IniParser_Reset(IniParser *parser);
+
+Table *IniParser_Parse(IniParser *parser);
 
 #endif
