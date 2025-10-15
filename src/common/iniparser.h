@@ -89,6 +89,7 @@ typedef struct {
 
 void IniParser_Init(IniParser *parser);
 void IniParser_Deinit(IniParser *parser);
+void IniParser_Reset(IniParser *parser);
 
 void IniParser_SetText(IniParser *parser, const char *text);
 const char *IniParser_GetText(const IniParser *parser);
