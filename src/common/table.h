@@ -35,32 +35,16 @@
 #define TABLE_GROWTH_FACTOR 2
 #define TABLE_MAX_LOAD_FACTOR 0.75
 
-
-struct _Table;
-
-typedef union _TableEntryValue {
-    int int_value;
-    char *string_value;
-    struct _Table *table_value;
-} TableValue;
-
-typedef enum {
-    TABLE_VALUE_TYPE_NONE,
-    TABLE_VALUE_TYPE_INT,
-    TABLE_VALUE_TYPE_STRING,
-    TABLE_VALUE_TYPE_TABLE
-} TableValueType;
-
 typedef enum {
     TABLE_SLOT_EMPTY,
     TABLE_SLOT_USED,
     TABLE_SLOT_TOMBSTONE
 } TableSlotState;
 
-typedef struct _TableEntry {
+typedef struct _TableSlot {
     char *key;
-    TableValue value;
-    TableValueType type;
+    void *value;
+    void (*destructor)(void *value);
     TableSlotState state;
 } TableSlot;
 
@@ -82,25 +66,24 @@ void Table_Destroy(Table *table);
 /**
  * @brief Set value for key in table.
  * 
- * If the key does not already exist in table it is copied with strdup(). The data a pointer in value
- * points to is not copied, but Table takes the ownership of this pointers and will free them if the
- * value gets overwritten or the table gets freed.
+ * If destructor is not NULL table takes the ownership of of value and will take responsibility
+ * for destroying it (in the case of overwriting or deleting it). If destructor is NULL the
+ * ownership stays by the owner and he need to take care of freeing value.
  */
-void Table_Set(Table *table, const char *key, TableValueType type, TableValue value);
+void Table_Set(Table *table, const char *key, void *value, void (*destructor)(void *value));
 
 /**
- * @brief Find the value for key in the table and return it.
+ * @brief Return the value for key or NULL if key is not found.
  * 
- * If key exists in the table return the value type and set value to the found value.
- * If the key does not exist return TABLE_VALUE_TYPE_NONE and set value to fallback.
+ * If NULL is a ligit value for key use Table_Has() to check if the key exists in the table.
  */
-TableValueType Table_Get(const Table *table, const char *key, TableValue *value, TableValue fallback);
+void *Table_Get(const Table *table, const char *key);
 
 /**
  * @brief Delete the entry for key in table.
  * 
- * Delete the entry of key if it exists. If value contains a pointer it is freed properly.
- * (for Table* Table_Destroy() is called)
+ * Delete the entry of key if it exists. If table has the ownership for value (a destructor is present)
+ * value will be destructed. 
  */
 void Table_Delete(Table *table, const char *key);
 
@@ -109,10 +92,10 @@ void Table_Delete(Table *table, const char *key);
  */
 bool Table_Has(const Table *table, const char *key);
 
-void Table_SetInt(Table *table, const char *key, int value);
-void Table_SetStr(Table *table, const char *key, const char *value);  //< value of the string is copied with strdup(). So the caller is responisble for value
-void Table_SetTable(Table *table, const char *key, Table *value);
-
+/**
+ * @brief Return true if table has the ownership for the entry of key
+ */
+bool Table_HasOwnership(const Table *table, const char *key);
 
 
 #endif
