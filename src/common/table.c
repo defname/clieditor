@@ -20,24 +20,10 @@
 #include "logging.h"
 
 
-void free_value(TableValue *value, TableValueType type) {
-    if (!value) {
-        return;
-    }
-    if (type == TABLE_VALUE_TYPE_STRING && value->string_value) {
-        free(value->string_value);
-    }
-    if (type == TABLE_VALUE_TYPE_TABLE && value->table_value) {
-        Table_Destroy(value->table_value);
-    }
-}
-
 void TableSlot_Init(TableSlot *slot) {
     slot->key = NULL;
-    slot->value.int_value = 0;
-    slot->value.string_value = NULL;
-    slot->value.table_value = NULL;
-    slot->type = TABLE_VALUE_TYPE_NONE;
+    slot->value = NULL;
+    slot->destructor = NULL;
     slot->state = TABLE_SLOT_EMPTY;
 }
 
@@ -48,7 +34,9 @@ void TableSlot_Deinit(TableSlot *slot) {
     if (slot->key) {
         free(slot->key);
     }
-   free_value(&slot->value, slot->type);
+    if (slot->destructor) {
+        slot->destructor(slot->value);
+    }
    TableSlot_Init(slot);
 }
 
@@ -95,7 +83,6 @@ static TableSlot *find_slot(const Table *table, const char *key) {
     logFatal("That's not possible!");
 }
 
-// copy the entries of src to the dst. do noch copy pointer targets only pointers itself
 static void shallow_copy_table(Table *dst, const Table *src) {
     if (!dst || !src) {
         return;
@@ -109,8 +96,11 @@ static void shallow_copy_table(Table *dst, const Table *src) {
         if (src_slot->state != TABLE_SLOT_USED) {
             continue;
         }
-        // Table_Set() copies the key but not the char* string or a Table* in value, only the pointers)
-        Table_Set(dst, src_slot->key, src_slot->type, src_slot->value);
+        // Table_Set() copies the key. The ownership of value is left by caller
+        // or transfered to new table
+        Table_Set(dst, src_slot->key, src_slot->value, src_slot->destructor);
+        // the src table looses the ownership in any case
+        src_slot->destructor = NULL;
     }
 }
 
@@ -197,7 +187,7 @@ void Table_Destroy(Table *table) {
 }
 
 
-void Table_Set(Table *table, const char*key, TableValueType type, TableValue value) {
+void Table_Set(Table *table, const char*key, void *value, void (*destructor)(void *value)) {
     if (!table || !key) {
         return;
     }
@@ -217,38 +207,28 @@ void Table_Set(Table *table, const char*key, TableValueType type, TableValue val
         }
         table->used++;
     }
-    // free potential pointers before overwriting them
-    free_value(&slot->value, slot->type);
-    slot->type = type;
+    // if table has the ownership of the value free it before overwriting it
+    if (slot->destructor) {
+        slot->destructor(slot->value);
+    }
+    slot->destructor = destructor;
     slot->value = value;  // potential pointers in value are copied and ownership is taken
 }
 
-TableValueType Table_Get(const Table *table, const char *key, TableValue *value, TableValue fallback) {
+void *Table_Get(const Table *table, const char *key) {
     if (!table) {
         logFatal("Invalid table in Table_Get().");
     }
-    if (!value) {
-        logWarn("value == NULL in Table_Get(). Return value cannot be set.");
-    }
     if (!key) {
         logWarn("Table_Get() was called with key == NULL.");
-        if (value) {
-            *value = fallback;
-        }
-        return TABLE_VALUE_TYPE_NONE;
+        return NULL;
     }
 
     TableSlot *slot = find_slot(table, key);
     if (slot->state == TABLE_SLOT_EMPTY) {
-        if (value) {
-            *value = fallback;
-        }
-        return TABLE_VALUE_TYPE_NONE;
+        return NULL;
     }
-    if (value) {
-        *value = slot->value;
-    }
-    return slot->type;
+    return slot->value;
 }
 
 void Table_Delete(Table *table, const char *key) {
@@ -263,11 +243,7 @@ void Table_Delete(Table *table, const char *key) {
     if (slot->state != TABLE_SLOT_USED) {
         return;
     }
-    free(slot->key);
-    slot->key = NULL;
-    free_value(&slot->value, slot->type);
-    slot->type = TABLE_VALUE_TYPE_NONE;;
-    slot->value = (TableValue){ 0 };
+    TableSlot_Deinit(slot);
     slot->state = TABLE_SLOT_TOMBSTONE;
 
     // used is not decremented intentionally!
@@ -286,28 +262,14 @@ bool Table_Has(const Table *table, const char *key) {
     return (slot->state == TABLE_SLOT_USED);
 }
 
-void Table_SetInt(Table *table, const char *key, int value) {
-    Table_Set(table, key, TABLE_VALUE_TYPE_INT, (TableValue){ .int_value = value });
-}
-
-void Table_SetStr(Table *table, const char *key, const char *value) {
-    if (!value) {
-        logWarn("Table_SetStr() was called with value == NULL. value is set to empty string.");
-        value = "";
+bool Table_HasOwnership(const Table *table, const char *key) {
+    if (!table) {
+        logFatal("Invalid table in Table_HasOwnership().");
     }
-    char *copy = strdup(value);
-    if (!copy) {
-        logFatal("No memory for string copy in Table_SetStr().");
+    if (!key) {
+        logWarn("Table_HasOwnership() was called with key == NULL.");
+        return false;
     }
-
-    Table_Set(table, key, TABLE_VALUE_TYPE_STRING, (TableValue){ .string_value = copy });
+    TableSlot *slot = find_slot(table, key);
+    return (slot->state == TABLE_SLOT_USED && slot->destructor != NULL);
 }
-
-void Table_SetTable(Table *table, const char *key, Table *value) {
-    if (table == value) {
-        logError("Cannot add table to itself.");
-        return;
-    }
-    Table_Set(table, key, TABLE_VALUE_TYPE_TABLE, (TableValue){ .table_value = value });
-}
-

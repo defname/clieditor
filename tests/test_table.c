@@ -11,70 +11,82 @@ void test_creation(void) {
     Table_Destroy(table);
 }
 
-void test_table_access(void) {
+void test_set_get(void) {
     Table *table = Table_Create();
 
-    // set int
-    Table_Set(table, "key0", TABLE_VALUE_TYPE_INT, (TableValue)5);
+    // set with destructor
+    Table_Set(table, "key0", strdup("Foobar"), free);
 
-    // set string
-    char *ownership_will_be_taken = strdup("ownership will be taken");
-    Table_Set(table, "key1", TABLE_VALUE_TYPE_STRING, (TableValue){ .string_value = ownership_will_be_taken });
-    
-    TableValue value;
+    // set without destructor
+    char *s = strdup("Test");
+    Table_Set(table, "key1", s, NULL);
+
+    TEST_CHECK(table->used == 2);
+    TEST_CHECK(table->capacity >= TABLE_INITIAL_CAPACITY);
+
     // get keys
-    TEST_CHECK(Table_Get(table, "key0", &value, (TableValue)0) == TABLE_VALUE_TYPE_INT);
-    TEST_CHECK(value.int_value == 5);
-    TEST_CHECK(Table_Get(table, "key1", &value, (TableValue)0) == TABLE_VALUE_TYPE_STRING);
-    TEST_CHECK(strcmp(value.string_value, "ownership will be taken") == 0);
+    TEST_CHECK(strcmp(Table_Get(table, "key0"), "Foobar") == 0);
+    TEST_CHECK(Table_Get(table, "key1") == s);
+    // get non existing key
+    TEST_CHECK(Table_Get(table, "invalid") == NULL);
 
     // overwrite
-    Table_SetStr(table, "key0", "Foobar");
-    TEST_ASSERT(Table_Get(table, "key0", &value, (TableValue)0) == TABLE_VALUE_TYPE_STRING);
-    TEST_ASSERT(strcmp(value.string_value, "Foobar") == 0);
-
-    // get non-existing key
-    TEST_CHECK(Table_Get(table, "invalid", &value, (TableValue)0) == TABLE_VALUE_TYPE_NONE);
+    Table_Set(table, "key0", strdup("Blub"), free);
+    TEST_CHECK(strcmp(Table_Get(table, "key0"), "Blub") == 0);
 
     // delete
     Table_Delete(table, "key0");
-    TEST_CHECK(!Table_Has(table, "key0"));
-    TEST_CHECK(Table_Get(table, "key0", &value, (TableValue)0) == TABLE_VALUE_TYPE_NONE);
-
-    // test has
-    TEST_CHECK(Table_Has(table, "key1"));
-    TEST_CHECK(!Table_Has(table, "invalid"));
-
-    // fallback
-    TEST_CHECK(Table_Get(table, "invalid", &value, (TableValue){ .int_value = 42 }) == TABLE_VALUE_TYPE_NONE);
-    TEST_CHECK(value.int_value == 42);
+    TEST_CHECK(Table_Get(table, "key0") == NULL);
 
     Table_Destroy(table);
+    free(s);
+}
+
+void test_has_hasownership(void) {
+    Table *table = Table_Create();
+
+    char *s = strdup("Test");
+    Table_Set(table, "key0", strdup("Foobar"), free);
+    Table_Set(table, "key1", strdup("Blub"), free);
+    Table_Set(table, "key2", s, NULL);
+    Table_Set(table, "key3", NULL, NULL);
+
+    TEST_CHECK(Table_Has(table, "key0"));
+    TEST_CHECK(Table_Has(table, "key1"));
+    TEST_CHECK(Table_Has(table, "key2"));
+    TEST_CHECK(Table_Has(table, "key3"));
+    TEST_CHECK(!Table_Has(table, "key4"));
+
+    TEST_CHECK(Table_HasOwnership(table, "key0"));
+    TEST_CHECK(Table_HasOwnership(table, "key1"));
+    TEST_CHECK(!Table_HasOwnership(table, "key2"));
+    TEST_CHECK(!Table_HasOwnership(table, "key3"));
+    TEST_CHECK(!Table_HasOwnership(table, "key4"));
+
+    Table_Destroy(table);
+    free(s);
 }
 
 void test_rehashing(void) {
     Table *table = Table_Create();
 
-    Table_SetInt(table, "int", 73);
+    // increase table the first time
+    Table_Set(table, "initial", NULL, NULL);
+    TEST_CHECK(table->capacity == TABLE_INITIAL_CAPACITY);
+
     size_t orig_capacity = table->capacity;
     for (size_t i=1; i<orig_capacity; i++) {
         char a[30];
         snprintf(a, 30, "key%ld", i);
-        Table_SetStr(table, a, a);
+        Table_Set(table, a, strdup(a), free);
     }
 
     TEST_CHECK(table->capacity == TABLE_INITIAL_CAPACITY * TABLE_GROWTH_FACTOR);
     
-    TableValue value;
-    TEST_CHECK(Table_Get(table, "int", &value, (TableValue)0) == TABLE_VALUE_TYPE_INT);
-    TEST_CHECK(value.int_value == 73);
-
     for (size_t i=1; i<orig_capacity; i++) {
         char a[30];
         snprintf(a, 30, "key%ld", i);
-        TableValue value;
-        TEST_CHECK(Table_Get(table, a, &value, (TableValue)0) == TABLE_VALUE_TYPE_STRING);
-        TEST_CHECK(strcmp(value.string_value, a) == 0);
+        TEST_CHECK(strcmp(Table_Get(table, a), a) == 0);
     }
 
     Table_Destroy(table);
@@ -82,7 +94,8 @@ void test_rehashing(void) {
 
 TEST_LIST = {
     { "Table: Creation", test_creation },
-    { "Table: Set and Get", test_table_access },
+    { "Table: Set and Get", test_set_get },
+    { "Table: Existence and Owndership", test_has_hasownership },
     { "Table: Rehashing", test_rehashing },
     { NULL, NULL }
 };
