@@ -49,10 +49,10 @@ TypedValue *TypedValue_Create();
 void TypedValue_Destroy(TypedValue *value);
 
 void TypedTable_SetNumber(Table *table, const char *key, int value);
-void TypedTable_SetString(Table *table, const char *key, char *value);
-void TypedTable_SetStringCopy(Table *table, const char *key, const char *value);
+void TypedTable_SetString(Table *table, const char *key, char *value);  //< ownership is taken
+void TypedTable_SetStringCopy(Table *table, const char *key, const char *value); //< value is copied
 void TypedTable_SetBoolean(Table *table, const char *key, bool value);
-void TypedTable_SetTable(Table *table, const char *key, Table *value);
+void TypedTable_SetTable(Table *table, const char *key, Table *value);  //< ownership is taken
 
 ValueType TypedTable_GetType(Table *table, const char *key);
 
