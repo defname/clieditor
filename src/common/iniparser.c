@@ -45,8 +45,9 @@ void ParsingError_Destroy(ParsingError *error) {
     free(error);
 }
 
-
-// create a new strong from a substring 
+/*********************************************/
+/* String helper functions                   */
+// create a new string from a substring 
 static char *substr(const char *str, size_t length) {
     char *substr = malloc(length + 1);
     if (!substr) {
@@ -214,6 +215,9 @@ static void parse_value(IniParser *parser, const char *key) {
     if (peek(parser) == '"') {
         advance(parser);
         char *value = parse_string(parser);
+        if (!value) {
+            return;  // error already set
+        }
         if (peek(parser) != '"') {
             set_error(parser, "Expected '\"'");
             free(value);
