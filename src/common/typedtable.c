@@ -1,0 +1,109 @@
+#include "typedtable.h"
+#include <string.h>
+#include "common/logging.h"
+
+
+TypedValue *TypedValue_Create() {
+    TypedValue *value = malloc(sizeof(TypedValue));
+    value->type = VALUE_TYPE_NONE;
+    value->data.number_value = 0;
+    return value;
+}
+
+void TypedValue_Destroy(TypedValue *value) {
+    if (!value) {
+        return;
+    }
+    switch (value->type) {
+        case VALUE_TYPE_NONE:
+        case VALUE_TYPE_NUMBER:
+        case VALUE_TYPE_BOOLEAN:
+            break;
+        case VALUE_TYPE_STRING:
+            free(value->data.string_value);
+            break;
+        case VALUE_TYPE_TABLE:
+            Table_Destroy(value->data.table_value);
+            break;
+    }
+    free(value);
+}
+
+void TypedTable_SetNumber(Table *table, const char *key, int value) {
+    TypedValue *typed_value = TypedValue_Create();
+    typed_value->type = VALUE_TYPE_NUMBER;
+    typed_value->data.number_value = value;
+    Table_Set(table, key, typed_value, (void(*)(void*))TypedValue_Destroy);
+}
+
+
+void TypedTable_SetString(Table *table, const char *key, char *value) {
+    TypedValue *typed_value = TypedValue_Create();
+    typed_value->type = VALUE_TYPE_STRING;
+    typed_value->data.string_value = value;
+    Table_Set(table, key, typed_value, (void(*)(void*))TypedValue_Destroy);
+}
+
+void TypedTable_SetStringCopy(Table *table, const char *key, const char *value) {
+    char *copy = strdup(value);
+    if (!copy) {
+        logFatal("Cannot allocate memory for string in TypedTable_SetStringCopy().");
+    }
+    TypedTable_SetString(table, key, copy);
+}
+
+void TypedTable_SetBoolean(Table *table, const char *key, bool value) {
+    TypedValue *typed_value = TypedValue_Create();
+    typed_value->type = VALUE_TYPE_BOOLEAN;
+    typed_value->data.boolean_value = value;
+    Table_Set(table, key, typed_value, (void(*)(void*))TypedValue_Destroy);
+}
+void TypedTable_SetTable(Table *table, const char *key, Table *value) {
+    if (value == table) {
+        logFatal("Table cannot contain itself as value.");
+    }
+    TypedValue *typed_value = TypedValue_Create();
+    typed_value->type = VALUE_TYPE_TABLE;
+    typed_value->data.table_value = value;
+    Table_Set(table, key, typed_value, (void(*)(void*))TypedValue_Destroy);
+}
+
+ValueType TypedTable_GetType(Table *table, const char *key) {
+    TypedValue *typed_value = Table_Get(table, key);
+    if (!typed_value) {
+        return VALUE_TYPE_NONE;
+    }
+    return typed_value->type;
+}
+
+int TypedTable_GetNumber(Table *table, const char *key) {
+    TypedValue *typed_value = Table_Get(table, key);
+    if (!typed_value || typed_value->type != VALUE_TYPE_NUMBER) {
+        return 0;
+    }
+    return typed_value->data.number_value;
+}
+
+char* TypedTable_GetString(Table *table, const char *key) {
+    TypedValue *typed_value = Table_Get(table, key);
+    if (!typed_value || typed_value->type != VALUE_TYPE_STRING) {
+        return NULL;
+    }
+    return typed_value->data.string_value;
+}
+
+bool TypedTable_GetBoolean(Table *table, const char *key) {
+    TypedValue *typed_value = Table_Get(table, key);
+    if (!typed_value || typed_value->type != VALUE_TYPE_BOOLEAN) {
+        return false;
+    }
+    return typed_value->data.boolean_value;
+}
+
+Table* TypedTable_GetTable(Table *table, const char *key) {
+    TypedValue *typed_value = Table_Get(table, key);
+    if (!typed_value || typed_value->type != VALUE_TYPE_TABLE) {
+        return NULL;
+    }
+    return typed_value->data.table_value;
+}
