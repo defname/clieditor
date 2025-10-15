@@ -90,7 +90,7 @@ int TypedTable_GetNumber(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_NUMBER) {
         if (typed_value && typed_value->type != VALUE_TYPE_NUMBER) {
-            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+            logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return 0;
     }
@@ -101,7 +101,7 @@ const char* TypedTable_GetString(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_STRING) {
         if (typed_value && typed_value->type != VALUE_TYPE_STRING) {
-            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+            logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return NULL;
     }
@@ -112,7 +112,7 @@ bool TypedTable_GetBoolean(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_BOOLEAN) {
         if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
-            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+            logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return false;
     }
@@ -123,7 +123,7 @@ Table* TypedTable_GetTable(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_TABLE) {
         if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
-            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+            logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return NULL;
     }
