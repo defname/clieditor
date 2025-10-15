@@ -57,7 +57,7 @@ void TypedTable_SetTable(Table *table, const char *key, Table *value);
 ValueType TypedTable_GetType(Table *table, const char *key);
 
 int TypedTable_GetNumber(Table *table, const char *key);
-char* TypedTable_GetString(Table *table, const char *key);
+const char* TypedTable_GetString(Table *table, const char *key);
 bool TypedTable_GetBoolean(Table *table, const char *key);
 Table* TypedTable_GetTable(Table *table, const char *key);
 

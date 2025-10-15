@@ -5,6 +5,9 @@
 
 TypedValue *TypedValue_Create() {
     TypedValue *value = malloc(sizeof(TypedValue));
+    if (!value) {
+        logFatal("Cannot allocate memory for TypedValue.");
+    }
     value->type = VALUE_TYPE_NONE;
     value->data.number_value = 0;
     return value;
@@ -20,10 +23,14 @@ void TypedValue_Destroy(TypedValue *value) {
         case VALUE_TYPE_BOOLEAN:
             break;
         case VALUE_TYPE_STRING:
-            free(value->data.string_value);
+            if (value->data.string_value) {
+                free(value->data.string_value);
+            }
             break;
         case VALUE_TYPE_TABLE:
-            Table_Destroy(value->data.table_value);
+            if (value->data.table_value) {
+                Table_Destroy(value->data.table_value);
+            }
             break;
     }
     free(value);
@@ -62,6 +69,9 @@ void TypedTable_SetTable(Table *table, const char *key, Table *value) {
     if (value == table) {
         logFatal("Table cannot contain itself as value.");
     }
+    if (!value) {
+        logFatal("Table cannot be NULL in TypedTable_SetTable().");
+    }
     TypedValue *typed_value = TypedValue_Create();
     typed_value->type = VALUE_TYPE_TABLE;
     typed_value->data.table_value = value;
@@ -79,14 +89,20 @@ ValueType TypedTable_GetType(Table *table, const char *key) {
 int TypedTable_GetNumber(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_NUMBER) {
+        if (typed_value && typed_value->type != VALUE_TYPE_NUMBER) {
+            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+        }
         return 0;
     }
     return typed_value->data.number_value;
 }
 
-char* TypedTable_GetString(Table *table, const char *key) {
+const char* TypedTable_GetString(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_STRING) {
+        if (typed_value && typed_value->type != VALUE_TYPE_STRING) {
+            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+        }
         return NULL;
     }
     return typed_value->data.string_value;
@@ -95,6 +111,9 @@ char* TypedTable_GetString(Table *table, const char *key) {
 bool TypedTable_GetBoolean(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_BOOLEAN) {
+        if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
+            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+        }
         return false;
     }
     return typed_value->data.boolean_value;
@@ -103,6 +122,9 @@ bool TypedTable_GetBoolean(Table *table, const char *key) {
 Table* TypedTable_GetTable(Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_TABLE) {
+        if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
+            logWarn("TypedTable_GetNumber: key %s has wrong type.", key);
+        }
         return NULL;
     }
     return typed_value->data.table_value;
