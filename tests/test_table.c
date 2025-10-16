@@ -92,10 +92,28 @@ void test_rehashing(void) {
     Table_Destroy(table);
 }
 
+void test_edge_case(void) {
+    // fill the table up to max load
+    // call get function. find_slot() will throw an error because
+    // the table is too loaded
+    Table *table = Table_Create();
+
+    for (size_t i=0; i<TABLE_INITIAL_CAPACITY * TABLE_MAX_LOAD_FACTOR; i++) {
+        char a[30];
+        snprintf(a, 30, "key%ld", i);
+        Table_Set(table, a, strdup(a), free);
+    }
+
+    Table_Get(table, "key0");
+    
+    Table_Destroy(table);
+}
+
 TEST_LIST = {
     { "Table: Creation", test_creation },
     { "Table: Set and Get", test_set_get },
     { "Table: Existence and Owndership", test_has_hasownership },
     { "Table: Rehashing", test_rehashing },
+    { "Table: Edge Case", test_edge_case },
     { NULL, NULL }
 };
