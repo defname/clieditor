@@ -17,8 +17,14 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include "common/typedtable.h"
+#include "common/iniparser.h"
 
 typedef struct _Config {
+    Table *table;
+    const Table *editor;
+    const Table *colors;
+
     int indent_size;
     bool use_spaces_for_indent;
     char filename[FILENAME_MAX_LENGTH];
@@ -30,9 +36,35 @@ void Config_Init() {
     config.indent_size = 4;
     config.use_spaces_for_indent = true;
     config.filename[0] = '\0';
+    config.table = NULL;
+    config.editor = NULL;
+    config.colors = NULL;
 }
 
 void Config_Deinit() {
+    if (config.table) {
+        Table_Destroy(config.table);
+    }
+    config.table = NULL;
+    config.editor = NULL;
+    config.colors = NULL;
+}
+
+
+void Config_LoadIni(const char *content) {
+    if (!content) {
+        return;
+    }
+    IniParser ini;
+    IniParser_Init(&ini);
+    IniParser_SetText(&ini, content);
+    Table *c = IniParser_Parse(&ini);
+    if (!c) {
+        return;
+    }
+    config.table = c;
+    config.editor = TypedTable_GetTable(config.table, "editor");
+    config.colors = TypedTable_GetTable(config.table, "colors");
 }
 
 void Config_SetFilename(const char *filename) {
@@ -46,4 +78,26 @@ void Config_SetFilename(const char *filename) {
 
 const char *Config_GetFilename() {
     return config.filename;
+}
+
+
+int Config_GetNumber(const char *key, int fallback) {
+    if (TypedTable_GetType(config.editor, key) != VALUE_TYPE_NUMBER) {
+        return fallback;
+    }
+    return TypedTable_GetNumber(config.editor, key);
+}
+
+const char *Config_GeStr(const char *key, const char *fallback) {
+    if (TypedTable_GetType(config.editor, key) != VALUE_TYPE_STRING) {
+        return fallback;
+    }
+    return TypedTable_GetString(config.editor, key);
+}
+
+uint8_t Config_GetColor(const char *key, uint8_t fallback) {
+    if (TypedTable_GetType(config.colors, key) != VALUE_TYPE_NUMBER) {
+        return fallback;
+    }
+    return (uint8_t)TypedTable_GetNumber(config.colors, key);
 }

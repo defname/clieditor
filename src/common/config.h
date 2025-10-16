@@ -16,13 +16,21 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "stdint.h"
+
 void Config_Init();
 void Config_Deinit();
+
+void Config_LoadIni(const char *content);
 
 #define FILENAME_MAX_LENGTH 256
 
 void Config_SetFilename(const char *filename);
 const char* Config_GetFilename();
+
+int Config_GetNumber(const char *key, int fallback);
+const char *Config_GetStr(const char *key, const char *fallback);
+uint8_t Config_GetColor(const char *key, uint8_t fallback);
 
 
 #endif
