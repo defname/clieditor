@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include "common/colors.h"
+#include "common/config.h"
 
 
 static void hide_notification(uint8_t timer_id, void *user_data) {
@@ -33,23 +34,20 @@ static void notification_destroy(Widget *self) {
 
 static void notification_draw(const Widget *self, Canvas *canvas) {
     Notification *noty = AS_NOTIFICATION(self);
-    uint8_t bg;
     switch (noty->type) {
         case NOTIFICATION_SUCCESS:
-            bg = Color_GetCodeById(COLOR_SUCCESS);
+            canvas->current_style = noty->style_success;
             break;
         case NOTIFICATION_ERROR:
-            bg = Color_GetCodeById(COLOR_ERROR);
+            canvas->current_style = noty->style_error;
             break;
         case NOTIFICATION_WARNING:
-            bg = Color_GetCodeById(COLOR_WARNING);
+            canvas->current_style = noty->style_warning;
             break;
         default:
-            bg = Color_GetCodeById(COLOR_PRIMARY_BG);
+            canvas->current_style = noty->style_normal;
             break;
     }
-    canvas->current_style.bg = bg;
-    canvas->current_style.fg = Color_GetCodeById(COLOR_BG);
     Canvas_Write(canvas, &noty->text);
     UTF8String spaces;
     UTF8String_Init(&spaces);
@@ -66,10 +64,25 @@ static void notification_on_resize(Widget *self, int new_parent_width, int new_p
     self->y = (new_parent_height - self->height) / 2;
 }
 
+static void on_notification_changed(Widget *w) {
+    Notification *self = AS_NOTIFICATION(w);
+    Table *conf = Config_GetModuleConfig("notification");
+
+    self->style_normal.fg = Config_GetColor(conf, "text", self->style_normal.fg);
+    self->style_normal.bg = Config_GetColor(conf, "bg", self->style_normal.bg);
+    self->style_error.fg = Config_GetColor(conf, "error.text", self->style_error.fg);
+    self->style_error.bg = Config_GetColor(conf, "error.bg", self->style_error.bg);
+    self->style_warning.fg = Config_GetColor(conf, "warning.text", self->style_warning.fg);
+    self->style_warning.bg = Config_GetColor(conf, "warning.bg", self->style_warning.bg);
+    self->style_success.fg = Config_GetColor(conf, "success.text", self->style_success.fg);
+    self->style_success.bg = Config_GetColor(conf, "success.bg", self->style_success.bg);
+}
+
 WidgetOps notification_ops = {
     .draw = notification_draw,
     .destroy = notification_destroy,
     .on_resize = notification_on_resize,
+    .on_config_changed = on_notification_changed,
     .on_input = NULL,
 };
 
@@ -81,6 +94,15 @@ void Notification_Init(Notification *self, Widget *parent) {
     self->timer = NO_TIMER;
     self->type = NOTIFICATION_NORMAL;
     UTF8String_Init(&self->text);
+
+    self->style_normal = self->base.style;
+    self->style_normal.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
+    self->style_error = self->base.style;
+    self->style_error.bg = Color_GetCodeById(COLOR_ERROR);
+    self->style_warning = self->base.style;
+    self->style_warning.bg = Color_GetCodeById(COLOR_WARNING);
+    self->style_success = self->base.style;
+    self->style_success.bg = Color_GetCodeById(COLOR_SUCCESS);
 }
 
 Notification *Notification_Create(Widget *parent) {

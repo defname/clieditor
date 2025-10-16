@@ -29,6 +29,15 @@ typedef enum {
 } EditorMode;
 
 typedef struct {
+    int cursor_interval;
+    bool underline_cursor;
+    Style normal;
+    Style selected;
+    Style active;
+    Style cursor;
+} EditorConfig;
+
+typedef struct {
     Widget base;
 
     TextBuffer *tb;
@@ -40,6 +49,8 @@ typedef struct {
     
     uint8_t cursor_timer;
     bool cursor_visible;
+
+    EditorConfig config;
 } Editor;
 
 #define AS_EDITOR(w) ((Editor*)(w))

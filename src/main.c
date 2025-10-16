@@ -205,6 +205,7 @@ int main(int argc, char *argv[]) {
         }
 
         App_Update();
+        Config_Loaded();
 
         App_Draw(&screen.canvas);
         Screen_Draw();

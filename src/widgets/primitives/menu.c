@@ -19,7 +19,7 @@
 #include "io/screen.h"
 #include "common/colors.h"
 #include "common/logging.h"
-
+#include "common/config.h"
 
 static void destroy(Widget *self) {
     Menu *menu = AS_MENU(self);
@@ -111,8 +111,9 @@ static void draw(const Widget *self, Canvas *canvas) {
         const char *entry_text = menu->entries[i].text;
         int text_len = strlen(entry_text);
         UTF8String_FromStr(&text, entry_text, text_len);
+        Style orig_style = canvas->current_style;
         if (i == menu->selected_entry) {
-            canvas->current_style.attributes |= STYLE_UNDERLINE;
+            canvas->current_style = menu->style_selected;
         }
         Canvas_Write(canvas, &text);
         
@@ -124,16 +125,27 @@ static void draw(const Widget *self, Canvas *canvas) {
         }
 
         if (i == menu->selected_entry) {
-            canvas->current_style.attributes &= ~STYLE_UNDERLINE;
+            canvas->current_style = orig_style;
         }
     }
     UTF8String_Deinit(&text);
 }
 
+static void on_config_change(Widget *w) {
+    Menu *self = AS_MENU(w);
+    Table *conf = Config_GetModuleConfig("menu");
+
+    w->style.fg = Config_GetColor(conf, "text", self->base.style.fg);
+    w->style.bg = Config_GetColor(conf, "bg", self->base.style.bg);
+    self->style_selected.fg = Config_GetColor(conf, "selected.text", self->style_selected.fg);
+    self->style_selected.attributes = Config_GetNumber(conf, "selected.attributes", self->style_selected.attributes);
+}   
+
 WidgetOps mainmenu_ops = {
     .draw = draw,
     .on_input = on_input,
     .on_resize = on_resize,
+    .on_config_changed = on_config_change,
     .destroy = destroy,
 };
 
@@ -153,6 +165,9 @@ void Menu_Init(Menu *menu, MenuEntry *entries, size_t entry_count, const char *t
     AS_WIDGET(menu)->style.fg = Color_GetCodeById(COLOR_BG);
     AS_WIDGET(menu)->style.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
     AS_WIDGET(menu)->style.attributes = STYLE_BOLD;
+    menu->style_selected = menu->base.style;
+    menu->style_selected.attributes = STYLE_UNDERLINE;
+
 }
 
 Menu *Menu_Create(MenuEntry *entries, size_t entry_count, const char *title, Callback on_close) {

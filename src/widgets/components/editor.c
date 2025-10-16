@@ -78,28 +78,34 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
 
     // change the style if it's the current line
     Style orig_style = canvas->current_style;
-    uint8_t line_style_color;
+    Style line_style;
     if (line->src == editor->tb->current_line) {
-        line_style_color = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+        line_style = editor->config.active;
     }
     else {
-        line_style_color = orig_style.bg;
+        line_style = orig_style;
     }
 
     // draw the characters
     for (int i=0; i<line->length; i++) {
         UTF8Char ch = VisualLine_GetChar(line, i);
-        bool has_cursor = (line == cursor.line && i == cursor.idx && editor->cursor_visible && editor->mode == EDITOR_MODE_INPUT);
+        bool has_cursor = (line == cursor.line && i == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
         if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
-            canvas->current_style.bg = Color_GetCodeById(COLOR_SECONDARY_BG);
+            canvas->current_style = editor->config.selected;
         }
         else {
-            canvas->current_style.bg = line_style_color;
+            canvas->current_style = line_style;
         }
-        draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor);
+        Style char_style = canvas->current_style;
+        if (has_cursor) {
+            char_style = editor->config.cursor;
+        }
+        canvas->current_style = char_style;
+        draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor && editor->cursor_visible);
+        canvas->current_style = line_style;
     }
 
-    canvas->current_style.bg = line_style_color;
+    canvas->current_style = line_style;
 
  
     int x = line->width;
@@ -348,6 +354,30 @@ static void editor_update(Widget *self) {
     }
 }
 
+static void editor_on_config_changed(Widget *self) {
+    Editor *editor = AS_EDITOR(self);
+    Table *conf = Config_GetModuleConfig("editor");
+
+    editor->config.normal.bg = Config_GetColor(conf, "bg", editor->config.normal.bg);
+    editor->config.normal.fg = Config_GetColor(conf, "text", editor->config.normal.fg);
+    editor->config.active.bg = Config_GetColor(conf, "active.bg", editor->config.active.bg);
+    editor->config.active.fg = Config_GetColor(conf, "active.text", editor->config.active.fg);
+    editor->config.selected.bg = Config_GetColor(conf, "selected.bg", editor->config.selected.bg);
+    editor->config.selected.fg = Config_GetColor(conf, "selected.text", editor->config.selected.fg);
+    editor->config.cursor.bg = Config_GetColor(conf, "cursor.bg", editor->config.cursor.bg);
+    editor->config.cursor.fg = Config_GetColor(conf, "cursor.text", editor->config.cursor.fg);
+
+    editor->config.cursor_interval = Config_GetNumber(conf, "cursor_interval", 500);
+
+    self->style = editor->config.normal;
+
+    Timer_Stop(editor->cursor_timer);
+    if (editor->config.cursor_interval) {
+        editor->cursor_timer = Timer_Start(editor->config.cursor_interval, alternate_cursor_visibility, editor);
+    }
+    editor->cursor_visible = false;
+}
+
 static WidgetOps editor_ops = {
     .destroy = editor_destroy,
     .draw = editor_draw,
@@ -355,6 +385,7 @@ static WidgetOps editor_ops = {
     .on_resize = editor_handle_resize,
     .on_focus = editor_on_focus,
     .on_blur = editor_on_blur,
+    .on_config_changed = editor_on_config_changed,
     .update = editor_update,
 };
 
@@ -369,12 +400,21 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
 
     self->mode = EDITOR_MODE_INPUT;
 
-    self->cursor_timer = Timer_Start(Config_GetNumber("cursor_interval", 500), alternate_cursor_visibility, self);
+    self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
     Timer_Pause(self->cursor_timer);  // start when getting focus
     self->cursor_visible = true;
-
+    
     self->base.style.bg = Color_GetCodeById(COLOR_BG);
     self->base.style.fg = Color_GetCodeById(COLOR_FG);
+
+    self->config.cursor_interval = 500;
+    self->config.normal = self->base.style;
+    self->config.selected = self->base.style;
+    self->config.selected.bg = Color_GetCodeById(COLOR_SECONDARY_BG);
+    self->config.active = self->base.style;
+    self->config.active.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+    self->config.cursor = self->base.style;
+    self->config.cursor.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
 }
 
 Editor *Editor_Create(Widget *parent, TextBuffer *tb) {

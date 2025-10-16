@@ -25,6 +25,8 @@ typedef struct _Config {
     const Table *editor;
     const Table *colors;
 
+    bool dirty;
+
     int indent_size;
     bool use_spaces_for_indent;
     char filename[FILENAME_MAX_LENGTH];
@@ -39,6 +41,7 @@ void Config_Init() {
     config.table = NULL;
     config.editor = NULL;
     config.colors = NULL;
+    config.dirty = false;
 }
 
 void Config_Deinit() {
@@ -65,6 +68,15 @@ void Config_LoadIni(const char *content) {
     config.table = c;
     config.editor = TypedTable_GetTable(config.table, "editor");
     config.colors = TypedTable_GetTable(config.table, "colors");
+    config.dirty = true;
+}
+
+bool Config_IsDirty() {
+    return config.dirty;
+}
+
+void Config_Loaded() {
+    config.dirty = false;
 }
 
 void Config_SetFilename(const char *filename) {
@@ -80,24 +92,30 @@ const char *Config_GetFilename() {
     return config.filename;
 }
 
-
-int Config_GetNumber(const char *key, int fallback) {
-    if (TypedTable_GetType(config.editor, key) != VALUE_TYPE_NUMBER) {
-        return fallback;
+Table *Config_GetModuleConfig(const char *section) {
+    if (!config.table || TypedTable_GetType(config.table, section) != VALUE_TYPE_TABLE) {
+        return NULL;
     }
-    return TypedTable_GetNumber(config.editor, key);
+    return TypedTable_GetTable(config.table, section);
 }
 
-const char *Config_GeStr(const char *key, const char *fallback) {
-    if (TypedTable_GetType(config.editor, key) != VALUE_TYPE_STRING) {
+int Config_GetNumber(Table *table, const char *key, int fallback) {
+    if (!table || TypedTable_GetType(table, key) != VALUE_TYPE_NUMBER) {
         return fallback;
     }
-    return TypedTable_GetString(config.editor, key);
+    return TypedTable_GetNumber(table, key);
 }
 
-uint8_t Config_GetColor(const char *key, uint8_t fallback) {
-    if (TypedTable_GetType(config.colors, key) != VALUE_TYPE_NUMBER) {
+const char *Config_GetStr(Table *table, const char *key, const char *fallback) {
+    if (!table || TypedTable_GetType(table, key) != VALUE_TYPE_STRING) {
         return fallback;
     }
-    return (uint8_t)TypedTable_GetNumber(config.colors, key);
+    return TypedTable_GetString(table, key);
+}
+
+uint8_t Config_GetColor(Table *table, const char *key, uint8_t fallback) {
+    if (!table || TypedTable_GetType(table, key) != VALUE_TYPE_NUMBER) {
+        return fallback;
+    }
+    return (uint8_t)TypedTable_GetNumber(table, key);
 }

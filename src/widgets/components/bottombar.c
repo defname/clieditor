@@ -42,10 +42,24 @@ void bottombar_handle_resize(Widget *self, int new_parent_width, int new_parent_
     self->height = 1;
 }
 
+static void on_config_changed(Widget *self) {
+    self->style.bg = Config_GetColor(Config_GetModuleConfig("bottombar"), "bg", self->style.bg);
+    self->style.fg = Config_GetColor(Config_GetModuleConfig("bottombar"), "text", self->style.fg);
+    for (int i=0; i<self->children_count; i++) {
+        Widget *child = self->children[i];
+        if (!child) {
+            continue;
+        }
+        child->style.bg = self->style.bg;
+        child->style.fg = self->style.fg;
+    }
+}
+
 static WidgetOps bottombar_ops = {
     .draw = bottombar_draw,
     .destroy = bottombar_destroy,
     .on_resize = bottombar_handle_resize,
+    .on_config_changed = on_config_changed,
     .on_input = NULL,
 };
 

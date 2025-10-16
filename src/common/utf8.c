@@ -84,6 +84,9 @@ UTF8Char UTF8_ReadCharFromBuf(Buffer *buf) {
 }
 
 UTF8Char UTF8_GetCharFromString(const char *s) {
+    if (!s) {
+        return utf8_invalid;
+    }
     UTF8Char utf8_char;
     // Initialize the struct to a known, zeroed state.
     // This also sets length to 0, which is our error indicator.
