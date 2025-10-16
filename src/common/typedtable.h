@@ -54,12 +54,12 @@ void TypedTable_SetStringCopy(Table *table, const char *key, const char *value);
 void TypedTable_SetBoolean(Table *table, const char *key, bool value);
 void TypedTable_SetTable(Table *table, const char *key, Table *value);  //< ownership is taken
 
-ValueType TypedTable_GetType(Table *table, const char *key);
+ValueType TypedTable_GetType(const Table *table, const char *key);
 
-int TypedTable_GetNumber(Table *table, const char *key);
-const char* TypedTable_GetString(Table *table, const char *key);
-bool TypedTable_GetBoolean(Table *table, const char *key);
-Table* TypedTable_GetTable(Table *table, const char *key);
+int TypedTable_GetNumber(const Table *table, const char *key);
+const char* TypedTable_GetString(const Table *table, const char *key);
+bool TypedTable_GetBoolean(const Table *table, const char *key);
+Table* TypedTable_GetTable(const Table *table, const char *key);
 
 
 #endif
