@@ -65,6 +65,9 @@ void Config_LoadIni(const char *content) {
     if (!c) {
         return;
     }
+    if (config.table) {
+        Table_Destroy(config.table);
+    }
     config.table = c;
     config.editor = TypedTable_GetTable(config.table, "editor");
     config.colors = TypedTable_GetTable(config.table, "colors");
