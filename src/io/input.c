@@ -293,6 +293,15 @@ static size_t get_utf8_length(unsigned char c) {
 }
 
 
+static void clear_input_buffer() {
+    tcflush(terminal.fd_in, TCIFLUSH);
+}
+
+static InputEvent return_helper(InputEvent ev) {
+    clear_input_buffer();
+    return ev;
+}
+
 InputEvent Input_Read() {
 
     int fd = terminal.fd_in;
@@ -301,7 +310,7 @@ InputEvent Input_Read() {
     unsigned char c;
     ssize_t byted_read = read(fd, &c, 1);
     if (byted_read != 1) {
-        return input_invalidevent;
+        return return_helper(input_invalidevent);
     }
 
     // if it is not the potential beginning of an escape sequence
@@ -310,12 +319,12 @@ InputEvent Input_Read() {
         char utf8_buf[5] = { c, 0, 0, 0, 0 };
         int l = get_utf8_length(c);
         if (l == 0) {
-            return input_invalidevent;
+            return return_helper(input_invalidevent);
         }
         for (int i=1; i<l; i++) {
             ssize_t bytes_read = read(fd, &utf8_buf[i], 1);  // this should be more robust as trying to read all l-1 bytes at once
             if (bytes_read != 1) {
-                return input_invalidevent;
+                return return_helper(input_invalidevent);
             }
         }
         InputEvent ev = {
@@ -338,11 +347,11 @@ InputEvent Input_Read() {
                     break;
             }
         }
-        return ev;
+        return return_helper(ev);
     }
 
     // read the escape sequence
     InputEvent ev = read_escape_sequence(fd);
 
-    return ev;
+    return return_helper(ev);
 }
