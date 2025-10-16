@@ -33,6 +33,7 @@
 #include "common/colors.h"
 #include "common/callback.h"
 #include "common/logging.h"
+#include "common/iniparser.h"
 
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
@@ -145,6 +146,14 @@ int main(int argc, char *argv[]) {
         else {
             failure_on_file_load = true;
         }
+    }
+
+    // Load config
+    File *config_file = File_Open("config.ini", FILE_ACCESS_READ);
+    if (config_file) {
+        char *content = File_Read(config_file);
+        Config_LoadIni(content);
+        free(content);
     }
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
