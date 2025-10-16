@@ -122,7 +122,7 @@ bool TypedTable_GetBoolean(const Table *table, const char *key) {
 Table* TypedTable_GetTable(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_TABLE) {
-        if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
+        if (typed_value && typed_value->type != VALUE_TYPE_TABLE) {
             logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return NULL;
