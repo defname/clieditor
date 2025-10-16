@@ -42,7 +42,7 @@ static void draw(const Widget *self, Canvas *canvas) {
         if (!prev || prev->src != line->src) {
             
             if (line->src == ln->tl->tb->current_line) {
-                canvas->current_style.fg = ln->active_color;
+                canvas->current_style = ln->style_active;
             }
             Canvas_MoveCursor(canvas, 0, i);
             UTF8String_Format(&str, 10, "%*d", width-1, line_nr);
@@ -67,7 +67,8 @@ void on_config_change(Widget *self) {
     self->style.bg = Config_GetColor(conf, "bg", ln->base.style.bg);
     self->style.fg = Config_GetColor(conf, "text", ln->base.style.fg);
     ln->border_char = UTF8_GetCharFromString(Config_GetStr(conf, "border_char", "│"));
-    ln->active_color = Config_GetColor(conf, "active_color", ln->active_color);
+    ln->style_active.fg = Config_GetColor(conf, "active.text", ln->style_active.fg);
+    ln->style_active.bg = Config_GetColor(conf, "active.bg", ln->style_active.bg);
 }
 
 WidgetOps linenumber_ops = {
@@ -84,7 +85,8 @@ void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
     
     w->style.bg = Color_GetCodeById(COLOR_BG);
     w->style.fg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
-    ln->active_color = Color_GetCodeById(COLOR_FG);
+    ln->style_active = w->style;
+    ln->style_active.fg = Color_GetCodeById(COLOR_FG);
     ln->border_char = UTF8_GetCharFromString("│");
     ln->first_number = 1;
 }
