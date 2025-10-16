@@ -25,6 +25,8 @@ typedef struct _LineNumbers {
 
     TextLayout *tl;
     int first_number;
+    UTF8Char border_char;
+    Style style_active;
 } LineNumbers;
 
 #define AS_LINENUMBERS(w) ((LineNumbers *)(w))

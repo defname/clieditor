@@ -33,6 +33,7 @@
 #include "common/colors.h"
 #include "common/callback.h"
 #include "common/logging.h"
+#include "common/iniparser.h"
 
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
@@ -147,6 +148,17 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Load config
+    File *config_file = File_Open("config.ini", FILE_ACCESS_READ);
+    if (config_file) {
+        char *content = File_Read(config_file);
+        if (content) {
+            Config_LoadIni(content);
+            free(content);
+        }
+        File_Close(config_file);
+    }
+
     App_Init(Screen_GetWidth(), Screen_GetHeight());
  
     EditorView *editor = EditorView_Create(AS_WIDGET(&app), &tb);
@@ -196,6 +208,7 @@ int main(int argc, char *argv[]) {
         }
 
         App_Update();
+        Config_Loaded();
 
         App_Draw(&screen.canvas);
         Screen_Draw();

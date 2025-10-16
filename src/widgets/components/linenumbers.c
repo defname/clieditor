@@ -17,6 +17,7 @@
 #include "common/logging.h"
 #include "common/utf8string.h"
 #include "common/colors.h"
+#include "common/config.h"
 
 
 static void draw(const Widget *self, Canvas *canvas) {
@@ -26,8 +27,6 @@ static void draw(const Widget *self, Canvas *canvas) {
     
     UTF8String str;
     UTF8String_Init(&str);
-
-    UTF8Char border_char = UTF8_GetCharFromString("│");
 
     int line_nr = ln->first_number;
     int width = self->width;
@@ -43,7 +42,7 @@ static void draw(const Widget *self, Canvas *canvas) {
         if (!prev || prev->src != line->src) {
             
             if (line->src == ln->tl->tb->current_line) {
-                canvas->current_style.fg = Color_GetCodeById(COLOR_FG);
+                canvas->current_style = ln->style_active;
             }
             Canvas_MoveCursor(canvas, 0, i);
             UTF8String_Format(&str, 10, "%*d", width-1, line_nr);
@@ -51,19 +50,30 @@ static void draw(const Widget *self, Canvas *canvas) {
             if (canvas->current_style.fg != color) {
                 canvas->current_style.fg = color;
             }
-            Canvas_PutChar(canvas, border_char);
+            Canvas_PutChar(canvas, ln->border_char);
             line_nr++;
         }
         else {
             Canvas_MoveCursor(canvas, width-1, i);
-            Canvas_PutChar(canvas, border_char);
+            Canvas_PutChar(canvas, ln->border_char);
         }
     }
     UTF8String_Deinit(&str);
 }
 
+void on_config_change(Widget *self) {
+    LineNumbers *ln = AS_LINENUMBERS(self);
+    Table *conf = Config_GetModuleConfig("linenumbers");
+    self->style.bg = Config_GetColor(conf, "bg", ln->base.style.bg);
+    self->style.fg = Config_GetColor(conf, "text", ln->base.style.fg);
+    ln->border_char = UTF8_GetCharFromString(Config_GetStr(conf, "border_char", "│"));
+    ln->style_active.fg = Config_GetColor(conf, "active.text", ln->style_active.fg);
+    ln->style_active.bg = Config_GetColor(conf, "active.bg", ln->style_active.bg);
+}
+
 WidgetOps linenumber_ops = {
     .draw = draw,
+    .on_config_changed = on_config_change,
 };
 
 void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
@@ -75,6 +85,10 @@ void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
     
     w->style.bg = Color_GetCodeById(COLOR_BG);
     w->style.fg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+    ln->style_active = w->style;
+    ln->style_active.fg = Color_GetCodeById(COLOR_FG);
+    ln->border_char = UTF8_GetCharFromString("│");
+    ln->first_number = 1;
 }
 
 LineNumbers *LineNumbers_Create(Widget *parent, TextLayout *tl) {

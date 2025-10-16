@@ -32,6 +32,11 @@ typedef struct _Notification {
     UTF8String text;
     NotificationType type;
     uint8_t timer;
+
+    Style style_normal;
+    Style style_success;
+    Style style_error;
+    Style style_warning;
 } Notification;
 
 #define AS_NOTIFICATION(w) ((Notification*)(w))

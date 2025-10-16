@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include "common/logging.h"
+#include "common/config.h"
 
 void Widget_Init(Widget *widget, Widget *parent, WidgetOps *ops) {
     widget->ops = ops;
@@ -270,6 +271,9 @@ void Widget_Update(Widget *self) {
     if (self->ops && self->ops->update) {
         self->ops->update(self);
     }
+    if (Config_IsDirty() && self->ops && self->ops->on_config_changed) {
+        self->ops->on_config_changed(self);
+    }
     for (int i=0; i<self->children_count; i++) {
         Widget *child = self->children[i];
         if (!child) {
@@ -277,6 +281,7 @@ void Widget_Update(Widget *self) {
         }
         Widget_Update(child);
     }
+
 }
 
 Widget *Widget_ChildHasFocus(Widget *self) {

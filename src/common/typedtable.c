@@ -78,7 +78,7 @@ void TypedTable_SetTable(Table *table, const char *key, Table *value) {
     Table_Set(table, key, typed_value, (void(*)(void*))TypedValue_Destroy);
 }
 
-ValueType TypedTable_GetType(Table *table, const char *key) {
+ValueType TypedTable_GetType(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value) {
         return VALUE_TYPE_NONE;
@@ -86,7 +86,7 @@ ValueType TypedTable_GetType(Table *table, const char *key) {
     return typed_value->type;
 }
 
-int TypedTable_GetNumber(Table *table, const char *key) {
+int TypedTable_GetNumber(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_NUMBER) {
         if (typed_value && typed_value->type != VALUE_TYPE_NUMBER) {
@@ -97,7 +97,7 @@ int TypedTable_GetNumber(Table *table, const char *key) {
     return typed_value->data.number_value;
 }
 
-const char* TypedTable_GetString(Table *table, const char *key) {
+const char* TypedTable_GetString(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_STRING) {
         if (typed_value && typed_value->type != VALUE_TYPE_STRING) {
@@ -108,7 +108,7 @@ const char* TypedTable_GetString(Table *table, const char *key) {
     return typed_value->data.string_value;
 }
 
-bool TypedTable_GetBoolean(Table *table, const char *key) {
+bool TypedTable_GetBoolean(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_BOOLEAN) {
         if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
@@ -119,10 +119,10 @@ bool TypedTable_GetBoolean(Table *table, const char *key) {
     return typed_value->data.boolean_value;
 }
 
-Table* TypedTable_GetTable(Table *table, const char *key) {
+Table* TypedTable_GetTable(const Table *table, const char *key) {
     TypedValue *typed_value = Table_Get(table, key);
     if (!typed_value || typed_value->type != VALUE_TYPE_TABLE) {
-        if (typed_value && typed_value->type != VALUE_TYPE_BOOLEAN) {
+        if (typed_value && typed_value->type != VALUE_TYPE_TABLE) {
             logWarn("%s: key %s has wrong type.", __func__, key);
         }
         return NULL;

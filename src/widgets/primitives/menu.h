@@ -38,6 +38,7 @@ typedef struct {
     size_t selected_entry;
     UTF8String title;
     Callback on_close;
+    Style style_selected;
 } Menu;
 
 #define AS_MENU(w) ((Menu *)(w))
