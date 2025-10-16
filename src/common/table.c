@@ -55,7 +55,8 @@ static TableSlot *find_slot(const Table *table, const char *key) {
     if (!table || !key) {
         logFatal("Invalid table or key in find_slot()");
     }
-    if (table->used >= table->capacity * TABLE_MAX_LOAD_FACTOR) {
+    // the +1 is a hotfix for an edge case bug. It need to be ensured that this does not succeed table->capacity!
+    if (table->used >= table->capacity * TABLE_MAX_LOAD_FACTOR + 1) {
         logFatal("Table too loaded.");  // this can only happen there is an error in the code
     }
     uint32_t hash = hash_string(key);
