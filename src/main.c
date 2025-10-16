@@ -152,8 +152,11 @@ int main(int argc, char *argv[]) {
     File *config_file = File_Open("config.ini", FILE_ACCESS_READ);
     if (config_file) {
         char *content = File_Read(config_file);
-        Config_LoadIni(content);
-        free(content);
+        if (content) {
+            Config_LoadIni(content);
+            free(content);
+        }
+        File_Close(config_file);
     }
 
     App_Init(Screen_GetWidth(), Screen_GetHeight());
