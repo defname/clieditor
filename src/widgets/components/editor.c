@@ -20,6 +20,7 @@
 #include "io/input.h"
 #include "common/logging.h"
 #include "common/colors.h"
+#include "common/config.h"
 #include "document/textedit.h"
 
 // timer callback function
@@ -368,7 +369,7 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
 
     self->mode = EDITOR_MODE_INPUT;
 
-    self->cursor_timer = Timer_Start(500, alternate_cursor_visibility, self);
+    self->cursor_timer = Timer_Start(Config_GetNumber("cursor_interval", 500), alternate_cursor_visibility, self);
     Timer_Pause(self->cursor_timer);  // start when getting focus
     self->cursor_visible = true;
 
