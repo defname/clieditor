@@ -89,7 +89,7 @@ size_t utf8_from_codepoint(uint32_t cp, char *out) {
         return 1;
     }
     if (cp <= 0x07FF) {
-        out[0] = cp >> 7 | 0xC0;
+        out[0] = cp >> 6 | 0xC0;
         out[1] = (cp & 0x3F) | 0x80;
         return 2;
     }
