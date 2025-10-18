@@ -61,7 +61,7 @@ void test_length(void) {
 
 typedef struct {
     const char *cstr;
-    size_t pos;
+    int pos;
     size_t expected_result;
 } GetCharTextCase;
 
@@ -107,7 +107,7 @@ void test_resize_bytes(void) {
     TEST_CHECK(str.bytes_capacity == STRING_GROW(STRING_INITIAL_CAPACITY));
     TEST_CHECK(String_Length(&str) == STRING_INITIAL_CAPACITY - 1);
     TEST_MSG("%ld", String_Length(&str));
-    TEST_CHECK(str.bytes_size = STRING_INITIAL_CAPACITY + 1);
+    TEST_CHECK(str.bytes_size == STRING_INITIAL_CAPACITY + 1);
     String_Deinit(&str);
 }
 
@@ -170,6 +170,14 @@ void test_misc(void) {
     String_Deinit(&str);
 }
 
+void test_edgecases(void) {
+    String str = String_FromCStr("Foobar€", strlen("Foobar€"));
+    StringView view = String_Slice(&str, 0, String_Length(&str));
+    TEST_CHECK(StringView_Length(&view) == String_Length(&str));
+    const char *ch = String_GetChar(&str, String_Length(&str));
+    TEST_CHECK(ch == str.bytes);
+    String_Deinit(&str);
+}
 
 
 TEST_LIST = {
@@ -180,5 +188,6 @@ TEST_LIST = {
     { "String: Resize multibytes", test_resize_multibytes },
     { "String: Append", test_append },
     { "String: Misc", test_misc },
+    { "String: Edge Cases", test_edgecases },
     { NULL, NULL }
 };

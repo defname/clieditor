@@ -208,6 +208,11 @@ const char *String_GetChar(String *string, int pos);
 StringView String_Slice(String *string, size_t start, size_t end);
 
 /**
+ * @brief Create a substring with length characters starting at start. 
+ */
+String String_Substring(String *string, size_t start, size_t length);
+
+/**
  * @brief Add str2 to the end of str1.
  */
 void String_Append(String *str1, const String *str2);
@@ -221,5 +226,10 @@ String String_Repeat(const String *str, size_t n);
  * @brief Create a string consisting of n spaces
  */
 String String_Spaces(size_t n);
+
+/**
+ * @brief Shorten the string to length characters.
+ */
+void String_Shorten(String *str, size_t n);
 
 #endif

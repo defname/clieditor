@@ -6,16 +6,16 @@
 
 // return the length of the utf8 char starting with c or 0 if it's invalid
 size_t utf8_get_char_length(unsigned char c) {
-    if (c <= 127) {  // ASCI character
+    if (c <= 0x7F) {  // ASCII character
         return 1;
     }
-    else if ((c & 0b11100000) == 0b11000000) {
+    else if ((c & 0xE0) == 0xC0) {
         return 2;
     }
-    else if ((c & 0b11110000) == 0b11100000) {
+    else if ((c & 0xF0) == 0xE0) {
         return 3;
     }
-    else if ((c & 0b11111000) == 0b11110000) {
+    else if ((c & 0xF8) == 0xF0) {
         return 4;
     }
     else {

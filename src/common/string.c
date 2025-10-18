@@ -255,6 +255,9 @@ void String_Deinit(String *str) {
 
 String *String_Create() {
     String *str = malloc(sizeof(String));
+    if (!str) {
+        logFatal("Cannot allocate memory for String.");
+    }
     String_Init(str);
     return str;
 }
@@ -308,6 +311,7 @@ void String_AddChar(String *str, const char *ch) {
 
     for (size_t i=1; i<ch_len; i++) {
         if (!utf8_is_continuation_byte(ch[i])) {
+            str->bytes[str->bytes_size] = '\0';
             return;
         }
         str->bytes[str->bytes_size + i] = ch[i];
@@ -433,7 +437,8 @@ StringView String_Slice(String *string, size_t start, size_t end) {
         return view;
     }
     view.bytes = String_GetChar(string, start);
-    view.bytes_size = String_GetChar(string, end) - view.bytes;
+    const char *end_char = end == string->char_count ? string->bytes + string->bytes_size : String_GetChar(string, end);
+    view.bytes_size = end_char - view.bytes;
     view.char_count = end - start;
     return view;
 }
