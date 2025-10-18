@@ -42,7 +42,7 @@ size_t utf8_strlen(const char *str) {
     return count;
 }
 
-uint32_t utf8_get_codepoint(const char *ch) {
+uint32_t utf8_to_codepoint(const char *ch) {
     if (ch == 0) return INVALID_CODEPOINT;
 
     size_t ch_len = utf8_get_char_length(ch[0]);
@@ -76,8 +76,35 @@ uint32_t utf8_get_codepoint(const char *ch) {
     return cp;
 }
 
-int utf8_get_width(const char *ch) {
-    uint32_t cp = utf8_get_codepoint(ch);
+size_t utf8_from_codepoint(uint32_t cp, char *out) {
+    if (cp <= 0x7F) {
+        out[0] = cp;
+        return 1;
+    }
+    if (cp <= 0x07FF) {
+        out[0] = cp >> 7 | 0xC0;
+        out[1] = (cp & 0x3F) | 0x80;
+        return 2;
+    }
+    if (cp <= 0xFFFF) {
+        out[0] = cp >> 12 | 0xE0;
+        out[1] = (cp >> 6 & 0x3F) | 0x80;
+        out[2] = (cp & 0x3F) | 0x80;
+        return 3;
+    }
+    if (cp <= 0x10FFFF) {
+        out[0] = cp >> 18 | 0xF0;
+        out[1] = (cp >> 12 & 0x3F) | 0x80;
+        out[1] = (cp >> 6 & 0x3F) | 0x80;
+        out[1] = (cp & 0x3F) | 0x80;
+        return 4;
+    }
+    return 0;
+
+}
+
+
+int utf8_get_width(uint32_t cp) {
     int w = wcwidth((wchar_t)cp);
     if (w < 0) w = 1; // fallback
     return w;
