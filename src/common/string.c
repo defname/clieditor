@@ -296,6 +296,21 @@ String String_FromCStr(const char *chstr, size_t length) {
     return str;
 }
 
+String String_TakeCStr(char *chstr) {
+    size_t l = strlen(chstr);
+
+    return (String){
+        .bytes = chstr,
+        .bytes_capacity = l + 1,
+        .bytes_size = l,
+        .multibytes = NULL,
+        .multibytes_capacity = 0,
+        .multibytes_size = 0,
+        .multibytes_invalid = true,
+        .char_count = utf8_strlen(chstr),
+    };
+}
+
 void String_AddChar(String *str, const char *ch) {
     if (!ch) {
         return;

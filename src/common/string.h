@@ -145,7 +145,7 @@ void String_Destroy(String *string);
 size_t String_Length(const String *string);
 
 /**
- * @brief Create a new String chstr. (chstr is copied)
+ * @brief Create a new String from chstr. (chstr is copied)
  * 
  * @param chstr Pointer to the C string (string is copied)
  * @param length Number of bytes to copy from chstr (strlen(chstr) for complete string).
@@ -153,6 +153,13 @@ size_t String_Length(const String *string);
  * Note that the length of the resulting String might be less then length (because of multibyte characters).
  */
 String String_FromCStr(const char *chstr, size_t length);
+
+/**
+ * @brief Create a new String that takes the ownership of chstr. (ownership is transfered)
+ * 
+ * @param chstr The ownership of this C string will be transfered to the String.
+ */
+String String_TakeCStr(char *chstr);
 
 /**
  * @brief Return string as C string. The return value is pointer directly into string's internal data and must not be modified or freed.
