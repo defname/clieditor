@@ -1,6 +1,5 @@
 #include "utf8_helper.h"
 
-#include <ctype.h>
 #include <wchar.h>
 
 
@@ -25,11 +24,11 @@ size_t utf8_get_char_length(unsigned char c) {
 }
 
 bool utf8_is_continuation_byte(unsigned char c) {
-    return (c & 0b11000000) == 0b10000000;
+    return (c & 0xC0) == 0x80;
 }
 
 size_t utf8_strlen(const char *str) {
-    int count = 0;
+    size_t count = 0;
     const char *byte = str;
     if (!byte) {
         return 0;
@@ -56,19 +55,19 @@ uint32_t utf8_get_codepoint(const char *ch) {
         return ch[0];
     }
     else if (ch_len == 2) {
-        cp  = (ch[0] & 0b00011111) << 6;  // 5 bits aus erstem Byte
-        cp |= (ch[1] & 0b00111111);       // 6 bits aus zweitem Byte
+        cp  = (ch[0] & 0x1F) << 6;  // 5 bits of first byte
+        cp |= (ch[1] & 0x3F);       // 6 bits of second byte
     }
     else if (ch_len == 3) {
-        cp  = (ch[0] & 0b00001111) << 12; // 4 bits
-        cp |= (ch[1] & 0b00111111) << 6;  // 6 bits
-        cp |= (ch[2] & 0b00111111);       // 6 bits
+        cp  = (ch[0] & 0x0F) << 12; // 4 bits
+        cp |= (ch[1] & 0x3F) << 6;  // 6 bits
+        cp |= (ch[2] & 0x3F);       // 6 bits
     }
     else if (ch_len == 4) {
-        cp  = (ch[0] & 0b00000111) << 18; // 3 bits
-        cp |= (ch[1] & 0b00111111) << 12; // 6 bits
-        cp |= (ch[2] & 0b00111111) << 6;  // 6 bits
-        cp |= (ch[3] & 0b00111111);       // 6 bits
+        cp  = (ch[0] & 0x07) << 18; // 3 bits
+        cp |= (ch[1] & 0x3F) << 12; // 6 bits
+        cp |= (ch[2] & 0x3F) << 6;  // 6 bits
+        cp |= (ch[3] & 0x3F);       // 6 bits
     }
     else {
         return INVALID_CODEPOINT;
@@ -79,7 +78,7 @@ uint32_t utf8_get_codepoint(const char *ch) {
 
 int utf8_get_width(const char *ch) {
     uint32_t cp = utf8_get_codepoint(ch);
-    int w = wcwidth(cp);
+    int w = wcwidth((wchar_t)cp);
     if (w < 0) w = 1; // fallback
     return w;
 }

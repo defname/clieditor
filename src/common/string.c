@@ -372,10 +372,6 @@ StringView String_ToView(const String *string) {
     };
 }
 
-const StringView *String_AsView(const String *string) {
-    return (const StringView *)string;
-}
-
 const char *String_GetChar(String *str, int pos) {
     // 1. Handle edge case: empty string
     if (str->char_count == 0) {
