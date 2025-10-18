@@ -389,7 +389,7 @@ const char *String_GetChar(String *str, int pos) {
     while (i1 < i2) {
         size_t mid = (i1 + i2) / 2;
         MultibyteIndexHelper *offset = &str->multibytes[mid];
-        if (offset->char_index <= pos) {
+        if (offset->char_index <= (size_t)pos) {
             i1 = mid + 1;
         }
         else {
@@ -469,6 +469,8 @@ String String_Repeat(const String *str, size_t n) {
     out.bytes[new_bytes_size] = '\0';
     out.char_count = n * str->char_count;
     out.multibytes_invalid = true;
+
+    return out;
 }
 
 String String_Spaces(size_t n) {
