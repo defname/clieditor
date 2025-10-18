@@ -13,11 +13,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+/**
+ * @file string.h
+ * @brief A high-level UTF-8 aware string implementation.
+ *
+ * This module provides:
+ * - **String**: A mutable UTF-8 string type that stores the C string and
+ *   auxiliary data for efficient character index ↔ byte offset mapping.
+ * - **StringView**: A lightweight, read-only view into an existing String.
+ * - **StringIterator**: A simple iterator to traverse a String or StringView
+ *   character by character.
+ *
+ * Designed for correctness, clarity, and full UTF-8 compliance.
+ */
+
 #ifndef STRING_H
 #define STRING_H
 
 #include <stdlib.h>
-#include "common/utf8.h"
+#include <stdbool.h>
 
 #define STRING_GROW_FACTOR_NUM 3
 #define STRING_GROW_FACTOR_DENUM 2
@@ -39,22 +54,16 @@ typedef struct {
  * @brief The String type.
  */
 typedef struct _String {
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // The order of the first three entries is important
-    // It need to be exaclty like StringView for easy casting!
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    // ⚠️ Do not reorder! First three fields must match StringView exactly.
     char *bytes;              //< pointer to the NULL terminated C string
-    size_t bytes_size;        //< number of bytes until '\0' (basically strlen(bytes))
     size_t char_count;        //< number of characters in the String
-
     size_t bytes_capacity;    //< capacity available for bytes
 
     MultibyteIndexHelper *multibytes;  //< information about the indices and byte offsets of the multibyte characters
     size_t multibytes_size;            //< number of entries in multibytes
     size_t multibytes_capacity;        //< total capacity available for multibytes
     bool multibytes_invalid;     //< true if recalulation is needed
+
+    size_t bytes_size;        //< number of bytes until '\0' (basically strlen(bytes))
 } String;
 
 
@@ -176,11 +185,6 @@ String String_FromView(StringView view);
  * @brief Create a StringView to the complete string.
  */
 StringView String_ToView(const String *string);
-
-/**
- * @brief Cast the string itself to a Stringview pointer.
- */
-const StringView *String_AsView(const String *string);
 
 /**
  * @brief Return the pointer to the char at the given position.

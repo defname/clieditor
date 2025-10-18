@@ -66,7 +66,8 @@ bool StringView_EqualToStr(const StringView *view, const char *cstr, size_t leng
 /* StringIterator                                                            */
 
 StringIterator StringIterator_FromString(const String *str) {
-    return StringIterator_FromView(String_AsView(str));
+    StringView view = String_ToView(str);
+    return StringIterator_FromView(&view);
 }
 
 StringIterator StringIterator_FromView(const StringView *str) {
