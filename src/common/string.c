@@ -116,11 +116,11 @@ bool StringIterator_Next(StringIterator *it) {
 /**
  * Increase ptr capacity
  */
-void *increase_ptr_capacity(void *ptr, size_t new_capacity, size_t old_capacity) {
+void *increase_ptr_capacity(void *ptr, size_t new_capacity, size_t old_capacity, size_t element_size) {
     if (new_capacity <= old_capacity) {
         return ptr;
     }
-    void *new_ptr = realloc(ptr, new_capacity);
+    void *new_ptr = realloc(ptr, element_size * new_capacity);
     if (new_ptr == NULL) {
         logFatal("Cannot allocate memory for String.");
     }
@@ -134,7 +134,7 @@ void resize_bytes_capacity(String *str, size_t new_capacity) {
     if (new_capacity <= str->bytes_capacity) {
         return;
     }   
-    str->bytes = increase_ptr_capacity(str->bytes, new_capacity, str->bytes_capacity);
+    str->bytes = increase_ptr_capacity(str->bytes, new_capacity, str->bytes_capacity, sizeof(char));
     str->bytes_capacity = new_capacity;
 }
 
@@ -153,8 +153,8 @@ void resize_multibytes_capacity(String *str, size_t new_capacity) {
     if (new_capacity <= str->multibytes_capacity) {
         return;
     }   
-    str->bytes = increase_ptr_capacity(str->multibytes, new_capacity, str->multibytes_capacity);
-    str->bytes_capacity = new_capacity;
+    str->multibytes = increase_ptr_capacity(str->multibytes, new_capacity, str->multibytes_capacity, sizeof(MultibyteIndexHelper));
+    str->multibytes_capacity = new_capacity;
 }
 
 /**
@@ -172,7 +172,7 @@ void increase_multibytes_capacity(String *string) {
  * Add an offset to string->multibyte_offsets and increase capacity if needed.
  */
 void add_multibyte_offset(String *string, size_t offset, size_t length) {
-    if (string->multibytes_size + 1 >= string->multibytes_capacity) {
+    if (string->multibytes_size + 1 > string->multibytes_capacity) {
         increase_multibytes_capacity(string);
     }
     MultibyteIndexHelper *mih = &string->multibytes[string->multibytes_size];
@@ -233,13 +233,22 @@ void String_Init(String *str) {
 }
 
 void String_Deinit(String *str) {
-    if (str->bytes != NULL) {
+    if (str->bytes) {
         free(str->bytes);
     }
-    if (str->multibytes != NULL) {
+    if (str->multibytes) {
         free(str->multibytes);
     }
-    String_Init(str);
+    str->bytes = NULL;
+    str->bytes_capacity = 0;
+    str->bytes_size = 0;
+
+    str->multibytes = NULL;
+    str->multibytes_capacity = 0;
+    str->multibytes_size = 0;
+    str->multibytes_invalid = false;
+
+    str->char_count = 0;
 }
 
 
@@ -291,10 +300,12 @@ void String_AddChar(String *str, const char *ch) {
     if (ch_len == 0) {
         return;
     }
-    if (str->bytes_size + ch_len + 1 >= str->bytes_capacity) {
+    if (str->bytes_size + ch_len + 1 > str->bytes_capacity) {
         increase_bytes_capacity(str);
     }
-    for (size_t i=0; i<ch_len; i++) {
+    str->bytes[str->bytes_size] = ch[0];
+
+    for (size_t i=1; i<ch_len; i++) {
         if (!utf8_is_continuation_byte(ch[i])) {
             return;
         }
@@ -371,7 +382,8 @@ const char *String_GetChar(String *str, int pos) {
     }
 
     // 2. Normalize position for modulo and negative indices
-    pos = pos % str->char_count;  // make sure to stay inside the string
+    pos = pos % (int)str->char_count;  // make sure to stay inside the string
+    //          ^^^^^ casting size_t to int is important to prevent loosing the sign
     if (pos < 0) {  // support negative indexing to count from the end
         pos += str->char_count;
     }
@@ -413,7 +425,7 @@ const char *String_GetChar(String *str, int pos) {
 
 StringView String_Slice(String *string, size_t start, size_t end) {
     StringView view;
-    if (start >= string->char_count || end > string->char_count) {
+    if (start >= string->char_count || end > string->char_count || start > end) {
         view.bytes = NULL;
         view.bytes_size = 0;
         view.char_count = 0;

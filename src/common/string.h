@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include "common/utf8.h"
 
-#define STRING_GROW_FACTOR_NUM 2
-#define STRING_GROW_FACTOR_DENUM 3
+#define STRING_GROW_FACTOR_NUM 3
+#define STRING_GROW_FACTOR_DENUM 2
 #define STRING_GROW(v) (((v) * STRING_GROW_FACTOR_NUM) / STRING_GROW_FACTOR_DENUM)
 
 #define STRING_INITIAL_CAPACITY 16
@@ -185,8 +185,14 @@ const StringView *String_AsView(const String *string);
 /**
  * @brief Return the pointer to the char at the given position.
  * 
+ * ```
+ * String_GetChar(&String_FromCStr("Foobar"), 7) == "oobar"
+ * String_GetChar(&String_FromCStr("Foobar"), -2) == "ar"
+ * ```
+ * 
  * @param string The string to use. This is not const because the internal multibytes map might to be rebuild if it's invalid.
- * @param pos The position of the character (*not* the byte offset)
+ * @param pos The position of the character (*not* the byte offset). Negative positions are accepted.
+
  */
 const char *String_GetChar(String *string, int pos);
 
