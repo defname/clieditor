@@ -29,6 +29,8 @@ size_t utf8_get_char_length(unsigned char c);
 bool utf8_is_continuation_byte(unsigned char c);
 size_t utf8_strlen(const char *str);
 uint32_t utf8_to_codepoint(const char *ch);
+size_t utf8_from_codepoint(uint32_t cp, char *out);
+bool utf8_is_ascii(uint32_t cp);
 int utf8_calc_width(uint32_t cp);
 
 #endif

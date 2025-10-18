@@ -85,29 +85,40 @@ uint32_t utf8_to_codepoint(const char *ch) {
 
 size_t utf8_from_codepoint(uint32_t cp, char *out) {
     if (cp <= 0x7F) {
-        out[0] = cp;
+        if (out) {
+            out[0] = cp;
+        }
         return 1;
     }
     if (cp <= 0x07FF) {
-        out[0] = cp >> 6 | 0xC0;
-        out[1] = (cp & 0x3F) | 0x80;
+        if (out) {
+            out[0] = cp >> 6 | 0xC0;
+            out[1] = (cp & 0x3F) | 0x80;
+        }
         return 2;
     }
     if (cp <= 0xFFFF) {
-        out[0] = cp >> 12 | 0xE0;
-        out[1] = (cp >> 6 & 0x3F) | 0x80;
-        out[2] = (cp & 0x3F) | 0x80;
+        if (out) {
+            out[0] = cp >> 12 | 0xE0;
+            out[1] = (cp >> 6 & 0x3F) | 0x80;
+            out[2] = (cp & 0x3F) | 0x80;
+        }
         return 3;
     }
     if (cp <= 0x10FFFF) {
-        out[0] = cp >> 18 | 0xF0;
-        out[1] = (cp >> 12 & 0x3F) | 0x80;
-        out[2] = (cp >> 6 & 0x3F) | 0x80;
-        out[3] = (cp & 0x3F) | 0x80;
+        if (out) {
+            out[0] = cp >> 18 | 0xF0;
+            out[1] = (cp >> 12 & 0x3F) | 0x80;
+            out[2] = (cp >> 6 & 0x3F) | 0x80;
+            out[3] = (cp & 0x3F) | 0x80;
+        }
         return 4;
     }
     return 0;
+}
 
+bool utf8_is_ascii(uint32_t cp) {
+    return cp <= 0x7F && cp > 0x00;
 }
 
 
