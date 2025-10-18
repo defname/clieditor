@@ -102,8 +102,8 @@ size_t utf8_from_codepoint(uint32_t cp, char *out) {
     if (cp <= 0x10FFFF) {
         out[0] = cp >> 18 | 0xF0;
         out[1] = (cp >> 12 & 0x3F) | 0x80;
-        out[1] = (cp >> 6 & 0x3F) | 0x80;
-        out[1] = (cp & 0x3F) | 0x80;
+        out[2] = (cp >> 6 & 0x3F) | 0x80;
+        out[3] = (cp & 0x3F) | 0x80;
         return 4;
     }
     return 0;
