@@ -25,7 +25,7 @@ size_t utf8_get_char_length(unsigned char c) {
 }
 
 bool utf8_is_continuation_byte(unsigned char c) {
-    return (c & 0b11000000) != 0b10000000;
+    return (c & 0b11000000) == 0b10000000;
 }
 
 size_t utf8_strlen(const char *str) {
