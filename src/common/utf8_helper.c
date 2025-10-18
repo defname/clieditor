@@ -48,6 +48,13 @@ uint32_t utf8_to_codepoint(const char *ch) {
     size_t ch_len = utf8_get_char_length(ch[0]);
     if (ch_len == 0) return INVALID_CODEPOINT;
 
+    for (size_t i=0; i<ch_len; i++) {
+        if (!utf8_is_continuation_byte(ch[i])) {
+            return INVALID_CODEPOINT;
+        }
+    }
+
+
     uint32_t cp = 0;
 
     if (ch_len == 1) {
