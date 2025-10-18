@@ -42,7 +42,7 @@ size_t StringView_Width(const StringView *view) {
     StringIterator it = StringIterator_FromView(view);
     int w = 0;
     while (StringIterator_Next(&it)) {
-        w += utf8_get_width(it.current);
+        w += utf8_calc_width(utf8_to_codepoint(it.current));
     }
     return w;
 }

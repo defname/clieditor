@@ -111,7 +111,7 @@ size_t utf8_from_codepoint(uint32_t cp, char *out) {
 }
 
 
-int utf8_get_width(uint32_t cp) {
+int utf8_calc_width(uint32_t cp) {
     int w = wcwidth((wchar_t)cp);
     if (w < 0) w = 1; // fallback
     return w;
