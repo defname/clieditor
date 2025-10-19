@@ -110,9 +110,11 @@ static void draw(const Widget *self, Canvas *canvas) {
         int y = i + MENU_BORDER_Y + y_offset;
         int display_width = self->width - MENU_BORDER_X * 2;
         uint32_t shortcut = menu->entries[i].shortcut ? menu->entries[i].shortcut : ' ';
-        char shortcut_ch[4];
-        size_t shortcut_byte_len = utf8_from_codepoint(shortcut, shortcut_ch); 
-        String text = String_Format("%*s%*s", display_width - 1, menu->entries[i].text, shortcut_byte_len, shortcut_ch);
+        char shortcut_ch[5];
+        size_t shortcut_byte_len = utf8_from_codepoint(shortcut, shortcut_ch);
+        shortcut_ch[shortcut_byte_len] = '\0';
+
+        String text = String_Format("%-*s%s", display_width - 1, menu->entries[i].text, shortcut_ch);
 
         Canvas_MoveCursor(canvas, MENU_BORDER_X, y);
         if (i == menu->selected_entry) {
