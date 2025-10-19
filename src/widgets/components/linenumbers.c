@@ -93,7 +93,7 @@ void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
     w->style.fg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
     ln->style_active = w->style;
     ln->style_active.fg = Color_GetCodeById(COLOR_FG);
-    ln->border_char = String_FromCStr("│", 1);
+    ln->border_char = String_FromCStr("│", strlen("│"));
     ln->first_number = 1;
 }
 

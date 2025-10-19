@@ -181,6 +181,14 @@ void test_edgecases(void) {
     const char *ch = String_GetChar(&str, String_Length(&str));
     TEST_CHECK(ch == str.bytes);
     String_Deinit(&str);
+
+    str = String_FromCStr("Foobar€", strlen("Foobar€"));
+    TEST_CHECK(strcmp(String_AsCStr(&str), "Foobar€") == 0);
+    String_Deinit(&str);
+
+    str = String_FromCStr("│", strlen("│"));
+    TEST_CHECK(strcmp(String_AsCStr(&str), "│") == 0);
+    String_Deinit(&str);
 }
 
 

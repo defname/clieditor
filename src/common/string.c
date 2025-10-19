@@ -67,20 +67,22 @@ StringView StringView_LimitWidth(const StringView *view, int max_width) {
         return empty;
     }
     StringIterator it = StringIterator_FromView(view);
-    int w = 0;
+    size_t current_width = 0;
+    size_t last_valid_byte_offset = 0;
+    size_t last_valid_char_index = 0;
+
     while (StringIterator_Next(&it)) {
-        w += utf8_calc_width(utf8_to_codepoint(it.current));
-        if (w >= max_width) {
+        int char_width = utf8_calc_width(utf8_to_codepoint(it.current));
+        if (current_width + char_width > (size_t)max_width) {
             break;
         }
+        current_width += char_width;
+        last_valid_byte_offset = it.byte_offset + utf8_get_char_length(it.current[0]);
+        last_valid_char_index = it.char_index + 1;
     }
-    StringView out = {
-        .bytes = view->bytes,
-        .bytes_size = it.byte_offset,
-        .char_count = it.char_index
-    };
-
-    return out;
+    return (StringView){.bytes = view->bytes,
+                        .bytes_size = last_valid_byte_offset,
+                        .char_count = last_valid_char_index};
 }
 
 
