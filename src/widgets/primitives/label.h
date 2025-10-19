@@ -17,11 +17,11 @@
 #define LABEL_H
 
 #include "display/widget.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 
 typedef struct {
     Widget base;
-    UTF8String text;
+    String text;
 } Label;
 
 #define AS_LABEL(w) ((Label*)(w))

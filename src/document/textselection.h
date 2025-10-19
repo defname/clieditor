@@ -17,7 +17,7 @@
 #define TEXTSELECTION_H
 
 #include "textbuffer.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 
 
 typedef struct _TextSelection {
@@ -42,7 +42,7 @@ void TextSelection_End(TextSelection *ts, Line *line, int idx);
 
 TextSelection TextSelection_Ordered(const TextSelection *ts);
 
-void TextSelection_Extract(TextSelection *ts, UTF8String *text);
+String TextSelection_Extract(TextSelection *ts);
 void TextSelection_Delete(TextSelection *ts, TextBuffer *tb);
 
 #endif

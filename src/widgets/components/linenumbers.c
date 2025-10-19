@@ -14,8 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "linenumbers.h"
+#include <string.h>
 #include "common/logging.h"
-#include "common/utf8string.h"
 #include "common/colors.h"
 #include "common/config.h"
 
@@ -24,14 +24,12 @@ static void draw(const Widget *self, Canvas *canvas) {
     (void)self;
     (void)canvas;
     LineNumbers *ln = AS_LINENUMBERS(self);
-    
-    UTF8String str;
-    UTF8String_Init(&str);
 
     int line_nr = ln->first_number;
-    int width = self->width;
+    int num_width = self->width - String_Length(&ln->border_char);
 
     uint8_t color = canvas->current_style.fg;
+
     
     for (int i=0; i<ln->tl->height; i++) {
         VisualLine *line = TextLayout_GetVisualLine(ln->tl, i);
@@ -45,20 +43,20 @@ static void draw(const Widget *self, Canvas *canvas) {
                 canvas->current_style = ln->style_active;
             }
             Canvas_MoveCursor(canvas, 0, i);
-            UTF8String_Format(&str, 10, "%*d", width-1, line_nr);
-            Canvas_Write(canvas, &str);
+            String text = String_Format("%*d", num_width, line_nr);
+            Canvas_Write(canvas, &text);
+            String_Deinit(&text);
             if (canvas->current_style.fg != color) {
                 canvas->current_style.fg = color;
             }
-            Canvas_PutChar(canvas, ln->border_char);
+            Canvas_Write(canvas, &ln->border_char);
             line_nr++;
         }
         else {
-            Canvas_MoveCursor(canvas, width-1, i);
-            Canvas_PutChar(canvas, ln->border_char);
+            Canvas_MoveCursor(canvas, num_width, i);
+            Canvas_Write(canvas, &ln->border_char);
         }
     }
-    UTF8String_Deinit(&str);
 }
 
 void on_config_change(Widget *self) {
@@ -66,14 +64,22 @@ void on_config_change(Widget *self) {
     Table *conf = Config_GetModuleConfig("linenumbers");
     self->style.bg = Config_GetColor(conf, "bg", ln->base.style.bg);
     self->style.fg = Config_GetColor(conf, "text", ln->base.style.fg);
-    ln->border_char = UTF8_GetCharFromString(Config_GetStr(conf, "border_char", "│"));
+    const char *border = Config_GetStr(conf, "border_char", "│");
+    String_Deinit(&ln->border_char);
+    ln->border_char = String_FromCStr(border, strlen(border));
     ln->style_active.fg = Config_GetColor(conf, "active.text", ln->style_active.fg);
     ln->style_active.bg = Config_GetColor(conf, "active.bg", ln->style_active.bg);
+}
+
+void destroy(Widget *self) {
+    LineNumbers *ln = AS_LINENUMBERS(self);
+    String_Deinit(&ln->border_char);
 }
 
 WidgetOps linenumber_ops = {
     .draw = draw,
     .on_config_changed = on_config_change,
+    .destroy = destroy
 };
 
 void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
@@ -87,7 +93,7 @@ void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {
     w->style.fg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
     ln->style_active = w->style;
     ln->style_active.fg = Color_GetCodeById(COLOR_FG);
-    ln->border_char = UTF8_GetCharFromString("│");
+    ln->border_char = String_FromCStr("│", strlen("│"));
     ln->first_number = 1;
 }
 

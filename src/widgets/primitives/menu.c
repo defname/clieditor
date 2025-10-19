@@ -20,10 +20,12 @@
 #include "common/colors.h"
 #include "common/logging.h"
 #include "common/config.h"
+#include "common/utf8_helper.h"
+
 
 static void destroy(Widget *self) {
     Menu *menu = AS_MENU(self);
-    UTF8String_Deinit(&menu->title);
+    String_Deinit(&menu->title);
 }
 
 static bool on_input(Widget *self, InputEvent input) {
@@ -46,19 +48,19 @@ static bool on_input(Widget *self, InputEvent input) {
             return true;
         }
     }
-    else if (input.key == KEY_ENTER || UTF8_Equal(input.ch, utf8_space)) {
+    else if (input.key == KEY_ENTER || input.ch == ' ') {
         MenuEntry *entry = &menu->entries[menu->selected_entry];
         Callback_Call(&entry->callback, self);
         return true;
     }
     // check for shortcuts
-    if (input.ch.length > 0) {
+    if (input.ch != 0x00 && input.ch != INVALID_CODEPOINT) {
         for (size_t i = 0; i < menu->entry_count; i++) {
-            UTF8Char shortcut = menu->entries[i].shortcut;
-            if (shortcut.length == 0) {
+            uint32_t shortcut = menu->entries[i].shortcut;
+            if (shortcut == 0x00 || shortcut == INVALID_CODEPOINT) {
                 continue;
             }
-            if (UTF8_Equal(input.ch, shortcut)) {
+            if (input.ch == shortcut) {
                 MenuEntry *entry = &menu->entries[i];
                 Callback_Call(&entry->callback, self);
                 return true;
@@ -73,7 +75,7 @@ static void on_resize(Widget *self, int new_parent_width, int new_parent_height)
     (void)new_parent_width;
     (void)new_parent_height;
     Menu *menu = AS_MENU(self);
-    int max_len = menu->title.length + MENU_BORDER_X * 2;
+    int max_len = String_Length(&menu->title) + MENU_BORDER_X * 2;
     for (size_t i=0; i<menu->entry_count; i++) {
         int len = strlen(menu->entries[i].text) + 5;  // distance to print shortcut
         if (len > max_len) {
@@ -82,7 +84,7 @@ static void on_resize(Widget *self, int new_parent_width, int new_parent_height)
     }
     self->width = max_len + 2 * MENU_BORDER_X;
     self->height = AS_MENU(self)->entry_count + 2 * MENU_BORDER_Y;
-    if (menu->title.length > 0) {
+    if (String_Length(&menu->title) > 0) {
         self->height += 2;
     }
     self->x = (Screen_GetWidth() - self->width) / 2;
@@ -95,40 +97,37 @@ static void draw(const Widget *self, Canvas *canvas) {
     Menu *menu = AS_MENU(self);
 
     int y_offset = 0;
-    if (menu->title.length > 0) {
-        int x = (self->width - menu->title.length) / 2;
+    if (String_Length(&menu->title) > 0) {
+        int x = (self->width - String_Length(&menu->title)) / 2;
         Canvas_MoveCursor(canvas, x, MENU_BORDER_Y);
         Canvas_Write(canvas, &menu->title);
         y_offset += 2;
     }
 
+    Style orig_style = canvas->current_style;
 
-    UTF8String text;
-    UTF8String_Init(&text);
     for (size_t i=0; i<menu->entry_count; i++) {
         int y = i + MENU_BORDER_Y + y_offset;
+        int display_width = self->width - MENU_BORDER_X * 2;
+        uint32_t shortcut = menu->entries[i].shortcut ? menu->entries[i].shortcut : ' ';
+        char shortcut_ch[5];
+        size_t shortcut_byte_len = utf8_from_codepoint(shortcut, shortcut_ch);
+        shortcut_ch[shortcut_byte_len] = '\0';
+
+        String text = String_Format("%-*s%s", display_width - 1, menu->entries[i].text, shortcut_ch);
+
         Canvas_MoveCursor(canvas, MENU_BORDER_X, y);
-        const char *entry_text = menu->entries[i].text;
-        int text_len = strlen(entry_text);
-        UTF8String_FromStr(&text, entry_text, text_len);
-        Style orig_style = canvas->current_style;
         if (i == menu->selected_entry) {
             canvas->current_style = menu->style_selected;
         }
         Canvas_Write(canvas, &text);
-        
-        // draw shortcut hint
-        if (menu->entries[i].shortcut.length > 0) {
-            int right_x = self->width - MENU_BORDER_X - 1;
-            Canvas_MoveCursor(canvas, right_x, y);
-            Canvas_PutChar(canvas, menu->entries[i].shortcut);
-        }
 
         if (i == menu->selected_entry) {
             canvas->current_style = orig_style;
         }
+        String_Deinit(&text);
     }
-    UTF8String_Deinit(&text);
+    
 }
 
 static void on_config_change(Widget *w) {
@@ -155,10 +154,12 @@ void Menu_Init(Menu *menu, MenuEntry *entries, size_t entry_count, const char *t
     menu->entry_count = entry_count;
     menu->selected_entry = 0;
     menu->on_close = on_close;
-    UTF8String_Init(&menu->title);
 
     if (title) {
-        UTF8String_FromStr(&menu->title, title, strlen(title));
+        menu->title = String_FromCStr(title, strlen(title));
+    }
+    else {
+        menu->title = String_Empty();
     }
 
 

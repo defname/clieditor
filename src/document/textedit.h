@@ -16,6 +16,8 @@
 #ifndef TEXTEDIT_H
 #define TEXTEDIT_H
 
+#include <stdint.h>
+
 #include "textbuffer.h"
 #include "textlayout.h"
 
@@ -34,12 +36,12 @@ void TextEdit_MoveUp(TextEdit *te);
 void TextEdit_MoveDown(TextEdit *te);
 
 // --- Editing ---
-void TextEdit_InsertChar(TextEdit *te, UTF8Char ch);
+void TextEdit_InsertChar(TextEdit *te, uint32_t cp);
 void TextEdit_DeleteChar(TextEdit *te);      // delete at cursor
 void TextEdit_Backspace(TextEdit *te);       // delete before cursor
 void TextEdit_Newline(TextEdit *te);
 
 // --- Optional convenience ---
-void TextEdit_InsertString(TextEdit *te, UTF8String *string);  // string should not contain newlines!
+void TextEdit_InsertString(TextEdit *te, const String *string);  // string should not contain newlines!
 
 #endif

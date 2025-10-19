@@ -16,10 +16,11 @@
 #ifndef MAINMENU_H
 #define MAINMENU_H
 
+#include <stdint.h>
+
 #include "display/widget.h"
 #include "common/callback.h"
-#include "common/utf8string.h"
-#include "common/utf8.h"
+#include "common/string.h"
 
 
 #define MENU_BORDER_X 3
@@ -27,7 +28,7 @@
 
 typedef struct _MenuEntry {
     const char *text;
-    UTF8Char shortcut;
+    uint32_t shortcut;
     Callback callback;
 } MenuEntry;
 
@@ -36,7 +37,7 @@ typedef struct {
     MenuEntry *entries;
     size_t entry_count;
     size_t selected_entry;
-    UTF8String title;
+    String title;
     Callback on_close;
     Style style_selected;
 } Menu;

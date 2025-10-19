@@ -15,6 +15,7 @@
  */
 #include "textedit.h"
 #include "common/logging.h"
+#include "common/utf8_helper.h"
 
 void TextEdit_Init(TextEdit *te, TextBuffer *tb, TextLayout *tl) {
     if (!te || !tb || !tl || tb != tl->tb) {
@@ -40,7 +41,7 @@ void TextEdit_MoveLeft(TextEdit *te) {
     }
     if (tb->current_line->prev) {
         tb->current_line = tb->current_line->prev;
-        tb->gap.position = tb->current_line->text.length;
+        tb->gap.position = String_Length(&tb->current_line->text);
     }
     else {
         tb->gap.position = 0;
@@ -51,7 +52,7 @@ void TextEdit_MoveRight(TextEdit *te) {
     TextBuffer *tb = te->tb;
     TextBuffer_MergeGap(tb);
 
-    if (tb->gap.position < tb->current_line->text.length) {
+    if (tb->gap.position < String_Length(&tb->current_line->text)) {
         tb->gap.position++;
         return;
     }
@@ -60,7 +61,7 @@ void TextEdit_MoveRight(TextEdit *te) {
         tb->gap.position = 0;
     }
     else {
-        tb->gap.position = tb->current_line->text.length;
+        tb->gap.position = String_Length(&tb->current_line->text);
     }
 }
 
@@ -91,8 +92,8 @@ void TextEdit_MoveUp(TextEdit *te) {
     tb->gap.position = line_above->offset + VisualLine_GetOffsetForX(line_above, cursor.x);
     
     // fix position out of bounds
-    if (tb->gap.position > tb->current_line->text.length) {
-        tb->gap.position = tb->current_line->text.length;
+    if (tb->gap.position > String_Length(&tb->current_line->text)) {
+        tb->gap.position = String_Length(&tb->current_line->text);
     }
 }
 
@@ -108,28 +109,34 @@ void TextEdit_MoveDown(TextEdit *te) {
         // try to scroll down 
         if (!TextLayout_ScrollDown(tl)) {
             // jump to the end of the line if scrolling was not possible (end of document reached)
-            tb->gap.position = tb->current_line->text.length;
+            tb->gap.position = String_Length(&tb->current_line->text);
             return;
         }
         cursor.y--;
     }
     VisualLine *line_below = TextLayout_GetVisualLine(tl, cursor.y + 1);
     if (!line_below) {
-        tb->gap.position = tb->current_line->text.length;
+        tb->gap.position = String_Length(&tb->current_line->text);
         return;
     }
     tb->current_line = line_below->src;
     tb->gap.position = line_below->offset + VisualLine_GetOffsetForX(line_below, cursor.x);
 
     // fix position out of bounds
-    if (tb->gap.position > tb->current_line->text.length) {
-        tb->gap.position = tb->current_line->text.length;
+    if (tb->gap.position > String_Length(&tb->current_line->text)) {
+        tb->gap.position = String_Length(&tb->current_line->text);
     }
 }
 
 // --- Editing ---
-void TextEdit_InsertChar(TextEdit *te, UTF8Char ch) {
-    UTF8String_AddChar(&te->tb->gap.text, ch);
+void TextEdit_InsertChar(TextEdit *te, uint32_t cp) {
+    char buf[5];
+    size_t len = utf8_from_codepoint(cp, buf);
+    if (len == 0) {
+        return;
+    }
+    buf[len] = '\0';
+    String_AddChar(&te->tb->gap.text, buf);
     te->tl->dirty = true;
 }
 
@@ -137,7 +144,7 @@ void TextEdit_DeleteChar(TextEdit *te) {
     TextBuffer *tb = te->tb;
     te->tl->dirty = true;
     TextBuffer_MergeGap(tb);
-    if (tb->gap.position - tb->gap.overlap + tb->gap.text.length < tb->current_line->text.length) {
+    if (tb->gap.position - tb->gap.overlap + String_Length(&tb->gap.text) < String_Length(&tb->current_line->text)) {
         tb->gap.position++;
         tb->gap.overlap++;
         return;
@@ -146,15 +153,15 @@ void TextEdit_DeleteChar(TextEdit *te) {
     if (!tb->current_line->next) {
         return;  // no next line... nothing to do
     }
-    UTF8String_Concat(&tb->current_line->text, &tb->current_line->next->text);
+    String_Append(&tb->current_line->text, &tb->current_line->next->text);
     TextBuffer_DeleteLine(tb, tb->current_line->next);
 }
 
 void TextEdit_Backspace(TextEdit *te) {
     TextBuffer *tb = te->tb;
     te->tl->dirty = true;
-    if (tb->gap.text.length > 0) {
-        UTF8String_Shorten(&tb->gap.text, tb->gap.text.length - 1);
+    if (String_Length(&tb->gap.text) > 0) {
+        String_Shorten(&tb->gap.text, String_Length(&tb->gap.text) - 1);
         return;
     }
     if (tb->gap.position - tb->gap.overlap > 0) {
@@ -169,8 +176,8 @@ void TextEdit_Backspace(TextEdit *te) {
         return;  // no prev line... nothing to do
     }
     tb->current_line = tb->current_line->prev;
-    tb->gap.position = tb->current_line->text.length;
-    UTF8String_Concat(&tb->current_line->text, &tb->current_line->next->text);
+    tb->gap.position = String_Length(&tb->current_line->text);
+    String_Append(&tb->current_line->text, &tb->current_line->next->text);
     TextBuffer_DeleteLine(tb, tb->current_line->next);
 }
 
@@ -178,11 +185,15 @@ void TextEdit_Newline(TextEdit *te) {
     TextBuffer *tb = te->tb;
     TextBuffer_MergeGap(tb);
     Line *new_line = Line_Create();
-    UTF8String dummy;
-    UTF8String_Init(&dummy);
-    UTF8String_Split(&tb->current_line->text, &dummy, &new_line->text, tb->gap.position);
-    UTF8String_Deinit(&dummy);
-    UTF8String_Shorten(&tb->current_line->text, tb->gap.position);
+
+    // get text after cursor
+    size_t after_cursor_len = String_Length(&tb->current_line->text) - tb->gap.position;
+    String after_cursor = String_Substring(&tb->current_line->text, tb->gap.position, after_cursor_len);
+    // shorten current line
+    String_Shorten(&tb->current_line->text, tb->gap.position);
+    // transfer ownership of after_cursor to new_line
+    String_Take(&new_line->text, &after_cursor);
+    // insert new line
     TextBuffer_InsertLineAfterCurrent(tb, new_line);
     tb->current_line = new_line;
     tb->gap.position = 0;
@@ -190,8 +201,8 @@ void TextEdit_Newline(TextEdit *te) {
 }
 
 // --- Optional convenience ---
-void TextEdit_InsertString(TextEdit *te, UTF8String *string) {
-    UTF8String_Concat(&te->tb->gap.text, string);
+void TextEdit_InsertString(TextEdit *te, const String *string) {
+    String_Append(&te->tb->gap.text, string);
     te->tl->dirty = true;
 }
 

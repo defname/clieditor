@@ -8,7 +8,6 @@
 #include "document/textbuffer.h"
 #include "document/textlayout.h"
 #include "document/line.h"
-#include "common/utf8string.h"
 
 // --- Test Setup Helper Functions ---
 
@@ -26,11 +25,11 @@ static void setup_fixture(TestFixture* f, int width, int height) {
 // Adds lines to the TextBuffer
 static void add_lines(TextBuffer* tb, const char* lines[], int count) {
     // Replace the first, empty line
-    UTF8String_FromStr(&tb->current_line->text, lines[0], strlen(lines[0]));
+    String_Set(&tb->current_line->text, String_FromCStr(lines[0], strlen(lines[0])));
 
     for (int i = 1; i < count; i++) {
         Line* new_line = Line_Create();
-        UTF8String_FromStr(&new_line->text, lines[i], strlen(lines[i]));
+        String_Set(&new_line->text, String_FromCStr(lines[i], strlen(lines[i])));
         TextBuffer_InsertLineAtBottom(tb, new_line);
     }
 }
@@ -188,7 +187,7 @@ void test_cursor_position(void) {
     TEST_CHECK(info.idx == 5);
 
     // Move cursor to the 3rd line, which is wrapped
-    UTF8String_FromStr(&f.tb.current_line->next->text, "This is a very long line.", 25);
+    String_Set(&f.tb.current_line->next->text, String_FromCStr("This is a very long line.", 25));
     f.tb.current_line = f.tb.current_line->next;
     f.tb.gap.position = 15; // "very |l|ong line"
     f.tl.dirty = true;
@@ -213,7 +212,7 @@ void test_scrolling(void) {
     TextLayout_Recalc(&f.tl, 0);
 
     // Initial state: "Line 0", "Line 1 wra", "ps"
-    TEST_ASSERT(UTF8String_EqualStr(&TextLayout_GetVisualLine(&f.tl, 0)->src->text, "Line 0"));
+    TEST_ASSERT(strcmp(String_AsCStr(&TextLayout_GetVisualLine(&f.tl, 0)->src->text), "Line 0") == 0);
 
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->src->position == 0);
     TEST_CHECK(TextLayout_GetVisualLine(&f.tl, 0)->offset == 0);
@@ -434,7 +433,7 @@ void test_gap_sensitivity(void) {
     f.tl.tabstop = 4;
     f.tb.gap.position = 0;
     f.tb.gap.overlap = 0;
-    UTF8String_FromStr(&f.tb.gap.text, "abc", 3);
+    String_Set(&f.tb.gap.text, String_FromCStr("abc", 3));
 
     TextLayout_Recalc(&f.tl, 0);
     TEST_CHECK(f.tl.cache[0].gap != NULL);
@@ -442,21 +441,21 @@ void test_gap_sensitivity(void) {
     TEST_CHECK(f.tl.cache[0].length == 6);  // "a", "b", "c", "0", "\t", "2"
     TEST_CHECK(f.tl.cache[0].width == 9);
 
-    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0] == 'a');
-    TEST_MSG("%c", VisualLine_GetChar(&f.tl.cache[0], 0).bytes[0]);
-    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 3).bytes[0] == '0');
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 0)[0] == 'a');
+    TEST_MSG("%c", VisualLine_GetChar(&f.tl.cache[0], 0)[0]);
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 3)[0] == '0');
 
     f.tb.gap.position = 2;
     f.tb.gap.overlap = 1;
     TextLayout_Recalc(&f.tl, 0);
     TEST_CHECK(f.tl.cache[0].gap != NULL);
     TEST_CHECK(f.tl.cache[0].length == 5);
-    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 1).bytes[0] == 'a');
+    TEST_CHECK(VisualLine_GetChar(&f.tl.cache[0], 1)[0] == 'a');
 
     f.tb.current_line = f.tb.current_line->next;
     f.tb.gap.position = 3;
     f.tb.gap.overlap = 1;
-    UTF8String_FromStr(&f.tb.gap.text, "", 0);
+    String_Set(&f.tb.gap.text, String_FromCStr("", 0));
 
     TextLayout_Recalc(&f.tl, 0);
     TEST_CHECK(f.tl.cache[0].gap == NULL);

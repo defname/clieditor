@@ -29,7 +29,7 @@ static void hide_notification(uint8_t timer_id, void *user_data) {
 
 static void notification_destroy(Widget *self) {
     Notification *noty = AS_NOTIFICATION(self);
-    UTF8String_Deinit(&noty->text);
+    String_Deinit(&noty->text);
 }
 
 static void notification_draw(const Widget *self, Canvas *canvas) {
@@ -49,11 +49,9 @@ static void notification_draw(const Widget *self, Canvas *canvas) {
             break;
     }
     Canvas_Write(canvas, &noty->text);
-    UTF8String spaces;
-    UTF8String_Init(&spaces);
-    UTF8String_Spaces(&spaces, self->width - UTF8String_Length(&noty->text));
+    String spaces = String_Spaces(self->width - String_Length(&noty->text));
     Canvas_Write(canvas, &spaces);
-    UTF8String_Deinit(&spaces);
+    String_Deinit(&spaces);
 }
 
 static void notification_on_resize(Widget *self, int new_parent_width, int new_parent_height) {
@@ -93,7 +91,7 @@ void Notification_Init(Notification *self, Widget *parent) {
     self->base.visible = false;
     self->timer = NO_TIMER;
     self->type = NOTIFICATION_NORMAL;
-    UTF8String_Init(&self->text);
+    String_Init(&self->text);
 
     self->style_normal = self->base.style;
     self->style_normal.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
@@ -116,7 +114,8 @@ void Notification_Notify(Notification *self, const char *msg, NotificationType t
         Timer_Stop(self->timer);
     }
     self->type = type;
-    UTF8String_FromStr(&self->text, msg, strlen(msg));
+    String_Deinit(&self->text);
+    self->text = String_FromCStr(msg, strlen(msg));
     Widget_Show(AS_WIDGET(self));
     self->timer = Timer_Start(2000, hide_notification, self);
 }

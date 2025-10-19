@@ -21,10 +21,10 @@ void TextBuffer_LoadFromFile(TextBuffer *tb, File *file) {
     TextBuffer_ReInit(tb);
     Line *first = tb->current_line;
     Line *current = tb->current_line;
-    UTF8String *line;
+    String *line;
     while ((line = File_ReadLine(file)) != NULL) {
-        UTF8String_Copy(&current->text, line);
-        UTF8String_Destroy(line);
+        String_Take(&current->text, line);
+        String_Destroy(line);   // ownership was transfered, so no total destruction needed, but works anyway since NULL guards in String_Destroy()
         Line *newline = Line_Create();
         TextBuffer_InsertLineAfterCurrent(tb, newline);
         tb->current_line = newline;

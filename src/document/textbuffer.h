@@ -64,13 +64,13 @@
 #ifndef TEXTBUFFER_H
 #define TEXTBUFFER_H
 
-#include "common/utf8string.h"
+#include "common/string.h"
 #include "io/file.h"
 
 #include "line.h"
 
 typedef struct _Gap {
-    UTF8String text;
+    String text;
     size_t position;
     size_t overlap;
 } Gap;
@@ -89,7 +89,10 @@ void TextBuffer_Init(TextBuffer *tb);
 void TextBuffer_Deinit(TextBuffer *tb);
 void TextBuffer_ReInit(TextBuffer *tb);
 
-void TextBuffer_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after);
+/**
+ * @brief Store the text around the gap in StringViews before and after.
+ */
+void TextBuffer_TextAroundGap(const TextBuffer *tb, StringView *before, StringView *after);
 void TextBuffer_MergeGap(TextBuffer *tb);
 
 void TextBuffer_InsertLineAfterCurrent(TextBuffer *tb, Line *new_line);

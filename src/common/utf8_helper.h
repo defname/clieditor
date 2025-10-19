@@ -13,26 +13,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef LINE_H
-#define LINE_H
 
-#include "common/string.h"
+#ifndef UTF8_HELPER_H
+#define UTF8_HELPER_H
 
-#define LINE_POSITION_STEP 100
+// used by utf8_to_codepoint if ch is not a valid UTF8 character
+#define INVALID_CODEPOINT 0xFFFFFFFF
 
-typedef struct _Line {
-    String text;
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-    int position;
 
-    struct _Line *prev;
-    struct _Line *next;
-} Line;
-
-Line *Line_Create();
-void Line_Destroy(Line *l);
-void Line_InsertBefore(Line *line, Line *new_line);
-void Line_InsertAfter(Line *line, Line *new_line);
-void Line_Delete(Line *line);
+size_t utf8_get_char_length(unsigned char c);
+bool utf8_is_continuation_byte(unsigned char c);
+size_t utf8_strlen(const char *str);
+uint32_t utf8_to_codepoint(const char *ch);
+size_t utf8_from_codepoint(uint32_t cp, char *out);
+bool utf8_is_ascii(uint32_t cp);
+int utf8_calc_width(uint32_t cp);
 
 #endif

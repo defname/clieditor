@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "common/logging.h"
+
 static File *create_file_object() {
     File *file = malloc(sizeof(File));
     if (!file) {
@@ -65,18 +66,16 @@ void File_Close(File *file) {
     free(file);
 }
 
-UTF8String *File_ReadLine(File *file) {
+String *File_ReadLine(File *file) {
     if (!file || !file->fp || file->access != FILE_ACCESS_READ) {
         logError("Invalid file handle.");
         return NULL;
     }
-    UTF8String *line = UTF8String_Create();
     char *lineptr = NULL;
     size_t length = 0;
     ssize_t bytes_read = getline(&lineptr, &length, file->fp);
     if (bytes_read == -1) {
         free(lineptr);
-        UTF8String_Destroy(line);
         return NULL;
     }
     if (bytes_read > 0 && lineptr[bytes_read-1] == '\n') {
@@ -85,9 +84,12 @@ UTF8String *File_ReadLine(File *file) {
     if (bytes_read > 0 && lineptr[bytes_read-1] == '\r') {
         lineptr[--bytes_read] = '\0';
     }
-    UTF8String_FromStr(line, lineptr, (size_t)bytes_read);
-    free(lineptr);
-    return line;
+    String *str = malloc(sizeof(String));
+    if (!str) {
+        logFatal("Cannot allocate memory for String.");
+    }
+    *str = String_TakeCStr(lineptr);
+    return str;
 }
 
 char *File_Read(File *file) {
@@ -116,14 +118,13 @@ char *File_Read(File *file) {
     return buffer;
 }
 
-void File_WriteLine(File *file, const UTF8String *line) {
+void File_WriteLine(File *file, const String *line) {
     if (!file || !file->fp || !line || file->access != FILE_ACCESS_WRITE) {
         logError("Invalid parameters for File_WriteLine.");
         return;
     }
-    char *str = UTF8String_ToStr(line);
+    const char *str = String_AsCStr(line);
     fputs(str, file->fp);
-    free(str);
     fputc('\n', file->fp);
     fflush(file->fp);
 }

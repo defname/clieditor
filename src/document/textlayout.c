@@ -14,10 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "textlayout.h"
-#include "common/logging.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "common/logging.h"
+#include "common/utf8_helper.h"
 
 
 void VisualLine_Init(VisualLine *vl, int screen_width) {
@@ -92,33 +94,33 @@ int VisualLine_GetCharX(const VisualLine *vl, int idx) {
     return vl->char_x[idx];
 }
 
-UTF8Char VisualLine_GetChar(const VisualLine *vl, int i) {
+const char *VisualLine_GetChar(const VisualLine *vl, int i) {
     if (!vl || i < 0) {
         logFatal("Invalid arguments to VisualLine_GetChar");
-        return utf8_invalid;
+        return NULL;
     }
     int idx = i + vl->offset;
     if (!vl->gap) {  // there is no gap on this line
-        if (idx < (int)vl->src->text.length) {
-            return vl->src->text.chars[idx];
+        if (idx < (int)String_Length(&vl->src->text)) {
+            return String_GetChar(&vl->src->text, idx);
         }
         logFatal("Index out of range in VisualLine_GetChar");
-        return utf8_invalid;
+        return NULL;
     }
     // the index is before the gap
     if (idx < (int)vl->gap->position - (int)vl->gap->overlap) {
-        return vl->src->text.chars[idx];
+        return String_GetChar(&vl->src->text, idx);
     }
     // index is in the gap
-    if (idx < (int)vl->gap->position - (int)vl->gap->overlap + (int)vl->gap->text.length) {
-        return vl->gap->text.chars[idx - vl->gap->position + vl->gap->overlap];
+    if (idx < (int)vl->gap->position - (int)vl->gap->overlap + (int)String_Length(&vl->gap->text)) {
+        return String_GetChar((String*)&vl->gap->text, idx - vl->gap->position + vl->gap->overlap);
     }
     // index is after the gap but within the total length of the line
     if (i < (int)vl->length) {
-        return vl->src->text.chars[idx - vl->gap->text.length + vl->gap->overlap];
+        return String_GetChar(&vl->src->text, idx - String_Length(&vl->gap->text) + vl->gap->overlap);
     }
     logFatal("Index out of range in VisualLine_GetChar");
-    return utf8_invalid;
+    return NULL;
     
 }
 
@@ -297,10 +299,10 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, TextLayout 
 
     const Gap *gap = NULL;
     vl->gap = NULL;
-    int text_length = line->text.length;
+    int text_length = String_Length(&line->text);
     if (line == tb->current_line) {
         gap = &tb->gap;
-        text_length += gap->text.length - gap->overlap;
+        text_length += String_Length(&gap->text) - gap->overlap;
         vl->gap = gap;
     }
 
@@ -308,29 +310,30 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, TextLayout 
         if (i >= text_length) {
             break;
         }
-        UTF8Char ch;
+        const char *ch;
         if (gap) {
             if (i < (int)gap->position - (int)gap->overlap) {
-                ch = line->text.chars[i];
+                ch = String_GetChar(&line->text, i);
             }
-            else if (i < (int)gap->position - (int)gap->overlap + (int)gap->text.length) {
-                ch = gap->text.chars[i - gap->position + gap->overlap];
+            else if (i < (int)gap->position - (int)gap->overlap + (int)String_Length(&gap->text)) {
+                ch = String_GetChar((String*)&gap->text, i - gap->position + gap->overlap);
             }
             else {
-                ch = line->text.chars[i - gap->text.length + gap->overlap];
+                ch = String_GetChar(&line->text, i - String_Length(&gap->text) + gap->overlap);
             }
         }
         else {
-            ch = line->text.chars[i];
+            ch = String_GetChar(&line->text, i);
         }
 
         
         int char_w;
-        if (UTF8_EqualToChar(ch, '\t')) {
+        uint32_t cp = utf8_to_codepoint(ch);
+        if (cp == '\t') {
             char_w = calc_tab_width(w, tabstop);
         }
         else {
-            char_w = UTF8_GetWidth(ch);
+            char_w = utf8_calc_width(cp);
         }
         if (w + char_w > width) {
             break;
@@ -359,9 +362,9 @@ void TextLayout_Recalc(TextLayout *tl, int start_y) {
         }
         VisualLine *prev = &tl->cache[cache_idx - 1];
         size_t new_offset = prev->offset + prev->length;
-        int text_length = prev->src->text.length;
+        int text_length = String_Length(&prev->src->text);
         if (prev->src == tl->tb->current_line) {
-            text_length += tl->tb->gap.text.length - tl->tb->gap.overlap;
+            text_length += String_Length(&tl->tb->gap.text) - tl->tb->gap.overlap;
         }
         if ((int)new_offset >= text_length) {  // prev line consumed src completely
             Line *next_src = prev->src->next;
@@ -401,7 +404,7 @@ int get_cursor_idx_in_line(const TextBuffer *tb) {
     if (!tb) {
         return 0;
     }
-    int pos = tb->gap.position + tb->gap.text.length - tb->gap.overlap;
+    int pos = tb->gap.position + String_Length(&tb->gap.text) - tb->gap.overlap;
     if (pos < 0) {
         logDebug("This should not happen at all... Check gap manipulating functions.");
         return 0;
@@ -444,7 +447,7 @@ int TextLayout_GetCursorLayoutInfo(TextLayout *tl, CursorLayoutInfo *info) {
 
         if (vl->src == cursor_line) {
             // if the line is the end of the line the cursor can be at the last position (behind the last char)
-            int src_line_length = (int)vl->src->text.length + (int)tl->tb->gap.text.length - (int)tl->tb->gap.overlap;
+            int src_line_length = (int)String_Length(&vl->src->text) + (int)String_Length(&tl->tb->gap.text) - (int)tl->tb->gap.overlap;
             bool line_ends_here = (vl->offset + vl->length == src_line_length);
             bool is_at_end_of_line = (line_ends_here && cursor_idx_in_line == src_line_length);
             // otherwise (if the line is broken and the cursor is not at the total end of the line)

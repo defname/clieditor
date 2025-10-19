@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include "common/utf8.h"
+#include "common/utf8_helper.h"
 #include "io/terminal.h"
 #include "common/logging.h"
 #include "common/buffer.h"
@@ -55,7 +55,7 @@ Shift+Alt+Ctrl	8
 */
 
 
-InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = { .bytes = { 0 }, .length = 0 } };
+InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = INVALID_CODEPOINT };
 
 
 #define MAX_SEQUENCE_LEN    6
@@ -63,13 +63,13 @@ InputEvent input_invalidevent = { .key = KEY_NONE, .mods = 0, .ch = { .bytes = {
 
 bool InputEvent_IsValid(const InputEvent *ev) {
     if (ev->key == KEY_CHAR) {
-        return ev->ch.length > 0;
+        return ev->ch != 0x00 && ev->ch != INVALID_CODEPOINT;
     }
     if (ev->key != KEY_NONE) {
         return true;
     }
     // accept e.g. for chars with mods
-    return ev->ch.length > 0;
+    return utf8_is_ascii(ev->ch);
 }
 
 void Input_Init() {
@@ -216,14 +216,14 @@ InputEvent read_escape_sequence(int fd) {
 
     ssize_t bytes_read = read_with_timeout(fd, &seq[1], 50);
     if (bytes_read != 1) {  // single press  of escape button
-        return (InputEvent){ .key = KEY_ESC, .mods = 0, .ch = utf8_invalid };
+        return (InputEvent){ .key = KEY_ESC, .mods = 0, .ch = 0x00 };
     }
     (seq_count)++;  // bytes_read == 1
     if (seq[1] != '[') {  // single byte escape sequence
         return (InputEvent){
             .key = KEY_NONE,
             .mods = KEY_MOD_ALT,
-            .ch = (UTF8Char){ .bytes = { seq[1] }, .length = 1 }
+            .ch = seq[1]  // for ASCII character the utf8 codepoint equals the ASCII code
         };
     }
 
@@ -330,7 +330,7 @@ InputEvent Input_Read() {
         InputEvent ev = {
             .key = KEY_CHAR,
             .mods = 0,
-            .ch = UTF8_GetCharFromString(utf8_buf)
+            .ch = utf8_to_codepoint(utf8_buf)
         };
         // set key for enter, backspace and keys that are delivered inconsistantly
         if (l == 1) {

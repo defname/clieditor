@@ -20,7 +20,6 @@
 #include <string.h>
 #include "io/terminal.h"
 #include "io/screen.h"
-#include "common/utf8string.h"
 #include "io/input.h"
 #include "document/textbuffer.h"
 #include "document/textio.h"
@@ -171,12 +170,12 @@ int main(int argc, char *argv[]) {
     MenuEntry entries[] = {
         {
             .text = "Save",
-            .shortcut = UTF8_GetCharFromString("s"),
+            .shortcut = 's',
             .callback = Callback_New(onMenuClick, "save")
         },
         {
             .text = "Exit",
-            .shortcut = UTF8_GetCharFromString("q"),
+            .shortcut = 'q',
             .callback = Callback_New(onMenuClick, "exit")
         },
     };

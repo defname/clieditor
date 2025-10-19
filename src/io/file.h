@@ -17,7 +17,7 @@
 #define FILE_H
 
 #include "stdio.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 
 typedef enum {
     FILE_ACCESS_READ,
@@ -57,7 +57,7 @@ void File_Close(File *file);
  *          The caller is responsible for freeing it with
  *          UTF8String_Destroy()
  */
-UTF8String *File_ReadLine(File *file);
+String *File_ReadLine(File *file);
 
 /**
  * @brief Read whole file. Ownership is left to caller
@@ -67,6 +67,6 @@ char *File_Read(File *file);
 /**
  * @brief Write a line to a file.
  */
-void File_WriteLine(File *file, const UTF8String *line);
+void File_WriteLine(File *file, const String *line);
 
 #endif

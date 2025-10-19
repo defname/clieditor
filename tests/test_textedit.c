@@ -9,13 +9,14 @@
 #include "document/textlayout.h"
 #include "document/textedit.h"
 #include "document/line.h"
+#include "common/string.h"
+#include "common/utf8_helper.h"
+
 
 // Helper to compare a UTF8String with a C-string
-static void check_string_equals(const UTF8String *s, const char *expected_cstr) {
-    char *actual_cstr = UTF8String_ToStr(s);
-    TEST_CHECK(strcmp(actual_cstr, expected_cstr) == 0);
-    TEST_MSG("Expected: '%s', Got: '%s'", expected_cstr, actual_cstr);
-    free(actual_cstr);
+static void check_string_equals(const String *s, const char *expected_cstr) {
+    TEST_CHECK(strcmp(String_AsCStr(s), expected_cstr) == 0);
+    TEST_MSG("Expected: '%s', Got: '%s'", expected_cstr, String_AsCStr(s));
 }
 
 // --- Test Setup Helper Functions ---
@@ -37,12 +38,12 @@ static void setup_fixture(TestFixture* f, int width, int height) {
 static void add_lines(TextBuffer* tb, const char* lines[], int count) {
     if (count == 0) return;
     // Replace the first, empty line
-    UTF8String_FromStr(&tb->current_line->text, lines[0], strlen(lines[0]));
+    String_Set(&tb->current_line->text, String_FromCStr(lines[0], strlen(lines[0])));
 
     Line* current = tb->current_line;
     for (int i = 1; i < count; i++) {
         Line* new_line = Line_Create();
-        UTF8String_FromStr(&new_line->text, lines[i], strlen(lines[i]));
+        String_Set(&new_line->text, String_FromCStr(lines[i], strlen(lines[i])));
         Line_InsertAfter(current, new_line);
         current = new_line;
         tb->line_count++;
@@ -198,8 +199,8 @@ void test_editing_functions(void) {
 
     // --- Test InsertChar ---
     f.tb.gap.position = 4; // "line| 1"
-    TextEdit_InsertChar(&f.te, UTF8_GetCharFromString("-"));
-    TextEdit_InsertChar(&f.te, UTF8_GetCharFromString("€"));
+    TextEdit_InsertChar(&f.te, utf8_to_codepoint("-"));
+    TextEdit_InsertChar(&f.te, utf8_to_codepoint("€"));
     TextBuffer_MergeGap(&f.tb);
     check_string_equals(&f.tb.current_line->text, "line-€ 1");
 
