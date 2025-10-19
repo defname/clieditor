@@ -22,6 +22,7 @@
 #include <string.h>
 #include "io/terminal.h"
 #include "common/logging.h"
+#include "common/utf8_helper.h"
 
 
 void reallocate_buffers(Canvas *canvas) {
@@ -77,7 +78,7 @@ void update_cell(Canvas *canvas, int col, int row, Cell *origin) {
         cell->changed = false;
         return;
     }
-    cell->ch = origin->ch;
+    cell->cp = origin->cp;
     cell->style = origin->style;
     cell->changed = true;
 }
@@ -109,8 +110,7 @@ void cursor_increment(Canvas *canvas) {
 }
 
 void Canvas_Clear(Canvas *canvas) {
-    const UTF8Char blank = { .bytes = {' '}, .length = 1 };
-    const Cell blank_cell = { .ch = blank, .style = { .fg = 0, .bg = 0, .attributes = STYLE_NONE }, .changed = true };
+    const Cell blank_cell = { .cp = ' ', .style = { .fg = 0, .bg = 0, .attributes = STYLE_NONE }, .changed = true };
 
     for (size_t i = 0; i < canvas->size; i++) {
         canvas->buffer[i] = blank_cell;
@@ -118,11 +118,10 @@ void Canvas_Clear(Canvas *canvas) {
 }
 
 void Canvas_Fill(Canvas *canvas, Style style) {
-    const UTF8Char blank = { .bytes = {' '}, .length = 1 };
     for (size_t i = 0; i < canvas->size; i++) {
         Cell *cell = &canvas->buffer[i];
-        if (!UTF8_Equal(cell->ch, blank) || !Style_Equal(&cell->style, &style)) {
-            cell->ch = blank;
+        if (cell->cp != ' ' || !Style_Equal(&cell->style, &style)) {
+            cell->cp = ' ';
             cell->style = style;
             cell->changed = true;
         }
@@ -134,7 +133,7 @@ void Canvas_MoveCursor(Canvas *canvas, int col, int row) {
     canvas->cursor_y = row;
 }
 
-void Canvas_PutChar(Canvas *canvas, UTF8Char c) {
+void Canvas_PutChar(Canvas *canvas, uint32_t cp) {
     if (canvas->cursor_x >= canvas->width
         || canvas->cursor_y >= canvas->height
         || canvas->cursor_x < 0
@@ -145,19 +144,20 @@ void Canvas_PutChar(Canvas *canvas, UTF8Char c) {
     }
     // Use the canvas's width for index calculation, not the terminal's.
     int idx = canvas->cursor_x + canvas->cursor_y * canvas->width;
-    if (!UTF8_Equal(canvas->buffer[idx].ch, c) || memcmp(&canvas->buffer[idx].style, &canvas->current_style, sizeof(Style)) != 0) {
-        canvas->buffer[idx].ch = c;
+    if (canvas->buffer[idx].cp != cp || (memcmp(&canvas->buffer[idx].style, &canvas->current_style, sizeof(Style)) != 0)) {
+        canvas->buffer[idx].cp = cp;
         canvas->buffer[idx].style = canvas->current_style;
         canvas->buffer[idx].changed = true;
     }
-    canvas->cursor_x++; // Move cursor to the right. Wrapping is handled by the caller or by subsequent calls.
+    canvas->cursor_x += utf8_calc_width(cp); // Move cursor to the right. Wrapping is handled by the caller or by subsequent calls.
 }
 
-void Canvas_Write(Canvas *canvas, const UTF8String *s) {
-    size_t n = s->length <= (size_t)canvas->width ? s->length : (size_t)canvas->width;
+void Canvas_Write(Canvas *canvas, const String *s) {
+    StringView view = String_ToView(s);
+    StringView limited = StringView_LimitWidth(&view, canvas->width);
 
-    for (size_t i=0; i<n; i++) {
-        
-        Canvas_PutChar(canvas, s->chars[i]);
+    StringIterator it = StringIterator_FromView(&limited);
+    while (StringIterator_Next(&it)) {
+        Canvas_PutChar(canvas, utf8_to_codepoint(it.current));
     }
 }

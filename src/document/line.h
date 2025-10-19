@@ -16,12 +16,12 @@
 #ifndef LINE_H
 #define LINE_H
 
-#include "common/utf8string.h"
+#include "common/string.h"
 
 #define LINE_POSITION_STEP 100
 
 typedef struct _Line {
-    UTF8String text;
+    String text;
 
     int position;
 

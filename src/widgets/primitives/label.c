@@ -32,7 +32,7 @@ static void label_draw(const Widget *self, Canvas *canvas) {
 
 // Die "destroy"-Methode für ein Label (gibt den Text frei)
 static void label_destroy(Widget *self) {
-    UTF8String_Deinit(&(AS_LABEL(self))->text);
+    String_Deinit(&(AS_LABEL(self))->text);
 }
 
 // 3. Die "vtable" für das Label-Widget
@@ -46,8 +46,7 @@ static WidgetOps label_ops = {
 
 void Label_Init(Label *self, Widget *parent, const char *text) {
     Widget_Init(&self->base, parent, &label_ops);
-    UTF8String_Init(&self->text);
-    UTF8String_FromStr(&self->text, text, strlen(text));
+    self->text = String_FromCStr(text, strlen(text));
 }
 
 Label *Label_Create(Widget *parent, const char* text) {

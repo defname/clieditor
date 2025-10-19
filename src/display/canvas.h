@@ -22,8 +22,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "common/utf8.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 #include "cell.h"
 
 /**
@@ -132,7 +131,7 @@ void Canvas_MoveCursor(Canvas *canvas, int col, int row);
  * @param canvas A pointer to the Canvas object.
  * @param c The UTF8Char to put on the canvas.
  */
-void Canvas_PutChar(Canvas *canvas, UTF8Char c);
+void Canvas_PutChar(Canvas *canvas, uint32_t cp);
 
 /**
  * @brief Writes a UTF8String to the canvas starting at the current cursor position.
@@ -143,6 +142,6 @@ void Canvas_PutChar(Canvas *canvas, UTF8Char c);
  * @param canvas A pointer to the Canvas object.
  * @param s A pointer to the UTF8String to write.
  */
-void Canvas_Write(Canvas *canvas, const UTF8String *s);
+void Canvas_Write(Canvas *canvas, const String *s);
 
 #endif

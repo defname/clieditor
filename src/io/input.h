@@ -32,7 +32,9 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "common/utf8.h"
+#include <stdint.h>
+#include <stdbool.h>
+
 
 #define INPUT_BUFFER_SIZE   24
 
@@ -63,7 +65,7 @@ typedef enum {
 
 typedef struct _InputEvent {
     KeyCode key;
-    UTF8Char ch;
+    uint32_t ch;
     uint8_t mods;
 } InputEvent;
 

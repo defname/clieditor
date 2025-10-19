@@ -19,7 +19,8 @@
 #include <stdlib.h>
 
 #include "common/logging.h"
-#include "common/utf8string.h"
+#include "common/string.h"
+#include "common/utf8_helper.h"
 #include "common/colors.h"
 
 // 0:┌ 1:─ 2:┒ 3:│ 4:┕ 5:┛ 6:┃ 7:━
@@ -30,7 +31,6 @@ static const char *box_drawing_chars[] = {
 };
 
 static void frame_destroy(Widget *self) {
-    UTF8String_Deinit(&(AS_FRAME(self))->charset);
     AS_FRAME(self)->container = NULL;
 }
 
@@ -41,7 +41,7 @@ static void frame_on_resize(Widget *self, int new_parent_width, int new_parent_h
 }
 
 static void frame_draw(const Widget *self, Canvas *canvas) {
-    UTF8Char *border_chars = AS_FRAME(self)->charset.chars;
+    uint32_t *border_chars = AS_FRAME(self)->charset;
 
     if (self->width < 2 || self->height < 2) {
         logWarn("Frame is too small to render.");
@@ -91,7 +91,6 @@ WidgetOps container_ops = {
 
 void Frame_Init(Frame *self, Widget *parent) {
     Widget_Init(&self->base, parent, &frame_ops);
-    UTF8String_Init(&self->charset);
     Frame_SetBorderStyle(self, 0);
     self->container->x = 1;
     self->container->y = 1;
@@ -120,9 +119,13 @@ void Frame_SetBoxDrawingCharacters(Frame *self, const char *chars) {
         Frame_SetBorderStyle(self, 0);
         return;
     }
-    UTF8String_FromStr(&self->charset, chars, strlen(chars));
-    if (self->charset.length != 8) {
+    String tmp = String_FromCStr(chars, strlen(chars));
+    if (String_Length(&tmp) != 8) {
         logError("Invalid charset length.");
         Frame_SetBorderStyle(self, 0);
     }
+    for (int i=0; i<8; i++) {
+        self->charset[i] = utf8_to_codepoint(String_GetChar(&tmp, i));
+    }
+    String_Deinit(&tmp);
 }

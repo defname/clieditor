@@ -22,6 +22,8 @@
 #include <sys/ioctl.h>
 
 #include "io/terminal.h"
+#include "common/utf8_helper.h"
+
 
 Screen screen;
 
@@ -74,8 +76,10 @@ void cursor_to(int col, int row) {
 
 }
 
-void canvas_putchar(UTF8Char c) {
-    UTF8_PutChar(terminal.fd_out, c);
+void canvas_putchar(uint32_t cp) {
+    char ch[4];
+    size_t len = utf8_from_codepoint(cp, ch);
+    write(terminal.fd_out, ch, len);
 }
 
 void underline(bool on) {
@@ -151,7 +155,7 @@ void Screen_Draw() {
         update_style(&current_style, &cell->style);
         current_style = cell->style;
         
-        canvas_putchar(screen.canvas.buffer[i].ch);
+        canvas_putchar(screen.canvas.buffer[i].cp);
         screen.canvas.buffer[i].changed = false;
     }
     reset_style();

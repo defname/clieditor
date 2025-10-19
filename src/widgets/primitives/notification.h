@@ -18,7 +18,7 @@
 
 #include "display/widget.h"
 #include "io/timer.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 
 typedef enum {
     NOTIFICATION_NORMAL,
@@ -29,7 +29,7 @@ typedef enum {
 
 typedef struct _Notification {
     Widget base;
-    UTF8String text;
+    String text;
     NotificationType type;
     uint8_t timer;
 

@@ -61,6 +61,28 @@ bool StringView_EqualToStr(const StringView *view, const char *cstr, size_t leng
     return memcmp(view->bytes, cstr, length) == 0;
 }
 
+StringView StringView_LimitWidth(const StringView *view, int max_width) {
+    if (!view || view->bytes_size == 0) {
+        StringView empty = { .bytes = NULL, .bytes_size = 0, .char_count = 0 };
+        return empty;
+    }
+    StringIterator it = StringIterator_FromView(view);
+    int w = 0;
+    while (StringIterator_Next(&it)) {
+        w += utf8_calc_width(utf8_to_codepoint(it.current));
+        if (w >= max_width) {
+            break;
+        }
+    }
+    StringView out = {
+        .bytes = view->bytes,
+        .bytes_size = it.byte_offset,
+        .char_count = it.char_index
+    };
+
+    return out;
+}
+
 
 /*****************************************************************************/
 /* StringIterator                                                            */
@@ -274,6 +296,30 @@ size_t String_Length(const String *string) {
     return string->char_count;
 }
 
+void String_Clear(String *string) {
+    String_Shorten(string, 0);
+}
+
+String String_Empty() {
+    return String_TakeCStr("");
+}
+
+void String_Take(String *dst, String *src) {
+    String_Deinit(dst);
+    dst->bytes = src->bytes;
+    dst->bytes_capacity = src->bytes_capacity;
+    dst->bytes_size = src->bytes_size;
+
+    dst->multibytes = src->multibytes;
+    dst->multibytes_capacity = src->multibytes_capacity;
+    dst->multibytes_size = src->multibytes_size;
+    dst->multibytes_invalid = src->multibytes_invalid;
+
+    dst->char_count = src->char_count;
+
+    String_Deinit(src);
+}
+
 const char *String_AsCStr(const String *string) {
     return string->bytes;
 }
@@ -465,16 +511,21 @@ String String_Substring(String *s, size_t start, size_t length) {
 }
 
 void String_Append(String *str1, const String *str2) {
-    size_t new_byte_size = str1->bytes_size + str2->bytes_size;
-    if (new_byte_size > str1->bytes_capacity) {
-        resize_bytes_capacity(str1, new_byte_size + 1);
+    StringView view = String_ToView(str2);
+    String_AppendView(str1, &view);
+}
+
+void String_AppendView(String *str, const StringView *view) {
+    size_t new_byte_size = str->bytes_size + view->bytes_size;
+    if (new_byte_size > str->bytes_capacity) {
+        resize_bytes_capacity(str, new_byte_size + 1);
     }
     // use memove to handle overlapping memory areas
-    memmove(str1->bytes + str1->bytes_size, str2->bytes, sizeof(char) * str2->bytes_size);
-    str1->bytes_size = new_byte_size;
-    str1->bytes[new_byte_size] = '\0';
-    str1->char_count += str2->char_count;
-    str1->multibytes_invalid = true;
+    memmove(str->bytes + str->bytes_size, view->bytes, sizeof(char) * view->bytes_size);
+    str->bytes_size = new_byte_size;
+    str->bytes[new_byte_size] = '\0';
+    str->char_count += view->char_count;
+    str->multibytes_invalid = true;
 }
 
 String String_Repeat(const String *str, size_t n) {

@@ -16,14 +16,15 @@
 #ifndef FRAME_H
 #define FRAME_H
 
+#include <stdint.h>
 #include "display/widget.h"
-#include "common/utf8string.h"
+#include "common/string.h"
 
 
 typedef struct {
     Widget base;
     Widget *container;  //< This need to be used as parent when adding children to the Frame
-    UTF8String charset;
+    uint32_t charset[8];
 } Frame;
 
 #define AS_FRAME(w) ((Frame*)(w))

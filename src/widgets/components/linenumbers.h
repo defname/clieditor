@@ -18,6 +18,7 @@
 
 #include "display/widget.h"
 #include "document/textlayout.h"
+#include "common/string.h"
 
 
 typedef struct _LineNumbers {
@@ -25,7 +26,7 @@ typedef struct _LineNumbers {
 
     TextLayout *tl;
     int first_number;
-    UTF8Char border_char;
+    String border_char;  //< can possibly be more than a char
     Style style_active;
 } LineNumbers;
 

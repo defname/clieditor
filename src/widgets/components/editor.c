@@ -16,11 +16,13 @@
 #include "editor.h"
 
 #include <ctype.h>
+#include <stdint.h>
 #include "display/canvas.h"
 #include "io/input.h"
 #include "common/logging.h"
 #include "common/colors.h"
 #include "common/config.h"
+#include "common/utf8_helper.h"
 #include "document/textedit.h"
 
 // timer callback function
@@ -40,20 +42,20 @@ static void editor_destroy(Widget *self) {
 }
 
 
-void draw_char(TextLayout *tl, Canvas *canvas, UTF8Char ch, int x_pos, bool has_cursor) {
+void draw_char(TextLayout *tl, Canvas *canvas, uint32_t cp, int x_pos, bool has_cursor) {
     Style orig_style;
     if (has_cursor) {
         orig_style = canvas->current_style;
         canvas->current_style.attributes |= STYLE_UNDERLINE;
     }
-    if (UTF8_IsASCII(ch) && UTF8_AsASCII(ch) == '\t') {
+    if (cp == '\t') {
         int tabwidth = TextLayout_CalcTabWidth(tl, x_pos);
         for (int i=0; i<tabwidth; i++) {
-            Canvas_PutChar(canvas, utf8_space);
+            Canvas_PutChar(canvas, ' ');
         }
     }
     else {
-        Canvas_PutChar(canvas, ch);
+        Canvas_PutChar(canvas, cp);
     }
     if (has_cursor) {
         canvas->current_style = orig_style;
@@ -88,7 +90,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
 
     // draw the characters
     for (int i=0; i<line->length; i++) {
-        UTF8Char ch = VisualLine_GetChar(line, i);
+        uint32_t cp = utf8_to_codepoint(VisualLine_GetChar(line, i));
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
         if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
             canvas->current_style = editor->config.selected;
@@ -101,7 +103,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
             char_style = editor->config.cursor;
         }
         canvas->current_style = char_style;
-        draw_char(&editor->tl, canvas, ch, line->char_x[i], has_cursor && editor->cursor_visible);
+        draw_char(&editor->tl, canvas, cp, line->char_x[i], has_cursor && editor->cursor_visible);
         canvas->current_style = line_style;
     }
 
@@ -119,13 +121,13 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
             x = 0;
             Canvas_MoveCursor(canvas, 0, y + y_offset);
         }
-        draw_char(&editor->tl, canvas, utf8_space, x,  editor->cursor_visible);
+        draw_char(&editor->tl, canvas, ' ', x,  editor->cursor_visible);
         x++;
     }
 
     // fill the line with spaces (to overwrite artifacts from earlier draws)
     for ( ; x<editor->tl.width; x++) {
-        draw_char(&editor->tl, canvas, utf8_space, x, false);
+        draw_char(&editor->tl, canvas, ' ', x, false);
     }
 
     // restore the previous style
@@ -240,11 +242,11 @@ static bool handle_input_text_editing(Editor *editor, InputEvent input, CursorLa
                 scroll_down(te->tl, te);
             }
             
-            if (UTF8_Equal(input.ch, utf8_tab)) {
-                TextEdit_InsertChar(te, utf8_tab);
+            if (input.ch == '\t') {
+                TextEdit_InsertChar(te, '\t');
                 return true;
             }
-            if (UTF8_IsPrintable(input.ch)) {
+            if (utf8_calc_width(input.ch) > 0) {
                 TextEdit_InsertChar(te, input.ch);
                 return true;
             }

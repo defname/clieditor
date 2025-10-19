@@ -18,11 +18,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "common/utf8.h"
 #include "display/style.h"
 
 typedef struct _Cell {
-    UTF8Char ch;
+    uint32_t cp;
     Style style;
     bool changed;  // marks if the Cell has changed since the last rendering
 } Cell;

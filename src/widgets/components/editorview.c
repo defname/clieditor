@@ -47,14 +47,15 @@ static void update(Widget *w) {
     
     int max_line_number = first_line_number + tl->height - 1;  // could be less if lines are wrapped
     int max_width = get_max_width(max_line_number);
+    int new_line_numbers_width = max_width + String_Length(&ev->line_numbers->border_char);
 
-    if (max_width + 1 == AS_WIDGET(ev->line_numbers)->width) {  // nothing changed...
+    if (new_line_numbers_width == AS_WIDGET(ev->line_numbers)->width) {  // nothing changed...
         return;
     }
 
-    AS_WIDGET(ev->line_numbers)->width = max_width + 1;
-    Editor_Resize(ev->editor, w->width - max_width - 1, w->height);
-    AS_WIDGET(ev->editor)->x = max_width + 1;
+    AS_WIDGET(ev->line_numbers)->width = new_line_numbers_width;
+    Editor_Resize(ev->editor, w->width - new_line_numbers_width, w->height);
+    AS_WIDGET(ev->editor)->x = new_line_numbers_width;
 }
 
 static void on_resize(Widget *w, int parent_w, int parent_h) {

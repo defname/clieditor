@@ -18,12 +18,12 @@
 #include "common/logging.h"
 
 void Gap_Init(Gap *gap) {
-    UTF8String_Init(&gap->text);
+    String_Init(&gap->text);
     gap->overlap = 0;
 }
 
 void Gap_Deinit(Gap *gap) {
-    UTF8String_Deinit(&gap->text);
+    String_Deinit(&gap->text);
 }
 
 void TextBuffer_Init(TextBuffer *tb) {
@@ -52,30 +52,25 @@ void TextBuffer_ReInit(TextBuffer *tb) {
     TextBuffer_Init(tb);
 }
 
-void TextBuffer_TextAroundGap(const TextBuffer *tb, UTF8String *before, UTF8String *after) {
-    UTF8String_Split(&tb->current_line->text, before, after, tb->gap.position);
-    UTF8String_Shorten(before, tb->gap.position - tb->gap.overlap);
+void TextBuffer_TextAroundGap(const TextBuffer *tb, StringView *before, StringView *after) {
+    *before = String_Slice(&tb->current_line->text, 0, tb->gap.position - tb->gap.overlap);
+    *after = String_Slice(&tb->current_line->text, tb->gap.position, String_Length(&tb->current_line->text));
 }
 
 void TextBuffer_MergeGap(TextBuffer *tb) {
-    UTF8String *line = &tb->current_line->text;
-    // split the line at cursor position
-    UTF8String a, b;
-    UTF8String_Init(&a);
-    UTF8String_Init(&b);
-    UTF8String_Split(line, &a, &b, tb->gap.position);
+    String *line = &tb->current_line->text;
+    // text after cursor position
+    StringView after_gap = String_Slice(line, tb->gap.position, String_Length(line));
     // shrink the original line (it's now the part before the gap)
-    UTF8String_Shorten(line, tb->gap.position - tb->gap.overlap);
+    String_Shorten(line, tb->gap.position - tb->gap.overlap);
     // concat parts
-    UTF8String_Concat(line, &tb->gap.text);
-    UTF8String_Concat(line, &b);
-    // free parts
-    UTF8String_Deinit(&a);
-    UTF8String_Deinit(&b);
+    String_Append(line, &tb->gap.text);
+    String_AppendView(line, &after_gap);
+    
     // set the cursor position to end of the former gap
-    tb->gap.position += (long)tb->gap.text.length - (long)tb->gap.overlap;
+    tb->gap.position += (long)String_Length(&tb->gap.text) - (long)tb->gap.overlap;
     // reset the gap
-    tb->gap.text.length = 0;
+    String_Clear(&tb->gap.text);
     tb->gap.overlap = 0;
 }
 

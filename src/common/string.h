@@ -105,6 +105,12 @@ bool StringView_Equal(const StringView *a, const StringView *b);
 bool StringView_EqualToStr(const StringView *view, const char *cstr, size_t length);
 
 /**
+ * @brief Shorten the string to a maximum display width.
+ */
+StringView StringView_LimitWidth(const StringView *str, int max_width);
+
+
+/**
  * @brief Iterate over a String or a StringView character by character.
  * 
  * Use it like:
@@ -143,6 +149,25 @@ void String_Destroy(String *string);
  * @brief Return the number of characters in the str.
  */
 size_t String_Length(const String *string);
+
+/**
+ * @brief Clear the string (set length to 0).
+ */
+void String_Clear(String *string);
+
+/**
+ * @brief Return an empty String.
+ */
+String String_Empty();
+
+/**
+ * @brief Transfer the owenership of src to dest.
+ * 
+ * Its for situation where dst is already initialized and your want to fill it
+ * with the content of another string without moving memory around.
+ * dst will be deinitialized!
+ */
+void String_Take(String *dst, String *src);
 
 /**
  * @brief Create a new String from chstr. (chstr is copied)
@@ -225,6 +250,11 @@ String String_Substring(String *string, size_t start, size_t length);
 void String_Append(String *str1, const String *str2);
 
 /**
+ * @brief Add the text of view to the end str1.
+ */
+void String_AppendView(String *str, const StringView *view);
+
+/**
  * @brief Repeat str n times and return it.
  */
 String String_Repeat(const String *str, size_t n);
@@ -238,5 +268,6 @@ String String_Spaces(size_t n);
  * @brief Shorten the string to length characters.
  */
 void String_Shorten(String *str, size_t n);
+
 
 #endif

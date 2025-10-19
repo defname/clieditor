@@ -45,7 +45,7 @@ int VisualLine_GetOffsetForX(const VisualLine *vl, int x);
 int VisualLine_GetLength(const VisualLine *vl);
 int VisualLine_GetWidth(const VisualLine *vl);
 int VisualLine_GetCharX(const VisualLine *vl, int idx);
-UTF8Char VisualLine_GetChar(const VisualLine *vl, int idx);
+const char *VisualLine_GetChar(const VisualLine *vl, int idx);
 
 
 /**

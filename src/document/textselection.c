@@ -61,7 +61,7 @@ static void ordered(const TextSelection *ts, Line **start, int *start_idx, Line 
 }
 
 bool TextSelection_IsSelected(TextSelection *ts, Line *line, int idx) {
-    if (!ts || !ts->start || !ts->end || !line || idx < 0 || idx > (int)line->text.length) {
+    if (!ts || !ts->start || !ts->end || !line || idx < 0 || idx > (int)String_Length(&line->text)) {
         return false;
     }
     Line *start, *end;
@@ -96,37 +96,37 @@ TextSelection TextSelection_Ordered(const TextSelection *ts) {
     return o;
 }
 
-void TextSelection_Extract(TextSelection *ts, UTF8String *text) {
+String TextSelection_Extract(TextSelection *ts) {
     if (!ts || !ts->start || !ts->end) {
-        return;
+        return String_Empty();
     }
 
     Line *start, *end;
     int start_idx, end_idx;
     ordered(ts, &start, &start_idx, &end, &end_idx);
 
-    UTF8String dummy;
-    UTF8String_Init(&dummy);
+    String out;
 
     Line *current = start;
 
     if (current == end) {
-        UTF8String_SubString(&current->text, text, start_idx, end_idx - start_idx);
+        out = String_Substring(&current->text, start_idx, end_idx - start_idx);
     }
     else {
-        UTF8String_SubString(&current->text, text, start_idx, current->text.length - start_idx);
+        out = String_Substring(&current->text, start_idx, String_Length(&current->text) - start_idx);
         current = current->next;
         while (current != end) {
-            UTF8String_AddChar(text, utf8_newline);
-            UTF8String_Concat(text, &current->text);
+            String_AddChar(&out, "\n");
+            String_Append(&out, &current->text);
             current = current->next;
         }
-        UTF8String_AddChar(text, utf8_newline);
-        UTF8String_SubString(&current->text, &dummy, 0, end_idx);
-        UTF8String_Concat(text, &dummy);
+        String_AddChar(&out, "\n");
+        String dummy = String_Substring(&current->text, 0, end_idx);
+        String_Append(&out, &dummy);
+        String_Deinit(&dummy);
     }
 
-    UTF8String_Deinit(&dummy);
+    return out;
 }
 
 void TextSelection_Delete(TextSelection *ts, TextBuffer *tb) {
@@ -135,13 +135,11 @@ void TextSelection_Delete(TextSelection *ts, TextBuffer *tb) {
     }
     TextSelection sel = TextSelection_Ordered(ts);
 
-    UTF8String end;
-    UTF8String_Init(&end);
-    UTF8String_SubString(&sel.end->text, &end, sel.end_idx, sel.end->text.length - sel.end_idx);
-
+    String end = String_Substring(&sel.end->text, sel.end_idx, String_Length(&sel.end->text) - sel.end_idx);
+    
     if (sel.start == sel.end) {
-        UTF8String_Shorten(&sel.start->text, sel.start_idx);
-        UTF8String_Concat(&sel.start->text, &end);
+        String_Shorten(&sel.start->text, sel.start_idx);
+        String_Append(&sel.start->text, &end);
     }
     else {
         tb->current_line = sel.start;  // cannot delete current line, so place it here
@@ -152,11 +150,11 @@ void TextSelection_Delete(TextSelection *ts, TextBuffer *tb) {
             current = current->prev;
             TextBuffer_DeleteLine(tb, current->next);
         }
-        UTF8String_Shorten(&sel.start->text, sel.start_idx);
-        UTF8String_Concat(&sel.start->text, &end);
+        String_Shorten(&sel.start->text, sel.start_idx);
+        String_Append(&sel.start->text, &end);
     }
 
     tb->gap.position = sel.start_idx;
 
-    UTF8String_Deinit(&end);
+    String_Deinit(&end);
 }

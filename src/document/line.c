@@ -23,7 +23,7 @@ Line *Line_Create() {
     if (!new_line) {
         logFatal("Cannot allocate memory for TextBuffer.");
     }
-    UTF8String_Init(&new_line->text);
+    String_Init(&new_line->text);
     new_line->prev = NULL;
     new_line->next = NULL;
     new_line->position = 0;
@@ -34,7 +34,7 @@ void Line_Destroy(Line *line) {
     if (!line) {
         return;
     }
-    UTF8String_Deinit(&line->text);
+    String_Deinit(&line->text);
     free(line);
 }
 
