@@ -153,8 +153,12 @@ void Canvas_PutChar(Canvas *canvas, uint32_t cp) {
 }
 
 void Canvas_Write(Canvas *canvas, const String *s) {
+    int max_cols = canvas->width - canvas->cursor_x;
+    if (max_cols <= 0) {
+        return;
+    }
     StringView view = String_ToView(s);
-    StringView limited = StringView_LimitWidth(&view, canvas->width);
+    StringView limited = StringView_LimitWidth(&view, max_cols);
 
     StringIterator it = StringIterator_FromView(&limited);
     while (StringIterator_Next(&it)) {
