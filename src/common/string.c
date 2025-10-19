@@ -566,12 +566,13 @@ String String_Spaces(size_t n) {
 }
 
 void String_Shorten(String *str, size_t n) {
-    if (n >= str->bytes_size) {
+    if (n >= str->char_count) {
         return;
     }
-    str->bytes_size = n;
-    str->bytes[n] = '\0';
-    str->char_count = utf8_strlen(str->bytes);
+    const char *p = String_GetChar(str, n);
+    str->bytes_size = p - str->bytes;
+    str->bytes[str->bytes_size] = '\0';
+    str->char_count = n;
     // even if the entries in multibytes are still valid multibytes_size
     // changed and lookups would do unnecessary iterations
     str->multibytes_invalid = true;
