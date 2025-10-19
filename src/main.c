@@ -20,7 +20,6 @@
 #include <string.h>
 #include "io/terminal.h"
 #include "io/screen.h"
-#include "common/utf8string.h"
 #include "io/input.h"
 #include "document/textbuffer.h"
 #include "document/textio.h"

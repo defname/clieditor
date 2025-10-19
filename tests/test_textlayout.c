@@ -8,7 +8,6 @@
 #include "document/textbuffer.h"
 #include "document/textlayout.h"
 #include "document/line.h"
-#include "common/utf8string.h"
 
 // --- Test Setup Helper Functions ---
 
