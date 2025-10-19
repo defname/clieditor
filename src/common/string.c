@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 #include "common/logging.h"
-#include "utf8_helper.h"
+#include "common/utf8_helper.h"
 
 /*****************************************************************************/
 /* StringView                                                                */
@@ -303,7 +303,7 @@ void String_Clear(String *string) {
 }
 
 String String_Empty() {
-    return String_TakeCStr("");
+    return String_FromCStr("", 0);
 }
 
 void String_Set(String *str, String src) {
