@@ -64,16 +64,22 @@ void on_config_change(Widget *self) {
     Table *conf = Config_GetModuleConfig("linenumbers");
     self->style.bg = Config_GetColor(conf, "bg", ln->base.style.bg);
     self->style.fg = Config_GetColor(conf, "text", ln->base.style.fg);
-    String_Deinit(&ln->border_char);
     const char *border = Config_GetStr(conf, "border_char", "│");
+    String_Deinit(&ln->border_char);
     ln->border_char = String_FromCStr(border, strlen(border));
     ln->style_active.fg = Config_GetColor(conf, "active.text", ln->style_active.fg);
     ln->style_active.bg = Config_GetColor(conf, "active.bg", ln->style_active.bg);
 }
 
+void destroy(Widget *self) {
+    LineNumbers *ln = AS_LINENUMBERS(self);
+    String_Deinit(&ln->border_char);
+}
+
 WidgetOps linenumber_ops = {
     .draw = draw,
     .on_config_changed = on_config_change,
+    .destroy = destroy
 };
 
 void LineNumbers_Init(LineNumbers *ln, Widget *parent, TextLayout *tl) {

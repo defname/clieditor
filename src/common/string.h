@@ -161,6 +161,17 @@ void String_Clear(String *string);
 String String_Empty();
 
 /**
+ * @brief Set the text of an existing and already initialized String.
+ * 
+ * This is a helper function to do something like
+ * ```
+ * String_Set(&some_string, String_FromCStr("FOO", 3));
+ * ```
+ * if `some_string` is a already initialized string of some struct or something.
+ */
+void String_Set(String *str, String src);
+
+/**
  * @brief Transfer the owenership of src to dest.
  * 
  * Its for situation where dst is already initialized and your want to fill it
@@ -210,6 +221,8 @@ String String_Format(const char *format, ...);
 
 /**
  * @brief Create a String from a View by copying it's data.
+ * 
+ * Note: This function does not take a pointer to be able to link View creating functions to it.
  */
 String String_FromView(StringView view);
 

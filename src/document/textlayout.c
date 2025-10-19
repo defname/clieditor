@@ -113,7 +113,7 @@ const char *VisualLine_GetChar(const VisualLine *vl, int i) {
     }
     // index is in the gap
     if (idx < (int)vl->gap->position - (int)vl->gap->overlap + (int)String_Length(&vl->gap->text)) {
-        return String_GetChar(&vl->gap->text, idx - vl->gap->position + vl->gap->overlap);
+        return String_GetChar((String*)&vl->gap->text, idx - vl->gap->position + vl->gap->overlap);
     }
     // index is after the gap but within the total length of the line
     if (i < (int)vl->length) {
@@ -316,7 +316,7 @@ static void calc_visual_line(VisualLine *vl, Line *line, int offset, TextLayout 
                 ch = String_GetChar(&line->text, i);
             }
             else if (i < (int)gap->position - (int)gap->overlap + (int)String_Length(&gap->text)) {
-                ch = String_GetChar(&gap->text, i - gap->position + gap->overlap);
+                ch = String_GetChar((String*)&gap->text, i - gap->position + gap->overlap);
             }
             else {
                 ch = String_GetChar(&line->text, i - String_Length(&gap->text) + gap->overlap);

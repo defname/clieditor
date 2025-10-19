@@ -304,19 +304,18 @@ String String_Empty() {
     return String_TakeCStr("");
 }
 
+void String_Set(String *str, String src) {
+    String_Deinit(str);
+    *str = src;
+}
+
 void String_Take(String *dst, String *src) {
     String_Deinit(dst);
-    dst->bytes = src->bytes;
-    dst->bytes_capacity = src->bytes_capacity;
-    dst->bytes_size = src->bytes_size;
+    *dst = String_TakeCStr(src->bytes);
 
-    dst->multibytes = src->multibytes;
-    dst->multibytes_capacity = src->multibytes_capacity;
-    dst->multibytes_size = src->multibytes_size;
-    dst->multibytes_invalid = src->multibytes_invalid;
-
-    dst->char_count = src->char_count;
-
+    src->bytes = NULL;
+    src->bytes_capacity = 0;
+    src->bytes_size = 0;
     String_Deinit(src);
 }
 
@@ -345,7 +344,7 @@ String String_FromCStr(const char *chstr, size_t length) {
 String String_TakeCStr(char *chstr) {
     size_t l = strlen(chstr);
 
-    return (String){
+    String out =  (String){
         .bytes = chstr,
         .bytes_capacity = l + 1,
         .bytes_size = l,
@@ -355,6 +354,7 @@ String String_TakeCStr(char *chstr) {
         .multibytes_invalid = true,
         .char_count = utf8_strlen(chstr),
     };
+    return out;
 }
 
 void String_AddChar(String *str, const char *ch) {
@@ -517,6 +517,14 @@ void String_Append(String *str1, const String *str2) {
 
 void String_AppendView(String *str, const StringView *view) {
     size_t new_byte_size = str->bytes_size + view->bytes_size;
+    
+    if (view->bytes >= str->bytes && view->bytes < str->bytes + str->bytes_size) {
+        // View is a view on the same str
+        String tmp = String_FromView(*view);
+        String_Append(str, &tmp);
+        String_Deinit(&tmp);
+        return;
+    }
     if (new_byte_size > str->bytes_capacity) {
         resize_bytes_capacity(str, new_byte_size + 1);
     }

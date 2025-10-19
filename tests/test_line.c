@@ -7,7 +7,7 @@ void test_create(void) {
     TEST_CHECK(line->next == NULL);
     TEST_CHECK(line->prev == NULL);
     TEST_CHECK(line->position == 0);
-    TEST_CHECK(line->text.length == 0);
+    TEST_CHECK(String_Length(&line->text) == 0);
     Line_Destroy(line);
 }
 

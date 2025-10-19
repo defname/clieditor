@@ -125,7 +125,6 @@ void File_WriteLine(File *file, const String *line) {
     }
     const char *str = String_AsCStr(line);
     fputs(str, file->fp);
-    free(str);
     fputc('\n', file->fp);
     fflush(file->fp);
 }

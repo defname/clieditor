@@ -167,6 +167,10 @@ void test_misc(void) {
     TEST_CHECK(StringView_Length(&view) == 3);
     TEST_CHECK(StringView_EqualToStr(&view, "cde", 3));
 
+    // test String_Set()
+    String_Set(&str, String_FromCStr("xyz", 3));
+    TEST_CHECK(strcmp(String_AsCStr(&str), "xyz") == 0);
+
     String_Deinit(&str);
 }
 

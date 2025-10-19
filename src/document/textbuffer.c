@@ -60,12 +60,14 @@ void TextBuffer_TextAroundGap(const TextBuffer *tb, StringView *before, StringVi
 void TextBuffer_MergeGap(TextBuffer *tb) {
     String *line = &tb->current_line->text;
     // text after cursor position
-    StringView after_gap = String_Slice(line, tb->gap.position, String_Length(line));
+    String after = String_Substring(line, tb->gap.position, String_Length(line) - tb->gap.position);
     // shrink the original line (it's now the part before the gap)
     String_Shorten(line, tb->gap.position - tb->gap.overlap);
     // concat parts
     String_Append(line, &tb->gap.text);
-    String_AppendView(line, &after_gap);
+    String_Append(line, &after);
+    
+    String_Deinit(&after);
     
     // set the cursor position to end of the former gap
     tb->gap.position += (long)String_Length(&tb->gap.text) - (long)tb->gap.overlap;
