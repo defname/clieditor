@@ -172,6 +172,74 @@ void test_misc(void) {
     TEST_CHECK(strcmp(String_AsCStr(&str), "xyz") == 0);
 
     String_Deinit(&str);
+
+    // String_Trim()
+    str = String_FromCStr("   ", 3);
+    String_Trim(&str);
+    TEST_CHECK(strcmp(String_AsCStr(&str), "") == 0);
+    String_Deinit(&str);
+    str = String_FromCStr("  Foo  bar   ", 13);
+    String_Trim(&str);
+    TEST_CHECK(strcmp(String_AsCStr(&str), "Foo  bar") == 0);
+    String_Deinit(&str);
+}
+
+void test_split(void) {
+    String delimiter = String_FromCStr(",", strlen(","));
+    String str = String_FromCStr("Foo,bar,€uro,", strlen("Foo,bar,€uro,"));
+    String list[4];
+    size_t count = String_Split(&str, &delimiter, list);
+    TEST_CHECK(count == 4);
+    TEST_CHECK(strcmp(String_AsCStr(&list[0]), "Foo") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[1]), "bar") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[2]), "€uro") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[3]), "") == 0);
+
+    for (size_t i=0; i<count; i++) {
+        String_Deinit(&list[i]);
+    }
+    String_Deinit(&str);
+
+    str = String_FromCStr(",", strlen(","));
+    count = String_Split(&str, &delimiter, list);
+    TEST_CHECK(count == 2);
+    TEST_CHECK(strcmp(String_AsCStr(&list[0]), "") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[1]), "") == 0);
+    String_Deinit(&list[0]);
+    String_Deinit(&list[1]);
+    String_Deinit(&str);
+
+    str = String_FromCStr("foobar", strlen("foobar"));
+    count = String_Split(&str, &delimiter, list);
+    TEST_CHECK(count == 1);
+    TEST_CHECK(strcmp(String_AsCStr(&list[0]), "foobar") == 0);
+    String_Deinit(&list[0]);
+    String_Deinit(&str);
+
+    str = String_FromCStr("", strlen(""));
+    count = String_Split(&str, &delimiter, list);
+    TEST_CHECK(count == 1);
+    TEST_CHECK(strcmp(String_AsCStr(&list[0]), "") == 0);
+    String_Deinit(&list[0]);
+    String_Deinit(&str);
+
+    String_Deinit(&delimiter);
+
+    delimiter = String_FromCStr("---", strlen("---"));
+    str = String_FromCStr("Foo---bar---€uro---", strlen("Foo---bar---€uro---"));
+    count = String_Split(&str, &delimiter, list);
+    TEST_CHECK(count == 4);
+    TEST_CHECK(strcmp(String_AsCStr(&list[0]), "Foo") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[1]), "bar") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[2]), "€uro") == 0);
+    TEST_CHECK(strcmp(String_AsCStr(&list[3]), "") == 0);
+
+    for (size_t i=0; i<count; i++) {
+        String_Deinit(&list[i]);
+    }
+    String_Deinit(&str);
+    String_Deinit(&delimiter);
+
 }
 
 void test_edgecases(void) {
@@ -189,6 +257,7 @@ void test_edgecases(void) {
     str = String_FromCStr("│", strlen("│"));
     TEST_CHECK(strcmp(String_AsCStr(&str), "│") == 0);
     String_Deinit(&str);
+
 }
 
 
@@ -200,6 +269,7 @@ TEST_LIST = {
     { "String: Resize multibytes", test_resize_multibytes },
     { "String: Append", test_append },
     { "String: Misc", test_misc },
+    { "String: Split", test_split },
     { "String: Edge Cases", test_edgecases },
     { NULL, NULL }
 };

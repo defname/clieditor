@@ -282,5 +282,15 @@ String String_Spaces(size_t n);
  */
 void String_Shorten(String *str, size_t n);
 
+/**
+ * @brief Trim whitespaces from begin and end of a string.
+ */
+void String_Trim(String *string);
+
+/**
+ * @brief Split a string into an array of StringViews.
+ */
+size_t String_Split(String *string, String *delimiter, String *out);
+
 
 #endif

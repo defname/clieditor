@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "common/logging.h"
 #include "common/utf8_helper.h"
@@ -578,4 +579,49 @@ void String_Shorten(String *str, size_t n) {
     // even if the entries in multibytes are still valid multibytes_size
     // changed and lookups would do unnecessary iterations
     str->multibytes_invalid = true;
+}
+
+void String_Trim(String *string) {
+    if (string->char_count == 0) {
+        return;
+    }
+    StringIterator it = StringIterator_FromString(string);
+    size_t start = 0;
+    while (StringIterator_Next(&it)) {
+        if (!isspace(it.current[0])) {
+            break;
+        }
+    }
+    start = it.char_index;
+    String_Set(string, String_Substring(string, start, string->char_count - start));
+    it = StringIterator_FromString(string);
+    size_t last_char_index = string->char_count - 1;
+    while (StringIterator_Next(&it)) {
+        if (!isspace(it.current[0])) {
+            last_char_index = it.char_index;
+        }
+    }
+    String_Shorten(string, last_char_index + 1);
+}
+
+size_t String_Split(String *string, String *delimiter, String *out) {
+    if (!string || !delimiter || !out) {
+        return 0;
+    }
+    StringIterator it = StringIterator_FromString(string);
+    size_t count = 0;
+    size_t start_idx = 0;
+    while (StringIterator_Next(&it)) {
+        if (start_idx > it.char_index) {  // skip delimiter
+            continue;
+        }
+        if (strncmp(it.current, delimiter->bytes, delimiter->bytes_size) == 0) {
+            out[count] = String_Substring(string, start_idx, it.char_index - start_idx);
+            start_idx = it.char_index + delimiter->char_count;  // set next start_idx to skip delimiter
+            count++;
+        }
+    }
+    out[count] = String_Substring(string, start_idx, String_Length(string) - start_idx);
+    count++;
+    return count;
 }
