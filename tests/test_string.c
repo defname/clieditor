@@ -165,13 +165,75 @@ void test_misc(void) {
     String str = String_FromCStr("abcdefghi", 9);
     StringView view = String_Slice(&str, 2, 5);
     TEST_CHECK(StringView_Length(&view) == 3);
-    TEST_CHECK(StringView_EqualToStr(&view, "cde", 3));
+    TEST_CHECK(StringView_EqualToCStr(&view, "cde", 3));
 
     // test String_Set()
     String_Set(&str, String_FromCStr("xyz", 3));
     TEST_CHECK(strcmp(String_AsCStr(&str), "xyz") == 0);
 
     String_Deinit(&str);
+
+    // String_Trim()
+    str = String_FromCStr("   ", 3);
+    String_Trim(&str);
+    TEST_CHECK(strcmp(String_AsCStr(&str), "") == 0);
+    String_Deinit(&str);
+    str = String_FromCStr("  Foo  bar   ", 13);
+    String_Trim(&str);
+    TEST_CHECK(strcmp(String_AsCStr(&str), "Foo  bar") == 0);
+    String_Deinit(&str);
+}
+
+void test_split(void) {
+    String delimiter = String_FromCStr(",", strlen(","));
+    String str = String_FromCStr("Foo,bar,€uro,", strlen("Foo,bar,€uro,"));
+    StringView *list;
+    ssize_t count;
+    list = String_Split(&str, &delimiter, &count);
+    TEST_CHECK(count == 4);
+    TEST_CHECK(StringView_EqualToCStr(&list[0], "Foo", 3));
+    TEST_CHECK(StringView_EqualToCStr(&list[1], "bar", 3));
+    TEST_CHECK(StringView_EqualToCStr(&list[2], "€uro", strlen("€uro")));
+    TEST_CHECK(StringView_EqualToCStr(&list[3], "", 0));
+    free(list);
+    String_Deinit(&str);
+
+    str = String_FromCStr(",", strlen(","));
+    list = String_Split(&str, &delimiter, &count);
+    TEST_CHECK(count == 2);
+    TEST_CHECK(StringView_EqualToCStr(&list[0], "", 0));
+    TEST_CHECK(StringView_EqualToCStr(&list[1], "", 0));
+    free(list);
+    String_Deinit(&str);
+
+    str = String_FromCStr("foobar", strlen("foobar"));
+    list = String_Split(&str, &delimiter, &count);
+    TEST_CHECK(count == 1);
+    TEST_CHECK(StringView_EqualToCStr(&list[0], "foobar", 6));
+    free(list);
+    String_Deinit(&str);
+
+    str = String_FromCStr("", strlen(""));
+    list = String_Split(&str, &delimiter, &count);
+    TEST_CHECK(count == 1);
+    TEST_CHECK(StringView_EqualToCStr(&list[0], "", 0));
+    free(list);
+    String_Deinit(&str);
+
+    String_Deinit(&delimiter);
+
+    delimiter = String_FromCStr("---", strlen("---"));
+    str = String_FromCStr("Foo---bar---€uro---", strlen("Foo---bar---€uro---"));
+    list = String_Split(&str, &delimiter, &count);
+    TEST_CHECK(count == 4);
+    TEST_CHECK(StringView_EqualToCStr(&list[0], "Foo", 3));
+    TEST_CHECK(StringView_EqualToCStr(&list[1], "bar", 3));
+    TEST_CHECK(StringView_EqualToCStr(&list[2], "€uro", strlen("€uro")));
+    TEST_CHECK(StringView_EqualToCStr(&list[3], "", 0));
+    free(list);
+    String_Deinit(&str);
+
+    String_Deinit(&delimiter);
 }
 
 void test_edgecases(void) {
@@ -200,6 +262,7 @@ TEST_LIST = {
     { "String: Resize multibytes", test_resize_multibytes },
     { "String: Append", test_append },
     { "String: Misc", test_misc },
+    { "String: Split", test_split },
     { "String: Edge Cases", test_edgecases },
     { NULL, NULL }
 };
