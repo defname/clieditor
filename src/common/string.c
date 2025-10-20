@@ -52,14 +52,17 @@ bool StringView_Equal(const StringView *a, const StringView *b) {
     if (a->bytes_size != b->bytes_size) {
         return false;
     }
-    return StringView_EqualToStr(a, b->bytes, b->bytes_size);
+    return StringView_EqualToCStr(a, b->bytes, b->bytes_size);
 }
 
-bool StringView_EqualToStr(const StringView *view, const char *cstr, size_t length) {
+bool StringView_EqualToCStr(const StringView *view, const char *cstr, size_t length) {
+    if (!view->bytes && length == 0) {
+        return true;
+    }
     if (view->bytes_size != length) {
         return false;
     }
-    return memcmp(view->bytes, cstr, length) == 0;
+    return strncmp(view->bytes, cstr, length) == 0;
 }
 
 StringView StringView_LimitWidth(const StringView *view, int max_width) {
@@ -488,6 +491,7 @@ const char *String_GetChar(String *str, int pos) {
     return str->bytes + byte_pos;
 }
 
+
 StringView String_Slice(String *string, size_t start, size_t end) {
     StringView view;
     if (start >= string->char_count || end > string->char_count || start > end) {
@@ -588,7 +592,7 @@ void String_Trim(String *string) {
     StringIterator it = StringIterator_FromString(string);
     size_t start = 0;
     while (StringIterator_Next(&it)) {
-        if (!isspace(it.current[0])) {
+        if (!isspace((unsigned char)it.current[0])) {
             break;
         }
     }
@@ -597,31 +601,66 @@ void String_Trim(String *string) {
     it = StringIterator_FromString(string);
     size_t last_char_index = string->char_count - 1;
     while (StringIterator_Next(&it)) {
-        if (!isspace(it.current[0])) {
+        if (!isspace((unsigned char)it.current[0])) {
             last_char_index = it.char_index;
         }
     }
     String_Shorten(string, last_char_index + 1);
 }
 
-size_t String_Split(String *string, String *delimiter, String *out) {
-    if (!string || !delimiter || !out) {
-        return 0;
-    }
-    StringIterator it = StringIterator_FromString(string);
-    size_t count = 0;
-    size_t start_idx = 0;
-    while (StringIterator_Next(&it)) {
-        if (start_idx > it.char_index) {  // skip delimiter
-            continue;
+StringView *String_Split(String *string, String *delimiter, ssize_t *count) {
+    if (!string || !delimiter || delimiter->char_count == 0) {
+        if (count) {
+            *count = -1;
         }
-        if (strncmp(it.current, delimiter->bytes, delimiter->bytes_size) == 0) {
-            out[count] = String_Substring(string, start_idx, it.char_index - start_idx);
-            start_idx = it.char_index + delimiter->char_count;  // set next start_idx to skip delimiter
-            count++;
+        return NULL;
+    }
+    
+    const char *data = string->bytes;
+    const char *end = data + string->bytes_size;
+    const char *delim = delimiter->bytes;
+    size_t delim_len = delimiter->bytes_size;
+
+    // max number of splits
+    size_t alloc = string->bytes_size / (delim_len ? delim_len : 1) + 1;
+    StringView *out = malloc(sizeof(StringView) * alloc);
+    if (!out) {
+        logFatal("Cannot allocate String list.");
+    }
+
+    *count = 0;
+    const char *start = data;
+
+    // find all parts
+    while (1) {
+        const char *pos = strstr(start, delim);
+        if (!pos) break;
+        size_t byte_size = pos - start;
+        out[(*count)++] = (StringView){
+            .bytes = start,
+            .bytes_size = byte_size,
+            .char_count = utf8_count_chars(start, byte_size)
+        }; 
+        start = pos + delim_len;
+    }
+
+    // last part
+    if (start <= end) {
+        size_t last_byte_size = end - start;
+        out[(*count)++] = (StringView){
+            .bytes = start,
+            .bytes_size = last_byte_size,
+            .char_count = utf8_count_chars(start, last_byte_size)
+        }; 
+    }
+
+    // reduce allocated memory to the used amount
+    if ((size_t)(*count) < alloc) {
+        out = realloc(out, sizeof(StringView) * (*count));
+        if (!out) {
+            logFatal("Cannot allocate String list.");
         }
     }
-    out[count] = String_Substring(string, start_idx, String_Length(string) - start_idx);
-    count++;
-    return count;
+
+    return out;
 }
