@@ -291,6 +291,13 @@ void String_Trim(String *string);
 
 /**
  * @brief Split a string into an array of StringViews.
+ * 
+ * @param string The string to split (must remain valid while using the returned views)
+ * @param delimiter The delimiter string
+ * @param count Output parameter for the number of resulting views
+ * @return An array of StringView that must be freed by the caller.
+ *         The views point into the original string's buffer and become
+ *         invalid if the string is modified or freed.
  */
 StringView *String_Split(String *string, String *delimiter, ssize_t *count);
 

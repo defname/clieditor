@@ -609,8 +609,10 @@ void String_Trim(String *string) {
 }
 
 StringView *String_Split(String *string, String *delimiter, ssize_t *count) {
-    if (!string || !delimiter || !count || delimiter->char_count == 0) {
-        *count = -1;
+    if (!string || !delimiter || delimiter->char_count == 0) {
+        if (count) {
+            *count = -1;
+        }
         return NULL;
     }
     
