@@ -644,15 +644,16 @@ StringView *String_Split(String *string, String *delimiter, ssize_t *count) {
 
     // last part
     if (start <= end) {
+        size_t last_byte_size = end - start;
         out[(*count)++] = (StringView){
             .bytes = start,
-            .bytes_size = end - start,
-            .char_count = 0    // set in next step
+            .bytes_size = last_byte_size,
+            .char_count = utf8_count_chars(start, last_byte_size)
         }; 
     }
 
     // reduce allocated memory to the used amount
-    if ((*count) < alloc) {
+    if ((size_t)(*count) < alloc) {
         out = realloc(out, sizeof(StringView) * (*count));
         if (!out) {
             logFatal("Cannot allocate String list.");
