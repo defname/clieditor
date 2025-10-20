@@ -25,12 +25,44 @@
 #include <stdint.h>
 
 
+/**
+ * @brief Return the number of bytes used by the character that starts with c.
+ */
 size_t utf8_get_char_length(unsigned char c);
+
+/**
+ * @brief Return true if c is a valid continuation byte for an UTF-8 character.
+ */
 bool utf8_is_continuation_byte(unsigned char c);
+
+/**
+ * @brief Return the number of characters of an NULL-terminated UTF-8 string.
+ */
 size_t utf8_strlen(const char *str);
+
+/**
+ * @brief Count the number of characters only looking in bytes. If bytes == -1 it's counted up to '\0' (so it's utf8_strlen())
+ */
+size_t utf8_count_chars(const char *str, ssize_t bytes);
+
+/**
+ * @brief Calculate the UTF-8 codepoint of the first character in ch.
+ */
 uint32_t utf8_to_codepoint(const char *ch);
+
+/**
+ * @brief Write the UTF-8 codepoint as string to out and return the number of bytes used.
+ */
 size_t utf8_from_codepoint(uint32_t cp, char *out);
+
+/**
+ * @brief Return true if the UTF-8 codepoint is an ASCII character.
+ */
 bool utf8_is_ascii(uint32_t cp);
+
+/**
+ * @brief Calculate the display width of an UTF-8 codepoint.
+ */
 int utf8_calc_width(uint32_t cp);
 
 #endif

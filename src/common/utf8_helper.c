@@ -28,12 +28,17 @@ bool utf8_is_continuation_byte(unsigned char c) {
 }
 
 size_t utf8_strlen(const char *str) {
+    return utf8_count_chars(str, -1);
+}
+
+size_t utf8_count_chars(const char *str, ssize_t max_bytes) {
     size_t count = 0;
     const char *byte = str;
+    const char *end = max_bytes >= 0 ? str + max_bytes : NULL;
     if (!byte) {
         return 0;
     }
-    while (*byte != '\0') {
+    while ((!end || byte < end) && *byte != '\0') {
         size_t ch_len = utf8_get_char_length(*byte);
         if (ch_len == 0) break; // Stop on invalid char or end of string
         byte += ch_len;

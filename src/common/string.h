@@ -101,8 +101,10 @@ bool StringView_Equal(const StringView *a, const StringView *b);
 
 /**
  * @brief Return true if the text in view equals cstr. length is the length of cstr in *bytes*
+ * 
+ * An empty StringView might contain a NULL pointer. This is handled like an empty string.
  */
-bool StringView_EqualToStr(const StringView *view, const char *cstr, size_t length);
+bool StringView_EqualToCStr(const StringView *view, const char *cstr, size_t length);
 
 /**
  * @brief Shorten the string to a maximum display width.
@@ -281,6 +283,16 @@ String String_Spaces(size_t n);
  * @brief Shorten the string to length characters.
  */
 void String_Shorten(String *str, size_t n);
+
+/**
+ * @brief Trim whitespaces from begin and end of a string.
+ */
+void String_Trim(String *string);
+
+/**
+ * @brief Split a string into an array of StringViews.
+ */
+StringView *String_Split(String *string, String *delimiter, ssize_t *count);
 
 
 #endif
