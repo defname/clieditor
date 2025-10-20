@@ -592,7 +592,7 @@ void String_Trim(String *string) {
     StringIterator it = StringIterator_FromString(string);
     size_t start = 0;
     while (StringIterator_Next(&it)) {
-        if (!isspace(it.current[0])) {
+        if (!isspace((unsigned char)it.current[0])) {
             break;
         }
     }
@@ -601,7 +601,7 @@ void String_Trim(String *string) {
     it = StringIterator_FromString(string);
     size_t last_char_index = string->char_count - 1;
     while (StringIterator_Next(&it)) {
-        if (!isspace(it.current[0])) {
+        if (!isspace((unsigned char)it.current[0])) {
             last_char_index = it.char_index;
         }
     }
