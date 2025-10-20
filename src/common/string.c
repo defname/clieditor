@@ -651,9 +651,12 @@ StringView *String_Split(String *string, String *delimiter, ssize_t *count) {
         }; 
     }
 
-    // set char_count of parts
-    for (size_t i=0; i<(size_t)(*count); i++) {
-        out[i].char_count = utf8_count_chars(out[i].bytes, out[i].bytes_size);
+    // reduce allocated memory to the used amount
+    if ((*count) < alloc) {
+        out = realloc(out, sizeof(StringView) * (*count));
+        if (!out) {
+            logFatal("Cannot allocate String list.");
+        }
     }
 
     return out;
