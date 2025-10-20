@@ -7,7 +7,7 @@
 typedef struct _TableIterator {
     const Table *table;
     ssize_t index;
-    TableSlot *current;
+    const TableSlot *current;
 } TableIterator;
 
 TableIterator TableIterator_Begin(const Table *table);
