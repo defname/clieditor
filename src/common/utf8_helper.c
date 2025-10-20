@@ -40,7 +40,14 @@ size_t utf8_count_chars(const char *str, ssize_t max_bytes) {
     }
     while ((!end || byte < end) && *byte != '\0') {
         size_t ch_len = utf8_get_char_length(*byte);
-        if (ch_len == 0) break; // Stop on invalid char or end of string
+        if (ch_len == 0) {
+            break; // Stop on invalid char or end of string
+        }
+        if (end && byte + ch_len > end) {
+            // if the character does not fit into the boundaries
+            // do not count it
+            break;
+        }
         byte += ch_len;
         count++;
     }
