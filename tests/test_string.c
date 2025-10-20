@@ -262,6 +262,7 @@ TEST_LIST = {
     { "String: Resize multibytes", test_resize_multibytes },
     { "String: Append", test_append },
     { "String: Misc", test_misc },
+    { "String: Split", test_split },
     { "String: Edge Cases", test_edgecases },
     { NULL, NULL }
 };
