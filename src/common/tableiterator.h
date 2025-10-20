@@ -1,7 +1,7 @@
 #ifndef TABLEITERATOR_H
 #define TABLEITERATOR_H
 
-#include <unistd.h>
+#include <sys/types.h>
 #include "table.h"
 
 typedef struct _TableIterator {
