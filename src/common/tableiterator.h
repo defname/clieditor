@@ -2,6 +2,7 @@
 #define TABLEITERATOR_H
 
 #include <sys/types.h>
+#include <stdbool.h>
 #include "table.h"
 
 typedef struct _TableIterator {
