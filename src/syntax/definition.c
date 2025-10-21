@@ -63,7 +63,7 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
     if (!start_regex) {
         set_error(error,
             SYNTAXDEFINITION_BLOCK_NO_START_REGEX, 
-            String_Format("Block \"%s\" has no start regex defined.", start_regex, name)
+            String_Format("Block \"%s\" has no start regex defined.", name)
         );
         free(block->name);
         free(block);
