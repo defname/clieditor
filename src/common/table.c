@@ -274,3 +274,10 @@ bool Table_HasOwnership(const Table *table, const char *key) {
     TableSlot *slot = find_slot(table, key);
     return (slot->state == TABLE_SLOT_USED && slot->destructor != NULL);
 }
+
+size_t Table_GetUsage(const Table *table) {
+    if (!table) {
+        return 0;
+    }
+    return table->used;
+}
