@@ -198,7 +198,7 @@ SyntaxDefinitionError link_children(SyntaxDefinition *def, Table *blocks) {
         }
         const Table *block_table = mapping->table;
 
-        const char *children_str = TypedTable_GetString(block_table, "children");
+        const char *children_str = TypedTable_GetString(block_table, "allowed_blocks");
         if (!children_str) {
             continue;
         }

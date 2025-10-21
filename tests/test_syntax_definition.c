@@ -111,7 +111,7 @@ typedef struct {
 void test_errors(void) {
     error_test_case cases[] = {
         {
-            "[met]\n"  // missing meta section
+            "[met]\n"
             "name = MINI\n"
             "[block:root]\n"
             "start=\".*\"\n",
@@ -139,6 +139,30 @@ void test_errors(void) {
             "start=\".*)(\"\n",
             SYNTAXDEFINITION_REGEX_ERROR_START
         },
+        {
+            "block:root = foo\n"
+            "[meta]\n"
+            "name = MINI\n",
+            SYNTAXDEFINITION_BLOCK_NOT_A_SECTION
+        },
+        {
+            "[meta]\n"
+            "name = MINI\n"
+            "[block:root]\n"
+            "start=.*\n"
+            "allowed_blocks=foo",
+            SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST
+        },
+        {
+            "[meta]\n"
+            "name = MINI\n"
+            "[block:root]\n"
+            "start=.*\n"
+            "allowed_blocks=foo, bar\n"
+            "[block:foo]\n"
+            "start=.*\n",
+            SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST
+        },
     };
 
     int cases_num = sizeof(cases) / sizeof(cases[0]);
@@ -146,6 +170,7 @@ void test_errors(void) {
     for (int i=0; i<cases_num; i++) {
         SyntaxDefinitionErrorCode error_code = test_error(cases[i].ini);
         TEST_CHECK(error_code == cases[i].error_code);
+        TEST_MSG("%d", error_code);
     }
 }
 
