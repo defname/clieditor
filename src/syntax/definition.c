@@ -86,10 +86,10 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
         ret = regcomp(&block->end, end_regex, REG_EXTENDED);
         if (ret != 0) {
             char errbuf[256];
-            regerror(ret, &block->start, errbuf, sizeof(errbuf));
+            regerror(ret, &block->end, errbuf, sizeof(errbuf));
             set_error(error,
                 SYNTAXDEFINITION_REGEX_ERROR_END, 
-                String_Format("Error in start regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
+                String_Format("Error in end regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
             );
             block->only_start = true;
             SyntaxBlockDef_Destroy(block);
