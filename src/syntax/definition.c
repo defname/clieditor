@@ -211,6 +211,8 @@ SyntaxDefinitionError link_children(SyntaxDefinition *def, Table *blocks) {
         }
         String_Deinit(&delimiter);
         if (children_count == 0) {
+            String_Deinit(&s);
+            free(children);
             continue;
         }
 
