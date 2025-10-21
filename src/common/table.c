@@ -220,6 +220,9 @@ void *Table_Get(const Table *table, const char *key) {
     if (!table) {
         logFatal("Invalid table in Table_Get().");
     }
+    if (table->used == 0) {
+        return NULL;
+    }
     if (!key) {
         logWarn("Table_Get() was called with key == NULL.");
         return NULL;
@@ -255,6 +258,9 @@ bool Table_Has(const Table *table, const char *key) {
     if (!table) {
         logFatal("Invalid table in Table_Has().");
     }
+    if (table->used == 0) {
+        return false;
+    }
     if (!key) {
         logWarn("Table_Has() was called with key == NULL.");
         return false;
@@ -266,6 +272,9 @@ bool Table_Has(const Table *table, const char *key) {
 bool Table_HasOwnership(const Table *table, const char *key) {
     if (!table) {
         logFatal("Invalid table in Table_HasOwnership().");
+    }
+    if (table->used == 0) {
+        return false;
     }
     if (!key) {
         logWarn("Table_HasOwnership() was called with key == NULL.");
