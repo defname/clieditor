@@ -239,6 +239,9 @@ void Table_Delete(Table *table, const char *key) {
     if (!table) {
         logFatal("Invalid table in Table_Delete().");
     }
+    if (table->used == 0) {
+        return;
+    }
     if (!key) {
         logWarn("Table_Delete() is called with key == NULL.");
         return;
