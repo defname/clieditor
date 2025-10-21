@@ -57,7 +57,7 @@
 <WS>            ::= ' ' | '\t'
 
 <LETTER>        ::= [a-zA-Z]
-<KEY_CHAR>      ::= <LETTER> | <DIGIT> | '.' | '-' | '_'
+<KEY_CHAR>      ::= <LETTER> | <DIGIT> | '.' | '-' | '_' | ':'
 <KEY>           ::= <KEY_CHAR> <KEY_CHAR>*
 
 *****************************************/

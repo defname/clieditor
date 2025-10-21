@@ -142,7 +142,7 @@ static bool is_digit(char ch) {
 }
 
 static bool is_key_char(char ch) {
-    return is_letter(ch) || is_digit(ch) || ch == '.' || ch == '-' || ch == '_';
+    return is_letter(ch) || is_digit(ch) || ch == '.' || ch == '-' || ch == '_' || ch == ':';
 }
 
 static bool is_at_end(const IniParser *parser) {

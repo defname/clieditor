@@ -105,7 +105,13 @@ void test_edge_case(void) {
     }
 
     Table_Get(table, "key0");
-    
+    Table_Destroy(table);
+
+    // checks on empty table
+    table = Table_Create();
+    TEST_CHECK(!Table_Get(table, "key"));
+    TEST_CHECK(!Table_Has(table, "key"));
+    TEST_CHECK(!Table_HasOwnership(table, "key"));
     Table_Destroy(table);
 }
 
