@@ -119,8 +119,8 @@ static SyntaxDefinitionError init_definition(SyntaxDefinition *def, const Table 
     if (!meta) {
         return ERROR(SYNTAXDEFINITION_NO_META, "No meta section found.");
     }
-    const char name = TypedTable_GetString(meta, "name");
-    def->name = strdup(name ? name : "");
+    const char *name = TypedTable_GetString(meta, "name");
+    def->name = strdup(name ?  name : "");
 
     // initialize block list
     def->blocks = malloc(sizeof(SyntaxBlockDef*) * (Table_GetUsage(table) - 1));
