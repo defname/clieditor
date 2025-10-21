@@ -119,7 +119,8 @@ static SyntaxDefinitionError init_definition(SyntaxDefinition *def, const Table 
     if (!meta) {
         return ERROR(SYNTAXDEFINITION_NO_META, "No meta section found.");
     }
-    def->name = strdup(TypedTable_GetString(meta, "name"));
+    const char name = TypedTable_GetString(meta, "name");
+    def->name = strdup(name ? name : "");
 
     // initialize block list
     def->blocks = malloc(sizeof(SyntaxBlockDef*) * (Table_GetUsage(table) - 1));
@@ -226,18 +227,21 @@ SyntaxDefinitionError link_children(SyntaxDefinition *def, Table *blocks) {
             String child_name = String_FromView(children[child_idx]);
             String_Trim(&child_name);
             table_block_mapping *child_mapping = Table_Get(blocks, child_name.bytes);
-            String_Deinit(&child_name);
+            
             if (!child_mapping) {
                 // no block with the given child name
                 // something like
                 // allowed_blocks = block1, non_existing_block
-                String_Deinit(&s);
-                free(children);
-                return ERROR(
+                SyntaxDefinitionError error = ERROR(
                     SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST,
                     "Block \"%s\" defines non-existing block \"%s\" as it's child.", block->name, child_name.bytes
                 );
+                String_Deinit(&child_name);
+                String_Deinit(&s);
+                free(children);
+                return error;
             }
+            String_Deinit(&child_name);
             block->children[child_idx] = child_mapping->block;
         }
         block->children_count = children_count;
