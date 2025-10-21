@@ -77,7 +77,6 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
             SYNTAXDEFINITION_REGEX_ERROR_START, 
             String_Format("Error in start regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
         );
-        regfree(&block->start);
         free(block->name);
         free(block);
         return NULL;
@@ -91,8 +90,8 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
                 SYNTAXDEFINITION_REGEX_ERROR_END, 
                 String_Format("Error in end regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
             );
-            block->only_start = true;
-            SyntaxBlockDef_Destroy(block);
+            block->only_start = true;  // must be set that SyntaxBlockDef_Destroy() does not try to free end regex
+            SyntaxBlockDef_Destroy(block);  // frees everything including start regex
             return NULL;
         }
         block->only_start = false;
