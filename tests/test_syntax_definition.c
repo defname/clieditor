@@ -174,11 +174,38 @@ void test_errors(void) {
     }
 }
 
+
+void test_children(void) {
+    const char *ini = 
+    "[meta]\n"
+    "name = Children\n"
+    "[block:root]\n"
+    "start=\".\"\n"
+    "allowed_blocks=block1,block2\n"
+    "[block:block1]\n"
+    "start=\".\"\n"
+    "[block:block2]\n"
+    "start=\".\"\n";
+    Table *table = table_from_ini(ini);
+    SyntaxDefinitionError error;
+    SyntaxDefinition *def = SyntaxDefinition_FromTable(table, &error);
+    TEST_ASSERT(def != NULL);
+    TEST_CHECK(def->blocks_count == 3);
+    TEST_CHECK(def->root != NULL);
+    TEST_CHECK(def->root->children_count == 2);
+
+    Table_Destroy(table);
+    SyntaxDefinition_Destroy(def);
+    SyntaxDefinitionError_Deinit(&error);
+}
+
+
 TEST_LIST = {
     { "SyntaxDefinition: Block Simple", test_block_simple },
     { "SyntaxDefinitions: Block with End", test_block_with_end },
     { "SyntaxDefinition: Block Errors", test_block_errors },
     { "SyntaxDefinition: Minimal Example", test_minimal_definition },
     { "SyntaxDefinition: Errors", test_errors },
+    { "SyntaxDefinition: Children", test_children },
     { NULL, NULL }
 };
