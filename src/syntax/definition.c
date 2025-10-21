@@ -172,7 +172,7 @@ static SyntaxDefinitionError build_blocks(SyntaxDefinition *def, const Table *ta
             // add the block to the list of all blocks (important for freeing also unreferenced blocks later)
             def->blocks[def->blocks_count++] = block;
 
-            if (strncmp(block_name, "root", 4) == 0) {
+            if (strcmp(block_name, "root") == 0) {
                 def->root = block;
             }
         }
