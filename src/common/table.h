@@ -97,5 +97,9 @@ bool Table_Has(const Table *table, const char *key);
  */
 bool Table_HasOwnership(const Table *table, const char *key);
 
+/**
+ * @brief Return the current number of non-free table slots.
+ */
+size_t Table_GetUsage(const Table *table);
 
 #endif

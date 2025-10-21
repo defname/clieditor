@@ -178,7 +178,7 @@ void String_Set(String *str, String src);
  * 
  * Its for situation where dst is already initialized and your want to fill it
  * with the content of another string without moving memory around.
- * dst will be deinitialized!
+ * src will be deinitialized!
  */
 void String_Take(String *dst, String *src);
 

@@ -1,8 +1,3 @@
-
-# --- Test-Konfiguration ---
-# CTest-Unterstützung aktivieren
-enable_testing()
-
 # Finde alle Testdateien
 file(GLOB TEST_SOURCES "test_*.c")
 
@@ -26,6 +21,6 @@ foreach(TEST_SOURCE_FILE ${TEST_SOURCES})
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_LINK_OBJECTS})
 
     # Den Test zu CTest hinzufügen, damit er mit `ctest` ausgeführt werden kann
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    add_test(NAME ${TEST_NAME} COMMAND $<TARGET_FILE:${TEST_NAME}>)
 
 endforeach()

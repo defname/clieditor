@@ -316,6 +316,9 @@ void String_Set(String *str, String src) {
 }
 
 void String_Take(String *dst, String *src) {
+    if (!dst || ! src) {
+        return;
+    }
     String_Deinit(dst);
     *dst = String_TakeCStr(src->bytes);
 
