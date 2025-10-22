@@ -66,6 +66,8 @@ Stack *Stack_Copy(const Stack *stack) {
     memcpy(copy->items, stack->items, stack->capacity * sizeof(void *));
     copy->size = stack->size;
     copy->capacity = stack->capacity;
+    
+    return copy;
 }
 
 void Stack_Push(Stack *stack, void *item) {
