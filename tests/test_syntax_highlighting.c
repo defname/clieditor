@@ -1,4 +1,5 @@
 #include "acutest.h"
+#include <time.h>
 #include "syntax/highlighting.h"
 #include "syntax/definition.h"
 #include "common/iniparser.h"
@@ -135,7 +136,7 @@ allowed_blocks=string, comment, keyword, brackets
 [block:brackets]
 start=\(
 end=\)
-allowed_blocks=string, keyword
+allowed_blocks=string, keyword, brackets
 
 [block:keyword]
 start=keyword
@@ -171,15 +172,6 @@ void test_basics(void) {
         },
         {
             test_ini1,
-            "foo 'ba//r' foo",  // string with comment inside (should be ignored)
-            2,
-            {4, 11},
-            {"string", "root"},
-            1,
-            {"root"}
-        },
-        {
-            test_ini1,
             "foo keyword foo",  // keyword
             2,
             {4, 11},
@@ -189,18 +181,27 @@ void test_basics(void) {
         },
         {
             test_ini1,
-            "foo 'keyword' foo",  // keyword inside string
+            "foo '//not a comment' foo",  // string with comment inside (should be ignored)
             2,
-            {4, 13},
+            {4, 21},
             {"string", "root"},
             1,
             {"root"}
         },
         {
             test_ini1,
-            "foo (bar) foo",  // keyword inside string
+            "foo 'not a keyword' foo",  // keyword inside string
             2,
-            {4, 9},
+            {4, 19},
+            {"string", "root"},
+            1,
+            {"root"}
+        },
+        {
+            test_ini1,
+            "foo (no brackets) foo",
+            2,
+            {4, 17},
             {"brackets", "root"},
             1,
             {"root"}
@@ -222,7 +223,25 @@ void test_basics(void) {
             {"brackets", "keyword", "brackets", "root", "keyword", "root"},
             1,
             {"root"}
-        }
+        },
+        {
+            test_ini1,
+            "",
+            0,
+            {},
+            {},
+            1,
+            {"root"}
+        },
+        {
+            test_ini1,
+            "(('not a keyword'))",
+            6,
+            {0, 1, 2, 17, 18, 19},
+            {"brackets", "brackets", "string", "brackets", "brackets", "root"},
+            1,
+            {"root"}
+        },
 
     };
     size_t count = sizeof(cases) / sizeof(cases[0]);
@@ -231,12 +250,102 @@ void test_basics(void) {
         TEST_CASE(cases[i].str);
         assert_highlight_tags(cases[i]);
     }
-
 }
 
+
+void test_open_blocks(void) {
+    TagTestCase cases[] = {
+        {
+            test_ini1,
+            "(keyword",
+            3,
+            {0, 1, 8},
+            {"brackets", "keyword", "brackets"},
+            2,
+            {"brackets", "root"}
+        },
+
+    };
+    size_t count = sizeof(cases) / sizeof(cases[0]);
+
+    for (size_t i=0; i<count; i++) {
+        TEST_CASE(cases[i].str);
+        assert_highlight_tags(cases[i]);
+    }
+}
+
+/****************************************************************/
+/* Random Tests                                                 */
+char random_char() {
+    char c = 0;
+    for (;;) {
+        c = rand() % 128;
+        if (isprint(c) && c != '\r' && c != '\n') {
+            return c;
+        }
+    }
+}
+
+void generate_random_string(char *out, size_t max_len, const char *tokens[], size_t token_count) {
+    //size_t len = rand() % (max_len/2) + (max_len/2) - 1;
+    size_t len = rand() % max_len;
+    size_t l = 0;
+    int token_prop = rand() % 10 + 1;
+    while (l < len) {
+        int choose_token = rand() % token_prop;
+        if (choose_token == 0) {
+            size_t i = rand() % (token_count);
+            const char *token = tokens[i];
+            size_t token_len = strlen(token);
+            if (l + token_len >= max_len) {
+                break;
+            }
+            memcpy(out + l, token, token_len);
+            l += token_len;
+        }
+        else {
+            out[l++] = random_char();
+        }
+    }
+    out[l] = '\0';
+}
+
+
+void test_stress(void) {
+    // function should just not crash on random input
+    const char *tokens[] = {
+        "(", ")", "keyword", "'", "//"
+    };
+
+    srand(time(NULL));
+
+    for (int i=0; i<1000; i++) {
+        SyntaxDefinition *def = create_definition(test_ini1);
+        SyntaxHighlighting hl;
+        SyntaxHighlighting_Init(&hl, def);
+        
+        char str[4096];
+        generate_random_string(str, 1024, tokens, sizeof(tokens) / sizeof(tokens[0]));
+        TEST_CASE(str);
+
+        String test = String_FromCStr(str, strlen(str));
+        Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &test, NULL);
+
+        TEST_CHECK(open_blocks != NULL);
+        TEST_CHECK(!Stack_IsEmpty(open_blocks));
+
+        Stack_Destroy(open_blocks);
+        String_Deinit(&test);
+        SyntaxHighlighting_Deinit(&hl);
+        SyntaxDefinition_Destroy(def);
+    }
+
+}
 
 TEST_LIST = {
     { "SyntaxHighlighting: Simple", test_highlight_string_simple },
     { "SyntaxHighlighting: Basics", test_basics },
+    { "SyntaxHighlighting: Open blocks", test_open_blocks },
+    { "SyntaxHighlighting: Random Tests", test_stress },
     { NULL, NULL }
 };
