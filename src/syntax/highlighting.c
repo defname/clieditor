@@ -144,7 +144,14 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
     }
 
     // create a working copy of the stack
-    Stack *open_blocks = Stack_Copy(open_blocks_at_begin);
+    Stack *open_blocks;
+    if (open_blocks_at_begin) {
+        open_blocks = Stack_Copy(open_blocks_at_begin);
+    }
+    else {
+        open_blocks = Stack_Create();
+        Stack_Push(open_blocks, hl->def->root);
+    }
 
     // iterate over the string
     size_t offset = 0;

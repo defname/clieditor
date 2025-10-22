@@ -98,7 +98,7 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
  * 
  * @param hl The `SyntaxHighlighting` instance to use.
  * @param text The text to hightlight.
- * @param open_blocks An pointer to a `Stack` instance that holds the open blocks at the beginning of string.
+ * @param open_blocks An pointer to a `Stack` instance that holds the open blocks at the beginning of string. If NULL it's assumed that the root block is current.
  * 
  * @returns
  * A new created `Stack` containing all open blocks at the end of `text`. 
