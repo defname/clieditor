@@ -59,9 +59,8 @@ void SyntaxBlockDef_Destroy(SyntaxBlockDef *block) {
         free(block->name);
     }
     regfree(&block->start);
-    if (!block->only_start) {
-        regfree(&block->end);
-    }
+    regfree(&block->end);
+
     free(block);
 }
 
@@ -113,8 +112,9 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
                 SYNTAXDEFINITION_REGEX_ERROR_END, 
                 String_Format("Error in end regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
             );
-            block->only_start = true;  // must be set that SyntaxBlockDef_Destroy() does not try to free end regex
-            SyntaxBlockDef_Destroy(block);  // frees everything including start regex
+            regfree(&block->start);
+            free(block->name);
+            free(block);
             return NULL;
         }
         block->only_start = false;
