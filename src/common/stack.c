@@ -51,6 +51,23 @@ void Stack_Deinit(Stack *stack) {
     stack->capacity = 0;
 }
 
+Stack *Stack_Create() {
+    Stack *stack = malloc(sizeof(Stack));
+    if (!stack) {
+        logFatal("Failed to allocate memory for stack.");
+    }
+    Stack_Init(stack);
+    return stack;
+}
+
+void Stack_Destroy(Stack *stack) {
+    if (!stack) {
+        return;
+    }
+    Stack_Deinit(stack);
+    free(stack);
+}
+
 Stack *Stack_Copy(const Stack *stack) {
     if (!stack) {
         return NULL;

@@ -32,6 +32,9 @@ typedef struct _Stack {
 void Stack_Init(Stack *stack);
 void Stack_Deinit(Stack *stack);
 
+Stack *Stack_Create();
+void Stack_Destroy(Stack *stack);
+
 Stack *Stack_Copy(const Stack *stack);
 
 void Stack_Push(Stack *stack, void *item);
