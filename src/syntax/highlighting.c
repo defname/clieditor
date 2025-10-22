@@ -107,9 +107,11 @@ static const SyntaxBlockDef *find_first_child(const char *str, const SyntaxBlock
         const SyntaxBlockDef *child = current->children[i];
         regmatch_t match;
         if (regexec(&child->start, str, 1, &match, 0) == 0) {
-            first_match = match;
-            first_block = child;
-            had_match = true;
+            if (!had_match || match.rm_so < first_match.rm_so) {
+                first_match = match;
+                first_block = child;
+                had_match = true;
+            }
         }
     }
     if (had_match) {
