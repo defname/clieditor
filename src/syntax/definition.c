@@ -75,6 +75,13 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
     block->name = strdup(name);
     block->only_start = true;
     block->color = (uint8_t)TypedTable_GetNumber(table, "color");
+
+    if (strcmp(name, "root") == 0) {
+        regcomp(&block->start, "^", REG_EXTENDED);  // matches always without consuming
+        regcomp(&block->end, "a^", REG_EXTENDED);   // matches never
+        block->only_start = false;
+        return block;
+    }
     
     if (!start_regex) {
         set_error(error,
@@ -111,6 +118,9 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
             return NULL;
         }
         block->only_start = false;
+    }
+    else {
+        regcomp(&block->end, "^", REG_EXTENDED);  // matches everything without consuming
     }
 
     return block;

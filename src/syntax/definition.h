@@ -42,6 +42,9 @@
  * Blocks that define an `end` expression may additionally define a list of
  * `allowed_blocks`, which specifies which block types are permitted to appear
  * inside the block.
+ * 
+ * The root block does not need defined `start` or `end` patterns but should
+ * define an `allowed_blocks` list (otherwise nothing will be found). 
  */
 
 #ifndef SYNTAX_DEFINITION_H
