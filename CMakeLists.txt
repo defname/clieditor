@@ -53,6 +53,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_OBJECTS})
 add_compile_definitions(_XOPEN_SOURCE=700)
 
 
+# CTest-Unterstützung aktivieren
+enable_testing()
 
 # --- Add tools ---
 add_subdirectory(tools)
