@@ -17,7 +17,6 @@ void test_block_simple(void) {
     TEST_CHECK(block->color == 10);
     SyntaxBlockDef_Destroy(block);
     Table_Destroy(block_table);
-    SyntaxDefinitionError_Deinit(&error);
 }
 
 void test_block_with_end(void) {
@@ -34,7 +33,6 @@ void test_block_with_end(void) {
     TEST_CHECK(block->color == 10);
     SyntaxBlockDef_Destroy(block);
     Table_Destroy(block_table);
-    SyntaxDefinitionError_Deinit(&error);
 }
 
 void test_block_errors(void) {
