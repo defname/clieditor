@@ -88,7 +88,7 @@ void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs) {
 
 void SyntaxHighlighting_Init(SyntaxHighlighting *hl, const SyntaxDefinition *def) {
     hl->def = def;
-    hl->strings = Table_Create();
+    hl->strings = Table_CreatePtr();
 }
 
 void SyntaxHighlighting_Deinit(SyntaxHighlighting *hl) {
@@ -138,7 +138,7 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
     else {
         // otherwise create and store
         shs = SyntaxHighlightingString_Create(text);
-        Table_Set(hl->strings, text, shs, SyntaxHighlightingString_Destroy);
+        Table_Set(hl->strings, text, shs, (void(*)(void*))SyntaxHighlightingString_Destroy);
     }
 
     // create a working copy of the stack
@@ -165,7 +165,7 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
             offset += match.rm_eo;
 
             // push the next_block to the stack to continue with it in the next iteration
-            Stack_Push(open_blocks, next_block);
+            Stack_Push(open_blocks, (void*)next_block);
             continue;
         }
         // no child block found
