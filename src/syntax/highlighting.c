@@ -153,38 +153,41 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
         const SyntaxBlockDef *current_block = (SyntaxBlockDef*)Stack_Peek(open_blocks);
 
         // find the first child block
-        regmatch_t match;
-        const SyntaxBlockDef *next_block = find_first_child(text->bytes + offset, current_block, &match);
-        if (next_block) {
+        regmatch_t child_match;
+        const SyntaxBlockDef *child = find_first_child(text->bytes + offset, current_block, &child_match);
+        regmatch_t end_match;
+        bool end_found = find_end_of_block(text->bytes + offset, current_block, &end_match);
+
+        if (child && (!end_found || child_match.rm_so < end_match.rm_so)) {
             // if there is a child block found create and add a tag to SyntaxHighlightingString tag list
             SyntaxHighlightingTag tag;
             tag.text = text;
-            tag.byte_offset = offset + match.rm_so;
-            tag.block = next_block;
+            tag.byte_offset = offset + child_match.rm_so;
+            tag.block = child;
             SyntaxHighlightingString_AddTag(shs, tag);
 
             // increase the offset to the end of the match
-            offset += match.rm_eo;
+            offset += child_match.rm_eo;
 
-            // push the next_block to the stack to continue with it in the next iteration
-            Stack_Push(open_blocks, (void*)next_block);
+            // push the child to the stack to continue with it in the next iteration
+            Stack_Push(open_blocks, (void*)child);
             continue;
         }
         // no child block found
         // so check if the last block ends
-        if (find_end_of_block(text->bytes + offset, current_block, &match)) {
+        if (end_found) {
             // end of block found so remove it from stack
             Stack_Pop(open_blocks);  // removes current (which was just peeked before)
 
             // and add a tag for the (new) begin of the surrounding block
             SyntaxHighlightingTag tag;
             tag.text = text;
-            tag.byte_offset = offset + match.rm_eo;  // the current block goes behind the match of its end
+            tag.byte_offset = offset + end_match.rm_eo;  // the current block goes behind the match of its end
             tag.block = Stack_Peek(open_blocks);  // new current block
             SyntaxHighlightingString_AddTag(shs, tag);
 
             // increase offset
-            offset += match.rm_eo;
+            offset += end_match.rm_eo;
             continue;
         }
         // neither the beginning of a new block nor the end of the current block found
