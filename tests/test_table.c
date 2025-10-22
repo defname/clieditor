@@ -115,11 +115,24 @@ void test_edge_case(void) {
     Table_Destroy(table);
 }
 
+void test_ptr_table(void) {
+    Table *table = Table_CreatePtr();
+
+    Table_Set(table, (void*)1, strdup("Foobar"), free);
+    Table_Set(table, (void*)2, strdup("Blub"), free);
+
+    TEST_CHECK(strcmp(Table_Get(table, (void*)1), "Foobar") == 0);
+    TEST_CHECK(strcmp(Table_Get(table, (void*)2), "Blub") == 0);
+
+    Table_Destroy(table);
+}
+
 TEST_LIST = {
     { "Table: Creation", test_creation },
     { "Table: Set and Get", test_set_get },
     { "Table: Existence and Owndership", test_has_hasownership },
     { "Table: Rehashing", test_rehashing },
     { "Table: Edge Case", test_edge_case },
+    { "Table: Pointer Keys", test_ptr_table },
     { NULL, NULL }
 };
