@@ -32,11 +32,15 @@ typedef struct _Stack {
 void Stack_Init(Stack *stack);
 void Stack_Deinit(Stack *stack);
 
+Stack *Stack_Copy(const Stack *stack);
+
 void Stack_Push(Stack *stack, void *item);
 void *Stack_Pop(Stack *stack);
 void *Stack_Peek(const Stack *stack);
 
 bool Stack_Has(const Stack *stack, const void *item);
+
+bool Stack_IsEmpty(const Stack *stack);
 
 void Stack_Clear(Stack *stack);
 

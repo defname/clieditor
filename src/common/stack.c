@@ -14,7 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "stack.h"
+#include <string.h>
 #include "logging.h"
+
 
 static void increase_capacity(Stack *stack) {
     if (!stack) {
@@ -47,6 +49,23 @@ void Stack_Deinit(Stack *stack) {
     stack->items = NULL;
     stack->size = 0;
     stack->capacity = 0;
+}
+
+Stack *Stack_Copy(const Stack *stack) {
+    if (!stack) {
+        return NULL;
+    }
+    Stack *copy = malloc(sizeof(Stack));
+    if (!copy) {
+        logFatal("Failed to allocate memory for stack copy.");
+    }
+    copy->items = malloc(stack->capacity * sizeof(void *));
+    if (!copy->items) {
+        logFatal("Failed to allocate memory for stack copy items.");
+    }
+    memcpy(copy->items, stack->items, stack->capacity * sizeof(void *));
+    copy->size = stack->size;
+    copy->capacity = stack->capacity;
 }
 
 void Stack_Push(Stack *stack, void *item) {
@@ -84,6 +103,10 @@ bool Stack_Has(const Stack *stack, const void *item) {
         }
     }
     return false;
+}
+
+bool Stack_IsEmpty(const Stack *stack) {
+    return stack->size == 0;
 }
 
 void Stack_Clear(Stack *stack) {
