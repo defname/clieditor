@@ -72,7 +72,7 @@ void SyntaxHighlightingString_Destroy(SyntaxHighlightingString *shs);
 void SyntaxHighlightingString_AddTag(SyntaxHighlightingString *shs, SyntaxHighlightingTag tag);
 void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs);
 
-/**
+/**match
  * @brief Holds the highlighting information for text of multiple `Strings`.
  */
 typedef struct _SyntaxHighlighting {
@@ -103,6 +103,6 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
  * @returns
  * A new created `Stack` containing all open blocks at the end of `text`. 
  */
-Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *text, const Stack *open_blocks);
+Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks);
 
 #endif

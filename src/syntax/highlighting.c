@@ -130,9 +130,9 @@ static bool find_end_of_block(const char *str, const SyntaxBlockDef *current, re
     return false;
 }
 
-Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *text, const Stack *open_blocks_at_begin) {
+Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
     // check if there is already old infomation about text in the table
-    SyntaxHighlightingString *shs = Table_Get(hl->strings, text);
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, text);
     if (shs) {
         // clear it if so
         SyntaxHighlightingString_Clear(shs);
@@ -140,7 +140,7 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
     else {
         // otherwise create and store
         shs = SyntaxHighlightingString_Create(text);
-        Table_Set(hl->strings, text, shs, (void(*)(void*))SyntaxHighlightingString_Destroy);
+        Table_Set(sh->strings, text, shs, (void(*)(void*))SyntaxHighlightingString_Destroy);
     }
 
     // create a working copy of the stack
@@ -150,7 +150,7 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *hl, const String *
     }
     else {
         open_blocks = Stack_Create();
-        Stack_Push(open_blocks, hl->def->root);
+        Stack_Push(open_blocks, sh->def->root);
     }
 
     // iterate over the string
