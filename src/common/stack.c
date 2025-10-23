@@ -68,21 +68,30 @@ void Stack_Destroy(Stack *stack) {
     free(stack);
 }
 
-Stack *Stack_Copy(const Stack *stack) {
-    if (!stack) {
+Stack *Stack_Copy(const Stack *src) {
+    if (!src) {
         return NULL;
     }
     Stack *copy = malloc(sizeof(Stack));
     if (!copy) {
         logFatal("Failed to allocate memory for stack copy.");
     }
-    copy->items = malloc(stack->capacity * sizeof(void *));
+
+    size_t cap = src->capacity ? src->capacity : STACK_INITIAL_CAPACITY;  // handle capacity == 0
+
+    // allocate memory
+    copy->items = malloc(cap * sizeof(void *));
     if (!copy->items) {
         logFatal("Failed to allocate memory for stack copy items.");
     }
-    memcpy(copy->items, stack->items, stack->capacity * sizeof(void *));
-    copy->size = stack->size;
-    copy->capacity = stack->capacity;
+    // only copy items
+    memcpy(copy->items, src->items, src->size * sizeof(void *));
+    // set remainder to 0
+    if (cap > src->size) {
+        memset(copy->items + src->size, 0, (cap - src->size) * sizeof(void *));
+    }
+    copy->size = src->size;
+    copy->capacity = src->capacity;
     
     return copy;
 }
