@@ -153,6 +153,7 @@ start = //
 end = $
 )";
 
+
 void test_basics(void) {
     TagTestCase cases[] = {
         {
@@ -245,7 +246,49 @@ void test_basics(void) {
             1,
             {"root"}
         },
+    };
+    size_t count = sizeof(cases) / sizeof(cases[0]);
 
+    for (size_t i=0; i<count; i++) {
+        TEST_CASE(cases[i].str);
+        assert_highlight_tags(cases[i]);
+    }
+}
+
+
+const char *test_ini2 = R"(
+[meta]
+name = TEST2
+
+[block:root]
+child_blocks=assignment, comment
+
+[block:assignment]
+start=^[a-zA-Z_:]+=
+end=$
+child_blocks=value
+
+[block:value]
+start=.
+end=$
+ends_on=comment
+
+[block:comment]
+start = //
+end = $
+)";
+
+void test_moderate(void) {
+    TagTestCase cases[] = {
+        {
+            test_ini2,
+            "foo=blub // should end assignment",  // assignment with comment
+            5,
+            {0, 4, 9, 33, 33},
+            {"assignment", "value", "comment", "assignment", "root"},
+            1,
+            {"root"}
+        },
     };
     size_t count = sizeof(cases) / sizeof(cases[0]);
 
@@ -348,6 +391,7 @@ void test_stress(void) {
 TEST_LIST = {
     { "SyntaxHighlighting: Simple", test_highlight_string_simple },
     { "SyntaxHighlighting: Basics", test_basics },
+    { "SyntaxHighlighting: Moderate", test_moderate },
     { "SyntaxHighlighting: Open blocks", test_open_blocks },
     { "SyntaxHighlighting: Random Tests", test_stress },
     { NULL, NULL }
