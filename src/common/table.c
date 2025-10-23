@@ -244,7 +244,7 @@ void Table_Set(Table *table, const void *key, void *value, void (*destructor)(vo
     if (slot->state == TABLE_SLOT_EMPTY) {
         slot->state = TABLE_SLOT_USED;
         slot->key = table->key_copy_func(key);
-        if (slot->key == NULL) {
+        if (!slot->key) {
             logFatal("No memory for string copy in Table_Set().");
         }
         table->used++;
