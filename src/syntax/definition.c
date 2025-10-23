@@ -47,6 +47,8 @@ SyntaxBlockDef *SyntaxBlockDef_Create() {
     block->only_start = false;
     block->children = NULL;
     block->children_count = 0;
+    block->ends_on = NULL;
+    block->ends_on_count = 0;
     return block;
 }
 
@@ -54,6 +56,9 @@ SyntaxBlockDef *SyntaxBlockDef_Create() {
 void SyntaxBlockDef_Destroy(SyntaxBlockDef *block) {
     if (block->children) {
         free(block->children);
+    }
+    if (block->ends_on) {
+        free(block->ends_on);
     }
     if (block->name) {
         free(block->name);
@@ -212,6 +217,68 @@ static SyntaxDefinitionError build_blocks(SyntaxDefinition *def, const Table *ta
     return NO_ERROR;
 }
 
+static SyntaxDefinitionError map_block_names_to_blocks(SyntaxBlockDef *current_block, StringView *block_names, size_t count, SyntaxBlockDef **out, Table *blocks) {
+    for (size_t i=0; i<count; i++) {
+        String name = String_FromView(block_names[i]);
+        String_Trim(&name);
+        table_block_mapping *mapping = Table_Get(blocks, name.bytes);
+        
+        if (!mapping) {
+            // no block with the given name
+            // something like
+            // allowed_blocks = block1, non_existing_block
+            SyntaxDefinitionError error = ERROR(
+                SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST,
+                "Block \"%s\" uses non-existing block \"%s\" in a list.", current_block->name, name.bytes
+            );
+            String_Deinit(&name);
+            return error;
+        }
+        String_Deinit(&name);
+        out[i] = mapping->block;
+    }
+    return NO_ERROR;
+}
+
+static SyntaxDefinitionError block_name_list_str_to_blocks(SyntaxBlockDef *current_block, const char *list_str, SyntaxBlockDef ***out, size_t *out_count, Table *blocks) {
+    if (!list_str) {
+        *out_count = 0;
+        return NO_ERROR;
+    }
+
+    String s = String_FromCStr(list_str, strlen(list_str));
+    ssize_t count = 0;
+    String delimiter = String_FromCStr(",", 1);
+    StringView *children = String_Split(&s, &delimiter, &count);
+    if (count < 0) {
+        logFatal("Potential error in String_Split().");
+    }
+    String_Deinit(&delimiter);
+    if (count == 0) {
+        String_Deinit(&s);
+        free(children);
+        return NO_ERROR;
+    }
+
+    // malloc memory for the children of SyntaxBlockDef
+    *out = malloc(sizeof(SyntaxBlockDef*) * count);
+    if (!(*out)) {
+        logFatal("Cannot allocate memory for children of SyntaxBlockDef.");
+    }
+
+    SyntaxDefinitionError error = map_block_names_to_blocks(current_block, children, count, *out, blocks);
+    if (error.code != SYNTAXDEFINITION_NO_ERROR) {
+        String_Deinit(&s);
+        free(children);
+        return error;
+    }
+
+    *out_count = count;
+    String_Deinit(&s);
+    free(children);
+
+    return NO_ERROR;
+}
 
 SyntaxDefinitionError link_children(SyntaxDefinition *def, Table *blocks) {
     for (size_t i=0; i<def->blocks_count; i++) {
@@ -224,55 +291,31 @@ SyntaxDefinitionError link_children(SyntaxDefinition *def, Table *blocks) {
         }
         const Table *block_table = mapping->table;
 
-        const char *children_str = TypedTable_GetString(block_table, "allowed_blocks");
-        if (!children_str) {
-            continue;
+        const char *children_str = TypedTable_GetString(block_table, "child_blocks");
+        SyntaxDefinitionError error = block_name_list_str_to_blocks(block, children_str, &block->children, &block->children_count, blocks);
+        if (error.code != SYNTAXDEFINITION_NO_ERROR) {
+            return error;
         }
+    }
+    return NO_ERROR;
+}
 
-        String s = String_FromCStr(children_str, strlen(children_str));
-        ssize_t children_count = 0;
-        String delimiter = String_FromCStr(",", 1);
-        StringView *children = String_Split(&s, &delimiter, &children_count);
-        if (children_count < 0) {
-            logFatal("Potential rrror in String_Split().");
+SyntaxDefinitionError link_ends_with(SyntaxDefinition *def, Table *blocks) {
+    for (size_t i=0; i<def->blocks_count; i++) {
+        SyntaxBlockDef *block = def->blocks[i];
+        
+        // get the mapping
+        table_block_mapping *mapping = Table_Get(blocks, block->name);
+        if (!mapping) {
+            logFatal("Some serious design flaw detected.");
         }
-        String_Deinit(&delimiter);
-        if (children_count == 0) {
-            String_Deinit(&s);
-            free(children);
-            continue;
-        }
+        const Table *block_table = mapping->table;
 
-        // malloc memory for the children of SyntaxBlockDef
-        block->children = malloc(sizeof(SyntaxBlockDef*) * children_count);
-        if (!block->children) {
-            logFatal("Cannot allocate memory for children of SyntaxBlockDef.");
+        const char *ends_with_str = TypedTable_GetString(block_table, "ends_on");
+        SyntaxDefinitionError error = block_name_list_str_to_blocks(block, ends_with_str, &block->ends_on, &block->ends_on_count, blocks);
+        if (error.code != SYNTAXDEFINITION_NO_ERROR) {
+            return error;
         }
-
-        for (size_t child_idx=0; child_idx<(size_t)children_count; child_idx++) {
-            String child_name = String_FromView(children[child_idx]);
-            String_Trim(&child_name);
-            table_block_mapping *child_mapping = Table_Get(blocks, child_name.bytes);
-            
-            if (!child_mapping) {
-                // no block with the given child name
-                // something like
-                // allowed_blocks = block1, non_existing_block
-                SyntaxDefinitionError error = ERROR(
-                    SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST,
-                    "Block \"%s\" defines non-existing block \"%s\" as it's child.", block->name, child_name.bytes
-                );
-                String_Deinit(&child_name);
-                String_Deinit(&s);
-                free(children);
-                return error;
-            }
-            String_Deinit(&child_name);
-            block->children[child_idx] = child_mapping->block;
-        }
-        block->children_count = children_count;
-        String_Deinit(&s);
-        free(children);
     }
     return NO_ERROR;
 }
@@ -294,7 +337,6 @@ SyntaxDefinition *SyntaxDefinition_FromTable(const Table *table, SyntaxDefinitio
         SyntaxDefinition_Destroy(def);
         return NULL;
     }
-    SyntaxDefinitionError_Deinit(error);
 
     // temporary table mapping all block names to it's SyntaxBlockDef
     Table *blocks = Table_Create();
@@ -304,7 +346,6 @@ SyntaxDefinition *SyntaxDefinition_FromTable(const Table *table, SyntaxDefinitio
         Table_Destroy(blocks);
         return NULL;
     }
-    SyntaxDefinitionError_Deinit(error);
 
     // construct the children lists
     *error = link_children(def, blocks);
@@ -313,7 +354,14 @@ SyntaxDefinition *SyntaxDefinition_FromTable(const Table *table, SyntaxDefinitio
         Table_Destroy(blocks);
         return NULL;
     }
-    SyntaxDefinitionError_Deinit(error);
+
+    // construct the ends_by list
+    *error = link_ends_with(def, blocks);
+    if (error->code != SYNTAXDEFINITION_NO_ERROR) {
+        SyntaxDefinition_Destroy(def);
+        Table_Destroy(blocks);
+        return NULL;
+    }
 
     // cleanup
     Table_Destroy(blocks);
