@@ -110,7 +110,7 @@ SyntaxBlockDef *SyntaxBlockDef_FromTable(const char *name, const Table *table, S
             regerror(ret, &block->end, errbuf, sizeof(errbuf));
             set_error(error,
                 SYNTAXDEFINITION_REGEX_ERROR_END, 
-                String_Format("Error in end regex \"%s\" in block \"%s\": %s", start_regex, name, errbuf)
+                String_Format("Error in end regex \"%s\" in block \"%s\": %s", end_regex, name, errbuf)
             );
             regfree(&block->start);
             free(block->name);
