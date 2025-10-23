@@ -49,6 +49,11 @@ void Buffer_Init(Buffer *buffer, size_t capacity, size_t element_size);
 void Buffer_Deinit(Buffer *buffer);
 
 /**
+ * @brief Set buffer count to 0 and cursor to the first element.
+ */
+void Buffer_Clear(Buffer *buffer);
+
+/**
  * @brief Adds an element to the end (tail) of the buffer.
  * If the buffer is full, the element is dropped.
  * @param buffer A pointer to the Buffer struct.
@@ -70,13 +75,16 @@ bool Buffer_Dequeue(Buffer *buffer, void *out_element);
  * @param buffer A pointer to the Buffer struct.
  * @return true if the buffer contains no elements, false otherwise.
  */
-bool Buffer_IsEmpty(Buffer *buffer);
+bool Buffer_IsEmpty(const Buffer *buffer);
 
 /** @brief Returns the current number of elements in the buffer. */
-size_t Buffer_Size(Buffer *buffer);
+size_t Buffer_Size(const Buffer *buffer);
 
 /** @brief Returns the maximum capacity of the buffer. */
-size_t Buffer_Capacity(Buffer *buffer);
+size_t Buffer_Capacity(const Buffer *buffer);
+
+/** @brief Return true if there are empty slots.  */
+bool Buffer_HasSpace(const Buffer *buffer);
 
 /**
  * @brief Peeks at an element in the buffer without removing it.
@@ -85,6 +93,6 @@ size_t Buffer_Capacity(Buffer *buffer);
  * @param out_element A pointer to a variable where the peeked element will be copied.
  * @return true on success, false if the lookahead index is out of bounds.
  */
-bool Buffer_Peek(Buffer *buffer, size_t lookahead, void *out_element);
+bool Buffer_Peek(const Buffer *buffer, size_t lookahead, void *out_element);
 
 #endif

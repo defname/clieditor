@@ -158,7 +158,7 @@ void test_errors(void) {
             "name = MINI\n"
             "[block:root]\n"
             "start=.*\n"
-            "allowed_blocks=foo",
+            "child_blocks=foo",
             SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST
         },
         {
@@ -166,7 +166,7 @@ void test_errors(void) {
             "name = MINI\n"
             "[block:root]\n"
             "start=.*\n"
-            "allowed_blocks=foo, bar\n"
+            "child_blocks=foo, bar\n"
             "[block:foo]\n"
             "start=.*\n",
             SYNTAXDEFINITION_BLOCK_DOES_NOT_EXIST
@@ -190,7 +190,7 @@ void test_children(void) {
     "name = Children\n"
     "[block:root]\n"
     "start=\".\"\n"
-    "allowed_blocks=block1,block2\n"
+    "child_blocks=block1,block2\n"
     "[block:block1]\n"
     "start=\".\"\n"
     "[block:block2]\n"
@@ -208,6 +208,34 @@ void test_children(void) {
     SyntaxDefinitionError_Deinit(&error);
 }
 
+void test_ends_on(void) {
+    const char *ini = 
+    "[meta]\n"
+    "name = EndsOn\n"
+    "[block:root]\n"
+    "child_blocks=block1\n"
+    "[block:block1]\n"
+    "start=\".\"\n"
+    "ends_on=block3,block2\n"
+    "[block:block2]\n"
+    "start=\".\"\n"
+    "[block:block3]\n"
+    "start=\".\"\n";
+    Table *table = table_from_ini(ini);
+    SyntaxDefinitionError error;
+    SyntaxDefinition *def = SyntaxDefinition_FromTable(table, &error);
+    TEST_ASSERT(def != NULL);
+    TEST_CHECK(def->blocks_count == 4);
+    TEST_CHECK(def->root != NULL);
+    SyntaxBlockDef *block1 = def->root->children[0];
+    TEST_CHECK(block1 != NULL);
+    TEST_CHECK(block1->ends_on_count == 2);
+    TEST_MSG("%zu", block1->ends_on_count);
+
+    Table_Destroy(table);
+    SyntaxDefinition_Destroy(def);
+    SyntaxDefinitionError_Deinit(&error);
+}
 
 TEST_LIST = {
     { "SyntaxDefinition: Block Simple", test_block_simple },
@@ -216,5 +244,6 @@ TEST_LIST = {
     { "SyntaxDefinition: Minimal Example", test_minimal_definition },
     { "SyntaxDefinition: Errors", test_errors },
     { "SyntaxDefinition: Children", test_children },
+    { "SyntaxDefinition: Ends On", test_ends_on},
     { NULL, NULL }
 };
