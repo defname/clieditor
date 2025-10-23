@@ -39,6 +39,11 @@ void Buffer_Deinit(Buffer *buffer) {
     buffer->buffer = NULL;
 }
 
+void Buffer_Clear(Buffer *buffer) {
+    buffer->count = 0;
+    buffer->cursor = 0;
+}
+
 void Buffer_Enqueue(Buffer *buffer, const void *element) {
     if (buffer->count >= buffer->capacity) {
         logError("Buffer overflow. Element dropped.");
@@ -65,19 +70,23 @@ bool Buffer_Dequeue(Buffer *buffer, void *out_element) {
     return true;
 }
 
-bool Buffer_IsEmpty(Buffer *buffer) {
+bool Buffer_IsEmpty(const Buffer *buffer) {
     return buffer->count == 0;
 }
 
-size_t Buffer_Size(Buffer *buffer) {
+size_t Buffer_Size(const Buffer *buffer) {
     return buffer->count;
 }
 
-size_t Buffer_Capacity(Buffer *buffer) {
+size_t Buffer_Capacity(const Buffer *buffer) {
     return buffer->capacity;
 }
 
-bool Buffer_Peek(Buffer *buffer, size_t lookahead, void *out_element) {
+bool Buffer_HasSpace(const Buffer *buffer) {
+    return buffer->count < buffer->capacity - 1;
+}
+
+bool Buffer_Peek(const Buffer *buffer, size_t lookahead, void *out_element) {
     if (lookahead >= buffer->count) {
         logError("Buffer underflow on Peek (lookahead: %zu, count: %zu).", lookahead, buffer->count);
         return false;
