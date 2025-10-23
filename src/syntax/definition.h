@@ -30,7 +30,22 @@
  * name = TEST
  * 
  * [block:root]
- * start = .
+ * ```
+ * 
+ * ### Another example
+ * ```
+ * [meta]
+ * name = TEST
+ * 
+ * [block:root]
+ * allowed_blocks = string, keyword
+ * 
+ * [block:string]
+ * start = "'"
+ * end = "'"
+ * 
+ * [block:keyword]
+ * start = if|then|else
  * ```
  *
  * Each block must define a `start` regex (an extended POSIX regular expression).
