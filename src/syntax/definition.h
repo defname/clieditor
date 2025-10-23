@@ -100,6 +100,16 @@ void SyntaxDefinitionError_Deinit(SyntaxDefinitionError *error);
 
 
 /**
+ * @brief Helper struct to cache regex match results. This information are used by the Highlight module.
+ */
+typedef struct _MatchCache {
+    ssize_t offset;     // total offset from where match was calculated
+    regmatch_t match;   // last match
+    bool done;          // if true the last match was already found   
+} MatchCache;
+
+
+/**
  * @brief Holds the definition of a syntax block.
  */
 typedef struct _SyntaxBlockDef {
@@ -113,6 +123,9 @@ typedef struct _SyntaxBlockDef {
     size_t children_count;              //< number of children
     
     uint8_t color;      //< the color to render the block
+
+    MatchCache start_cache; //< used by the Highlight module
+    MatchCache end_cache;   //< used by the Highlight module
 } SyntaxBlockDef;
 
 SyntaxBlockDef *SyntaxBlockDef_Create();

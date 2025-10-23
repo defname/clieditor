@@ -99,14 +99,33 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *hl) {
     hl->def = NULL;
 }
 
-static const SyntaxBlockDef *find_first_child(const char *str, const SyntaxBlockDef *current, regmatch_t *match) {
+static bool regexec_with_cache(const regex_t *regex, const char *str, size_t offset, MatchCache *cache, regmatch_t *match) {
+    if (cache->done) {
+        return false;
+    }
+    if (cache->match.rm_so + cache->offset >= (regoff_t)offset) {
+        *match = cache->match;
+        match->rm_so = cache->match.rm_so + cache->offset - offset;
+        match->rm_eo = cache->match.rm_eo + cache->offset - offset;
+        return true;
+    }
+    if (regexec(regex, str + offset, 1, match, 0) == 0) {
+        cache->match = *match;
+        cache->offset = offset;
+        return true;
+    }
+    cache->done = true;
+    return false;
+}
+
+static SyntaxBlockDef *find_first_child(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
     bool had_match = false;
     regmatch_t first_match;
-    const SyntaxBlockDef *first_block;
+    SyntaxBlockDef *first_block = NULL;
     for (size_t i=0; i<current->children_count; i++) {
-        const SyntaxBlockDef *child = current->children[i];
+        SyntaxBlockDef *child = current->children[i];
         regmatch_t curr_match;
-        if (regexec(&child->start, str, 1, &curr_match, 0) == 0) {
+        if (regexec_with_cache(&child->start, str, offset, &child->start_cache, &curr_match)) {
             if (!had_match || curr_match.rm_so < first_match.rm_so) {
                 first_match = curr_match;
                 first_block = child;
@@ -121,13 +140,23 @@ static const SyntaxBlockDef *find_first_child(const char *str, const SyntaxBlock
     return NULL;
 }
 
-static bool find_end_of_block(const char *str, const SyntaxBlockDef *current, regmatch_t *match) {
-    regmatch_t end_match;
-    if (regexec(&current->end, str, 1, &end_match, 0) == 0) {
-        *match = end_match;
-        return true;
+static bool find_end_of_block(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
+    return regexec_with_cache(&current->end, str, offset, &current->end_cache, match);
+}
+
+static void init_match_cache(SyntaxHighlighting *sh) {
+    for (size_t i=0; i<sh->def->blocks_count; i++) {
+        SyntaxBlockDef *block = sh->def->blocks[i];
+        block->start_cache.match.rm_so = -1;
+        block->start_cache.match.rm_eo = -1;
+        block->start_cache.offset = 0;
+        block->start_cache.done = false;
+        block->end_cache.match.rm_so = -1;
+        block->end_cache.match.rm_eo = -1;
+        block->end_cache.offset = 0;
+        block->end_cache.done = false;
+
     }
-    return false;
 }
 
 Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
@@ -153,17 +182,20 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *
         Stack_Push(open_blocks, sh->def->root);
     }
 
+    // initialize the cache fields of the SyntaxBlockDefs
+    init_match_cache(sh);
+
     // iterate over the string
     size_t offset = 0;
     for (;;) {
         // take the current block from the stack (but keep it there)
-        const SyntaxBlockDef *current_block = (SyntaxBlockDef*)Stack_Peek(open_blocks);
+        SyntaxBlockDef *current_block = (SyntaxBlockDef*)Stack_Peek(open_blocks);
 
         // find the first child block
         regmatch_t child_match;
-        const SyntaxBlockDef *child = find_first_child(text->bytes + offset, current_block, &child_match);
+        SyntaxBlockDef *child = find_first_child(text->bytes, offset, current_block, &child_match);
         regmatch_t end_match;
-        bool end_found = find_end_of_block(text->bytes + offset, current_block, &end_match);
+        bool end_found = find_end_of_block(text->bytes, offset, current_block, &end_match);
 
         if (child && (!end_found || child_match.rm_so < end_match.rm_so)) {
             // if there is a child block found create and add a tag to SyntaxHighlightingString tag list
