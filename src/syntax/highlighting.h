@@ -27,7 +27,7 @@
 #ifndef SYNTAX_HIGHLIGHTING_H
 #define SYNTAX_HIGHLIGHTING_H
 
-#include <stdint.h>
+#include <stddef.h>
 #include "definition.h"
 #include "common/stack.h"
 #include "common/table.h"
