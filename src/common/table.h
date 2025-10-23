@@ -20,6 +20,8 @@
  * Simple implementation of a hashtable using the open addressing
  * with linear probing. For hashing the djb2 hash algorithm is used.
  * 
+ * Custom keys are supported via the Table_CreateCustom() function.
+ * 
  * The load factor is calculated from all slots that are not empty
  * (tombstones included). It's assumed that there not too many deletions
  * occure. Otherwise the worst that can happen is that the used memory
@@ -28,6 +30,7 @@
 #ifndef TABLE_H
 #define TABLE_H
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -42,25 +45,52 @@ typedef enum {
 } TableSlotState;
 
 typedef struct _TableSlot {
-    char *key;
+    void *key;
     void *value;
     void (*destructor)(void *value);
     TableSlotState state;
 } TableSlot;
 
 void TableSlot_Init(TableSlot *slot);
-void TableSlot_Deinit(TableSlot *slot);
+void TableSlot_Deinit(TableSlot *slot, void (*free_key_func)(void *key));
 
 typedef struct _Table {
     TableSlot *slots;
     size_t capacity;
     size_t used;
+
+    uint32_t (*hash_func)(const void *p);
+    int (*key_cmp_func)(const void*, const void *);
+    void *(*key_copy_func)(const void *p);
+    void (*key_free_func)(void *p);
 } Table;
 
 void Table_Init(Table *table);
 void Table_Deinit(Table *table);
 
+/**
+ * @brief Create a `Table` with char* keys.
+ */
 Table *Table_Create();
+
+/**
+ * @brief Create a `Table` with pointer addresses as keys.
+ */
+Table *Table_CreatePtr();
+
+/**
+ * @brief Create a `Table`with custom keys.
+ */
+Table *Table_CreateCustom(
+    uint32_t (*hash_func)(const void *p),
+    int (*key_cmp_func)(const void*, const void *),
+    void *(*key_copy_func)(const void *p),
+    void (*key_free_func)(void *p)
+);
+
+/**
+ * @brief Destroy `table`
+ */
 void Table_Destroy(Table *table);
 
 /**
@@ -70,14 +100,14 @@ void Table_Destroy(Table *table);
  * for destroying it (in the case of overwriting or deleting it). If destructor is NULL the
  * ownership stays by the owner and he need to take care of freeing value.
  */
-void Table_Set(Table *table, const char *key, void *value, void (*destructor)(void *value));
+void Table_Set(Table *table, const void *key, void *value, void (*destructor)(void *value));
 
 /**
  * @brief Return the value for key or NULL if key is not found.
  * 
  * If NULL is a ligit value for key use Table_Has() to check if the key exists in the table.
  */
-void *Table_Get(const Table *table, const char *key);
+void *Table_Get(const Table *table, const void *key);
 
 /**
  * @brief Delete the entry for key in table.
@@ -85,17 +115,17 @@ void *Table_Get(const Table *table, const char *key);
  * Delete the entry of key if it exists. If table has the ownership for value (a destructor is present)
  * value will be destructed. 
  */
-void Table_Delete(Table *table, const char *key);
+void Table_Delete(Table *table, const void *key);
 
 /**
  * @brief Return true if the key exists in table.
  */
-bool Table_Has(const Table *table, const char *key);
+bool Table_Has(const Table *table, const void *key);
 
 /**
  * @brief Return true if table has the ownership for the entry of key
  */
-bool Table_HasOwnership(const Table *table, const char *key);
+bool Table_HasOwnership(const Table *table, const void *key);
 
 /**
  * @brief Return the current number of non-free table slots.

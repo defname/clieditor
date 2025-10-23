@@ -134,8 +134,18 @@ void test_errors(void) {
             "[meta]\n"
             "name = MINI\n"
             "[block:root]\n"
+            "[block:error]\n"
             "start=\".*)(\"\n",
             SYNTAXDEFINITION_REGEX_ERROR_START
+        },
+        {
+            "[meta]\n"
+            "name = MINI\n"
+            "[block:root]\n"
+            "[block:error]\n"
+            "start=.*\n"
+            "end=\".*)(\"\n",
+            SYNTAXDEFINITION_REGEX_ERROR_END  
         },
         {
             "block:root = foo\n"
@@ -166,6 +176,7 @@ void test_errors(void) {
     int cases_num = sizeof(cases) / sizeof(cases[0]);
 
     for (int i=0; i<cases_num; i++) {
+        TEST_CASE(cases[i].ini);
         SyntaxDefinitionErrorCode error_code = test_error(cases[i].ini);
         TEST_CHECK(error_code == cases[i].error_code);
         TEST_MSG("%d", error_code);

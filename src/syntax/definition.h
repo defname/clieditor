@@ -30,7 +30,22 @@
  * name = TEST
  * 
  * [block:root]
- * start = .
+ * ```
+ * 
+ * ### Another example
+ * ```
+ * [meta]
+ * name = TEST
+ * 
+ * [block:root]
+ * allowed_blocks = string, keyword
+ * 
+ * [block:string]
+ * start = "'"
+ * end = "'"
+ * 
+ * [block:keyword]
+ * start = if|then|else
  * ```
  *
  * Each block must define a `start` regex (an extended POSIX regular expression).
@@ -42,6 +57,9 @@
  * Blocks that define an `end` expression may additionally define a list of
  * `allowed_blocks`, which specifies which block types are permitted to appear
  * inside the block.
+ * 
+ * The root block does not need defined `start` or `end` patterns but should
+ * define an `allowed_blocks` list (otherwise nothing will be found). 
  */
 
 #ifndef SYNTAX_DEFINITION_H

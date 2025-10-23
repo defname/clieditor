@@ -14,7 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "stack.h"
+#include <string.h>
 #include "logging.h"
+
 
 static void increase_capacity(Stack *stack) {
     if (!stack) {
@@ -47,6 +49,51 @@ void Stack_Deinit(Stack *stack) {
     stack->items = NULL;
     stack->size = 0;
     stack->capacity = 0;
+}
+
+Stack *Stack_Create() {
+    Stack *stack = malloc(sizeof(Stack));
+    if (!stack) {
+        logFatal("Failed to allocate memory for stack.");
+    }
+    Stack_Init(stack);
+    return stack;
+}
+
+void Stack_Destroy(Stack *stack) {
+    if (!stack) {
+        return;
+    }
+    Stack_Deinit(stack);
+    free(stack);
+}
+
+Stack *Stack_Copy(const Stack *src) {
+    if (!src) {
+        return NULL;
+    }
+    Stack *copy = malloc(sizeof(Stack));
+    if (!copy) {
+        logFatal("Failed to allocate memory for stack copy.");
+    }
+
+    size_t cap = src->capacity ? src->capacity : STACK_INITIAL_CAPACITY;  // handle capacity == 0
+
+    // allocate memory
+    copy->items = malloc(cap * sizeof(void *));
+    if (!copy->items) {
+        logFatal("Failed to allocate memory for stack copy items.");
+    }
+    // only copy items
+    memcpy(copy->items, src->items, src->size * sizeof(void *));
+    // set remainder to 0
+    if (cap > src->size) {
+        memset(copy->items + src->size, 0, (cap - src->size) * sizeof(void *));
+    }
+    copy->size = src->size;
+    copy->capacity = src->capacity;
+    
+    return copy;
 }
 
 void Stack_Push(Stack *stack, void *item) {
@@ -84,6 +131,10 @@ bool Stack_Has(const Stack *stack, const void *item) {
         }
     }
     return false;
+}
+
+bool Stack_IsEmpty(const Stack *stack) {
+    return stack->size == 0;
 }
 
 void Stack_Clear(Stack *stack) {
