@@ -240,26 +240,15 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *
             // the current block ends by the occurence of the ends_on block
             Stack_Pop(open_blocks);  // removes current (which was just peeked before)
 
-            // check if the ends_on block is allowed in the surrounding block
-            SyntaxBlockDef *surrounding_block = Stack_Peek(open_blocks);
-            bool is_valid = false;
-            for (size_t i=0; i<surrounding_block->children_count; i++) {
-                if (surrounding_block->children[i] == ends_on) {
-                    is_valid = true;
-                    break;
-                }
-            }
-            if (!is_valid) {
-                // if the ending block is not valid put the current block back on the stack
-                Stack_Push(open_blocks, current_block);
-                // and ignore what just happend
-                continue;
-            }
+            // add a tag for the beginning of the ends_on block
             SyntaxHighlightingTag tag;
             tag.text = text;
             tag.byte_offset = offset + ends_on_match.rm_so;
-            tag.block = surrounding_block;
+            tag.block = ends_on;
             SyntaxHighlightingString_AddTag(shs, tag);
+
+            // add the ends_on block to the stack
+            Stack_Push(open_blocks, (void*)ends_on);
 
             // increase the offset to the end of the match
             offset += ends_on_match.rm_eo;
