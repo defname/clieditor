@@ -1,5 +1,8 @@
 #include "acutest.h"
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "syntax/highlighting.h"
 #include "syntax/definition.h"
 #include "common/iniparser.h"
