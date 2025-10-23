@@ -143,7 +143,7 @@ static void increase_capacity(Table *table) {
     // free old table keys
     for (size_t i=0; i<table->capacity; i++) {
         TableSlot *slot = &table->slots[i];
-        if (slot->state == TABLE_SLOT_USED) {
+        if (slot->state == TABLE_SLOT_USED && table->key_free_func) {
             table->key_free_func(slot->key);
         }
     }
