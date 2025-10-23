@@ -43,7 +43,7 @@
  */
 typedef struct _SyntaxHighlightingTag {
     const String *text;             //< pointer to the string this tag is for
-    size_t byte_offset;             //< byte offset where the tag occures
+    size_t byte_offset;             //< byte offset where the tag occurs
     const SyntaxBlockDef *block;    //< pointer to the block this tag is for
 } SyntaxHighlightingTag;
 
