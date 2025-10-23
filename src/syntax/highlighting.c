@@ -118,17 +118,17 @@ static bool regexec_with_cache(const regex_t *regex, const char *str, size_t off
     return false;
 }
 
-static SyntaxBlockDef *find_first_child(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
+static SyntaxBlockDef *find_first_block(SyntaxBlockDef **block_list, size_t block_list_count, const char *str, size_t offset, regmatch_t *match) {
     bool had_match = false;
-    regmatch_t first_match;
+    regmatch_t first_match = {0};
     SyntaxBlockDef *first_block = NULL;
-    for (size_t i=0; i<current->children_count; i++) {
-        SyntaxBlockDef *child = current->children[i];
+    for (size_t i=0; i<block_list_count; i++) {
+        SyntaxBlockDef *curr = block_list[i];
         regmatch_t curr_match;
-        if (regexec_with_cache(&child->start, str, offset, &child->start_cache, &curr_match)) {
+        if (regexec_with_cache(&curr->start, str, offset, &curr->start_cache, &curr_match)) {
             if (!had_match || curr_match.rm_so < first_match.rm_so) {
                 first_match = curr_match;
-                first_block = child;
+                first_block = curr;
                 had_match = true;
             }
         }
@@ -140,9 +140,18 @@ static SyntaxBlockDef *find_first_child(const char *str, size_t offset, SyntaxBl
     return NULL;
 }
 
+static SyntaxBlockDef *find_first_child(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
+    return find_first_block(current->children, current->children_count, str, offset, match);
+}
+
+static SyntaxBlockDef *find_first_ends_on_block(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
+    return find_first_block(current->ends_on, current->ends_on_count, str, offset, match);
+}
+
 static bool find_end_of_block(const char *str, size_t offset, SyntaxBlockDef *current, regmatch_t *match) {
     return regexec_with_cache(&current->end, str, offset, &current->end_cache, match);
 }
+
 
 static void init_match_cache(SyntaxHighlighting *sh) {
     for (size_t i=0; i<sh->def->blocks_count; i++) {
@@ -194,10 +203,22 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *
         // find the first child block
         regmatch_t child_match;
         SyntaxBlockDef *child = find_first_child(text->bytes, offset, current_block, &child_match);
-        regmatch_t end_match;
-        bool end_found = find_end_of_block(text->bytes, offset, current_block, &end_match);
+        // find the first ends_on block
+        regmatch_t ends_on_match;
+        SyntaxBlockDef *ends_on = find_first_ends_on_block(text->bytes, offset, current_block, &ends_on_match);
 
-        if (child && (!end_found || child_match.rm_so < end_match.rm_so)) {
+        // find the block_end
+        regmatch_t end_match = {0, 0};  // current position with no consumption
+        bool end_found = true;   // true for the case current_block is an only start block
+        if (!current_block->only_start) {
+            end_found = find_end_of_block(text->bytes, offset, current_block, &end_match);
+        }
+
+        // check if child is the first match
+        if (child
+            && (!ends_on || child_match.rm_so < ends_on_match.rm_so)
+            && (!end_found || child_match.rm_so < end_match.rm_so))
+        {
             // if there is a child block found create and add a tag to SyntaxHighlightingString tag list
             SyntaxHighlightingTag tag;
             tag.text = text;
@@ -212,8 +233,39 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *
             Stack_Push(open_blocks, (void*)child);
             continue;
         }
-        // no child block found
-        // so check if the last block ends
+        // check if ends_on is the first match
+        if (ends_on
+            && (!end_found || ends_on_match.rm_so < end_match.rm_so))
+        {
+            // the current block ends by the occurence of the ends_on block
+            Stack_Pop(open_blocks);  // removes current (which was just peeked before)
+
+            // check if the ends_on block is allowed in the surrounding block
+            SyntaxBlockDef *surrounding_block = Stack_Peek(open_blocks);
+            bool is_valid = false;
+            for (size_t i=0; i<surrounding_block->children_count; i++) {
+                if (surrounding_block->children[i] == ends_on) {
+                    is_valid = true;
+                    break;
+                }
+            }
+            if (!is_valid) {
+                // if the ending block is not valid put the current block back on the stack
+                Stack_Push(open_blocks, current_block);
+                // and ignore what just happend
+                continue;
+            }
+            SyntaxHighlightingTag tag;
+            tag.text = text;
+            tag.byte_offset = offset + ends_on_match.rm_so;
+            tag.block = surrounding_block;
+            SyntaxHighlightingString_AddTag(shs, tag);
+
+            // increase the offset to the end of the match
+            offset += ends_on_match.rm_eo;
+            continue;
+        }
+        // last case.... if end_found it's the first match automatically
         if (end_found) {
             // end of block found so remove it from stack
             Stack_Pop(open_blocks);  // removes current (which was just peeked before)

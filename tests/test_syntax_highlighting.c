@@ -96,7 +96,7 @@ const char *test_ini0 =
 "[block:root]\n"
 "start=^\n"
 "end=a^\n"
-"allowed_blocks=string\n"
+"child_blocks=string\n"
 "\n"
 "[block:string]\n"
 "start=\"'\"\n"
@@ -134,12 +134,12 @@ const char *test_ini1 = R"(
 name = TEST
 
 [block:root]
-allowed_blocks=string, comment, keyword, brackets
+child_blocks=string, comment, keyword, brackets
 
 [block:brackets]
 start=\(
 end=\)
-allowed_blocks=string, keyword, brackets
+child_blocks=string, keyword, brackets
 
 [block:keyword]
 start=keyword
