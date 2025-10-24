@@ -56,9 +56,10 @@ static void assert_highlight_tags(
     SyntaxHighlighting hl;
     SyntaxHighlighting_Init(&hl, def);
 
-    Stack *open_blocks_at_begin = Stack_Create();
-    Stack_Push(open_blocks_at_begin, def->root);
-    Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &str, open_blocks_at_begin);
+    const Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &str, NULL);
+
+    SyntaxHighlightingString *shs = Table_Get(hl.strings, &str);
+    TEST_ASSERT(open_blocks == &shs->open_blocks_at_end);
 
     TEST_CHECK(!Stack_IsEmpty(open_blocks));
     TEST_MSG("Expected open_blocks to not be not empty.");
@@ -69,8 +70,6 @@ static void assert_highlight_tags(
         TEST_CHECK(strcmp(open_blocks_expected[i], block->name) == 0);
         TEST_MSG("Expected open block #%zu to be '%s' but got '%s'.", i, open_blocks_expected[i], block->name);
     }
-
-    SyntaxHighlightingString *shs = Table_Get(hl.strings, &str);
     
     TEST_CHECK(shs->tags_count == tags_count);
     TEST_MSG("Expected %zu tags but got %zu.", tags_count, shs->tags_count);
@@ -83,8 +82,6 @@ static void assert_highlight_tags(
         TEST_MSG("Expected block #%zu to be '%s' but got '%s'.", i, tag_blocks[i], shs->tags[i].block->name);
     }
 
-    Stack_Destroy(open_blocks);
-    Stack_Destroy(open_blocks_at_begin);
     String_Deinit(&str);
     SyntaxHighlighting_Deinit(&hl);
     SyntaxDefinition_Destroy(def);
@@ -122,7 +119,6 @@ void test_highlight_string_simple(void) {
     TEST_CHECK(shs->tags[1].byte_offset == 13);  // end of 'string'
     TEST_CHECK(shs->tags[1].block == def->root);
 
-    Stack_Destroy(open_blocks);
     Stack_Destroy(open_blocks_at_begin);
     String_Deinit(&test1);
     SyntaxHighlighting_Deinit(&hl);
@@ -380,7 +376,6 @@ void test_stress(void) {
         TEST_CHECK(open_blocks != NULL);
         TEST_CHECK(!Stack_IsEmpty(open_blocks));
 
-        Stack_Destroy(open_blocks);
         String_Deinit(&test);
         SyntaxHighlighting_Deinit(&hl);
         SyntaxDefinition_Destroy(def);
