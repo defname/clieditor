@@ -137,6 +137,10 @@ bool Stack_IsEmpty(const Stack *stack) {
     return stack->size == 0;
 }
 
+size_t Stack_Size(const Stack *stack) {
+    return stack->size;
+}
+
 void Stack_Clear(Stack *stack) {
     if (!stack) {
         return;
