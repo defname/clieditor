@@ -97,7 +97,7 @@ start = "'"
 end = "'"
 )";
 
-void test_textlayout_bindings(void) {
+void test_binding_basic(void) {
     // data
     const char *lines[] = {
         "First line",
@@ -124,7 +124,41 @@ void test_textlayout_bindings(void) {
     cleanup_fixture(&fixture);
 }
 
+void test_binding_basic2(void) {
+    // data
+    const char *lines[] = {
+        "First 'line",
+        "Second' // line",
+    };
+    size_t lines_count = sizeof(lines) / sizeof(char*);
+    
+    // 1. Setup
+    TestFixture fixture;
+    setup_fixture(&fixture, test_ini, lines, lines_count);
+    TextBuffer *tb = &fixture.tb;
+    SyntaxHighlighting *sh = &fixture.sh;
+    SyntaxHighlightingBinding *binding = &fixture.binding;
+
+    
+    // 2. Calculate
+    SyntaxHighlightingBinding_Update(binding, fixture.lines[1], fixture.lines[1]);
+
+    // 3. Check
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, &fixture.lines[0]->text);
+    TEST_CHECK(shs != NULL);
+    TEST_CHECK(shs->text == &fixture.lines[0]->text);
+    TEST_CHECK(shs->tags_count == 1);
+    TEST_CHECK(shs->tags[0].byte_offset == 6);
+    TEST_CHECK(shs->open_blocks_at_end.size == 2);
+    TEST_MSG("%zu", shs->open_blocks_at_end.size);
+    TEST_CHECK(Table_Get(sh->strings, &fixture.lines[1]->text) != NULL);
+
+    // 4. Cleanup
+    cleanup_fixture(&fixture);
+}
+
 TEST_LIST = {
-    { "TextLayoutBindings: No Styling", test_textlayout_bindings },
+    { "TextLayoutBindings: No Styling", test_binding_basic },
+    { "TextLayoutBindings: String over two lines", test_binding_basic2 },
     { NULL, NULL }
 };
