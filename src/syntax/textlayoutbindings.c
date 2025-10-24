@@ -10,27 +10,40 @@ void SyntaxHighlightingBinding_Deinit(SyntaxHighlightingBinding *binding) {
     binding->sh = NULL;
 }
 
+static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line, Stack *open_blocks) {
+    while (line) {
+        // open_blocks == NULL is also handled by the function
+        open_blocks = SyntaxHighlighting_HighlightString(binding->sh, &line->text, open_blocks);
+        if (line == last_line) {
+            break;
+        }
+        line = line->next;
+    }
+}
+
 void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line) {
     Line *prev_line = line->prev;
     Stack *open_blocks = NULL;
     if (prev_line) {
         // check if highlighting for the previous line is already calculated
-        SyntaxHighlightingString *shs = Table_Get(binding->sh->strings, prev_line->text);
+        SyntaxHighlightingString *shs = Table_Get(binding->sh->strings, &prev_line->text);
         if (shs) {
             // use the open_blocks from the end of previous line
-            open_blocks = shs->open_blocks_at_end;
+            open_blocks = &shs->open_blocks_at_end;
         }
         else {
             // highlighting for the line is not calculated so far
             // so run this function for thr previous line
-            SyntaxHighlightingBinding_Update(prev_line, last_line);
+            SyntaxHighlightingBinding_Update(binding, prev_line, last_line);
             return;
         }
     }
     if (line == binding->tl->tb->current_line) {
         // this is super dirty cause the gap funcitonality is totally disabled this way!!!
         // NEED A BETTER SOLUTION
-        TextBuffer_MergeGap(binding->tl->tb);
+        TextBuffer_MergeGap((TextBuffer*)binding->tl->tb);
     }
-    SyntaxHighlighting_HighlightString(binding->sh->strings, line->text, open_blocks);  // open_blocks == NULL is handled by the function
+
+    // update all lines until last_line (including)
+    update_lines(binding, line, last_line, open_blocks);
 }
