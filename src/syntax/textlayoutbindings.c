@@ -10,15 +10,19 @@ void SyntaxHighlightingBinding_Deinit(SyntaxHighlightingBinding *binding) {
     binding->sh = NULL;
 }
 
-static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line, Stack *open_blocks) {
+static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line, const Stack *open_blocks) {
+    Stack *open_blocks_begin = Stack_Copy(open_blocks);
     while (line) {
         // open_blocks == NULL is also handled by the function
-        open_blocks = SyntaxHighlighting_HighlightString(binding->sh, &line->text, open_blocks);
+        Stack *open_blocks_end = SyntaxHighlighting_HighlightString(binding->sh, &line->text, open_blocks_begin);
+        Stack_Destroy(open_blocks_begin);
+        open_blocks_begin = open_blocks_end;
         if (line == last_line) {
             break;
         }
         line = line->next;
     }
+    Stack_Destroy(open_blocks_begin);
 }
 
 void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line) {
