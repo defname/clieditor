@@ -26,6 +26,7 @@ SyntaxHighlightingString *SyntaxHighlightingString_Create(const String *text) {
     shs->tags = NULL;
     shs->tags_count = 0;
     shs->tags_capacity = 0;
+    Stack_Init(&shs->open_blocks_at_begin);
     Stack_Init(&shs->open_blocks_at_end);
 
     shs->tags = malloc(sizeof(SyntaxHighlightingTag) * SHS_TAGS_INITIAL_CAPACITY);
@@ -44,7 +45,9 @@ void SyntaxHighlightingString_Destroy(SyntaxHighlightingString *shs) {
     shs->tags_count = 0;
     shs->tags_capacity = 0;
     shs->text = NULL;
+    Stack_Deinit(&shs->open_blocks_at_begin);
     Stack_Deinit(&shs->open_blocks_at_end);
+
     free(shs);
 }
 
@@ -168,7 +171,7 @@ static void init_match_cache(SyntaxHighlighting *sh) {
     }
 }
 
-Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
+const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
     // check if there is already old infomation about text in the table
     SyntaxHighlightingString *shs = Table_Get(sh->strings, text);
     if (shs) {
@@ -182,14 +185,17 @@ Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *
     }
 
     // create a working copy of the stack
-    Stack *open_blocks;
     if (open_blocks_at_begin) {
-        open_blocks = Stack_Copy(open_blocks_at_begin);
+        Stack_CopyTo(&shs->open_blocks_at_begin, open_blocks_at_begin);
+        Stack_CopyTo(&shs->open_blocks_at_end, open_blocks_at_begin);
     }
     else {
-        open_blocks = Stack_Create();
-        Stack_Push(open_blocks, sh->def->root);
+        Stack_Clear(&shs->open_blocks_at_begin);
+        Stack_Push(&shs->open_blocks_at_begin, sh->def->root);
+        Stack_CopyTo(&shs->open_blocks_at_end, &shs->open_blocks_at_begin);
     }
+    Stack *open_blocks = &shs->open_blocks_at_end;
+
 
     // initialize the cache fields of the SyntaxBlockDefs
     init_match_cache(sh);

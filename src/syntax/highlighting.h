@@ -60,7 +60,8 @@ typedef struct _SyntaxHighlightingString {
     size_t tags_count;              //< number of tags in `tags`
     size_t tags_capacity;           //< capacity of `tags`
 
-    Stack open_blocks_at_end;    //< Stack of (SyntaxBlockDef*) elements that are open at the end of `text`
+    Stack open_blocks_at_begin;     //< Stack of (SyntaxBlockDef*) elements that are open
+    Stack open_blocks_at_end;       //< Stack of (SyntaxBlockDef*) elements that are open at the end of `text`
 } SyntaxHighlightingString;
 
 #define SHS_TAGS_INITIAL_CAPACITY 16
@@ -103,6 +104,6 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
  * @returns
  * A new created `Stack` containing all open blocks at the end of `text`. 
  */
-Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks);
+const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks);
 
 #endif

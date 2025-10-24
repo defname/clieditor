@@ -35,7 +35,8 @@ void Stack_Deinit(Stack *stack);
 Stack *Stack_Create();
 void Stack_Destroy(Stack *stack);
 
-Stack *Stack_Copy(const Stack *stack);
+Stack *Stack_Copy(const Stack *stack);              //< create a new copy of stack
+void Stack_CopyTo(Stack *dst, const Stack *src);    //< copy src to the (already initialized) dst
 
 void Stack_Push(Stack *stack, void *item);
 void *Stack_Pop(Stack *stack);
