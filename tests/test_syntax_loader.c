@@ -201,5 +201,6 @@ TEST_LIST = {
     { "SyntaxLoader: No Filename", test_no_filename },
     { "SyntaxLoader: File Not Found", test_file_not_found },
     { "SyntaxLoader: Parse Error", test_parse_error },
+    { "SyntaxLoader: Definition Error", test_definition_error },
     { NULL, NULL }
 };
