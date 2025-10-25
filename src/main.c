@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Load config
-    File *config_file = File_Open("config.ini", FILE_ACCESS_READ);
+    File *config_file = File_OpenConfig(FILE_ACCESS_READ);
     if (config_file) {
         char *content = File_Read(config_file);
         if (content) {
