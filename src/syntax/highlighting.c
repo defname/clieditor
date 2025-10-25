@@ -90,7 +90,7 @@ void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs) {
 /*****************************************************************************/
 /* SyntaxHighlighting                                                        */
 
-void SyntaxHighlighting_Init(SyntaxHighlighting *hl, const SyntaxDefinition *def) {
+void SyntaxHighlighting_Init(SyntaxHighlighting *hl, SyntaxDefinition *def) {
     hl->def = def;
     hl->strings = Table_CreatePtr();
 }
@@ -99,11 +99,14 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *hl) {
     if (hl->strings) {
         Table_Destroy(hl->strings);
     }
+    if (hl->def) {
+        SyntaxDefinition_Destroy(hl->def);
+    }
     hl->strings = NULL;
     hl->def = NULL;
 }
 
-SyntaxHighlighting *SyntaxHighlighting_Create(const SyntaxDefinition *def) {
+SyntaxHighlighting *SyntaxHighlighting_Create(SyntaxDefinition *def) {
     SyntaxHighlighting *hl = malloc(sizeof(SyntaxHighlighting));
     if (!hl) {
         logFatal("Cannot allocate memory for SyntaxHighlighting.");
