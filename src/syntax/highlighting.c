@@ -188,7 +188,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
     SyntaxHighlightingString *shs = Table_Get(sh->strings, text);
     if (shs) {
         // early exit if nothing changed since the last calculation
-        if (stack_equal(&shs->open_blocks_at_begin, open_blocks_at_begin)) {
+        if (open_blocks_at_begin && stack_equal(&shs->open_blocks_at_begin, open_blocks_at_begin)) {
         return &shs->open_blocks_at_end;
         }
         // if open_blocks_at_begin changed clear the old information
