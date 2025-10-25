@@ -20,7 +20,6 @@
 #include <string.h>
 #include <unistd.h>     // access()
 #include <libgen.h>     // dirname()
-#include <limits.h>     // PATH_MAX
 #include <errno.h>
 #include "common/config.h"
 #include "common/logging.h"
