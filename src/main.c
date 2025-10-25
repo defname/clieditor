@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
      ************************************/
     srand(time(NULL));
 
-    Config_Init();
+    Config_Init(argv[0]);
     parse_arguments(argc, argv);
     load_environment();
 

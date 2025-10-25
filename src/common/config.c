@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>     // PATH_MAX
 #include "common/typedtable.h"
 #include "common/iniparser.h"
 
@@ -27,14 +28,17 @@ typedef struct _Config {
 
     bool dirty;
 
+    const char *exe_path;
+
     int indent_size;
     bool use_spaces_for_indent;
-    char filename[FILENAME_MAX_LENGTH];
+    char filename[PATH_MAX];
 } Config;
 
 static Config config;
 
-void Config_Init() {
+void Config_Init(const char *argv0) {
+    config.exe_path = argv0;
     config.indent_size = 4;
     config.use_spaces_for_indent = true;
     config.filename[0] = '\0';
@@ -82,13 +86,17 @@ void Config_Loaded() {
     config.dirty = false;
 }
 
+const char *Config_GetExePath() {
+    return config.exe_path;
+}
+
 void Config_SetFilename(const char *filename) {
     if (filename == NULL) {
         config.filename[0] = '\0';
         return;
     }
-    strncpy(config.filename, filename, FILENAME_MAX_LENGTH);
-    config.filename[FILENAME_MAX_LENGTH - 1] = '\0';
+    strncpy(config.filename, filename, PATH_MAX - 1);
+    config.filename[PATH_MAX - 1] = '\0';
 }
 
 const char *Config_GetFilename() {
