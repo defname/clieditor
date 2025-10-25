@@ -84,13 +84,13 @@ void Stack_CopyTo(Stack *dst, const Stack *src) {
         return;
     }
     if (src->size == 0) {
-        // ealry exit if src is empty
+        // early exit if src is empty
         Stack_Clear(dst);
         return;
     }
     if (src->size > dst->capacity) {
         // resize dst to a multiple of STACK_INITIAL_SIZE
-        size_t new_cap = ((src->size % STACK_INITIAL_CAPACITY) + 1) * STACK_INITIAL_CAPACITY;
+        size_t new_cap = ((src->size + STACK_INITIAL_CAPACITY - 1) / STACK_INITIAL_CAPACITY) * STACK_INITIAL_CAPACITY;
         resize_capacity(dst, new_cap);
     }
     // copy items
