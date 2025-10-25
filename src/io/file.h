@@ -59,7 +59,7 @@ File *File_OpenConfig(FileAccessType access);
  * @param rel_path  Filepath relative to one of those locations
  * @param access Type of access needed
  */
-File *File_ProjectFile(const char *rel_path, FileAccessType access);
+File *File_OpenProjectFile(const char *rel_path, FileAccessType access);
 
 /**
  * @brief Close a file
