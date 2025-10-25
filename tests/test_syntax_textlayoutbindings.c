@@ -78,24 +78,24 @@ static void cleanup_fixture(TestFixture *fixture) {
 
 
 
-const char *test_ini = R"(
-[meta]
-name = TEST
-
-[block:root]
-child_blocks=keyword, comment, string
-
-[block:keyword]
-start = keyword
-
-[block:comment]
-start = "#"
-end = $
-
-[block:string]
-start = "'"
-end = "'"
-)";
+const char *test_ini =
+"[meta]\n"
+"name = TEST\n"
+"\n"
+"[block:root]\n"
+"child_blocks=keyword, comment, string\n"
+"\n"
+"[block:keyword]\n"
+"start = keyword\n"
+"\n"
+"[block:comment]\n"
+"start = \"#\"\n"
+"end = $\n"
+"\n"
+"[block:string]\n"
+"start = \"'\"\n"
+"end = \"'\"\n"
+;
 
 void test_binding_basic(void) {
     // data
