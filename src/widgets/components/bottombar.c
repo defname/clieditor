@@ -67,7 +67,7 @@ void BottomBar_Init(BottomBar *self, Widget *parent) {
     Widget_Init(AS_WIDGET(self), parent, &bottombar_ops);
     self->base.x = 0;
     self->base.y = 0;
-    self->base.width = FILENAME_MAX_LENGTH;
+    self->base.width = parent->width;
     self->base.height = 1;
 
     self->base.style.bg = Color_GetCodeById(COLOR_PRIMARY_BG);
