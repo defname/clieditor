@@ -1,6 +1,12 @@
 #include "loader.h"
 #include <string.h>
+#include <stdio.h>  // snprintf
 #include "io/file.h"
+
+void SyntaxHighlightingLoaderError_Init(SyntaxHighlightingLoaderError *error) {
+    memset(error, 0, sizeof(SyntaxHighlightingLoaderError));
+    error->code = SYNTAX_LOADER_NO_ERROR;
+}
 
 
 void SyntaxHighlightingLoaderError_Deinit(SyntaxHighlightingLoaderError *error) {
@@ -12,8 +18,10 @@ void SyntaxHighlightingLoaderError_Deinit(SyntaxHighlightingLoaderError *error) 
 
 
 SyntaxHighlighting *SyntaxHighlighting_LoadFromFile(const char *format, SyntaxHighlightingLoaderError *error) {
-    error->code = SYNTAX_LOADER_NO_ERROR;
-    error->parsing_error.message = NULL;  // important for correct deinitialization
+    if (!error) {
+        return NULL;
+    }
+    SyntaxHighlightingLoaderError_Init(error);
 
     if (!format) {
         error->code = SYNTAX_LOADER_NO_FILENAME;
