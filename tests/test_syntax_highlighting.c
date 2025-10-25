@@ -31,14 +31,25 @@ Table *build_blocks_table(SyntaxDefinition *def) {
 }
 
 typedef struct {
-    const char *ini;
-    const char *str;
-    size_t tags_count;
-    size_t tag_offsets[32];
-    const char *tag_blocks[32];
-    size_t open_blocks_count;
-    const char *open_blocks[32];
+    const char *ini;    //< text of an INI file for the syntax definition
+    const char *str;    //< str to parse (single line)
+    size_t open_blocks_at_begin_count;  //< number of open blocks at the begin
+    const char *open_blocks_at_begin[32]; //< list of open block names at the begin
+    size_t tags_count;  //< expected count of tags
+    size_t tag_offsets[32];  //< list of expected offsets of the tags
+    const char *tag_blocks[32]; //< list of expected block names of the tags
+    size_t open_blocks_count;   //< number of expected open blocks at the end
+    const char *open_blocks[32];  //< names of the expected open blocks at the end
 } TagTestCase;
+
+static void get_blocks(const char **block_names, size_t count, SyntaxBlockDef **out, Table *blocks_table) {
+    for (size_t i=0; i<count; i++) {
+        const char *name = block_names[i];
+        SyntaxBlockDef *block = Table_Get(blocks_table, name);
+        TEST_ASSERT(block != NULL);
+        out[i] = block;
+    }
+}
 
 static void assert_highlight_tags(
     TagTestCase testcase
@@ -52,25 +63,42 @@ static void assert_highlight_tags(
     const char **open_blocks_expected = testcase.open_blocks;
 
 
+    // the syntax definition
     SyntaxDefinition *def = create_definition(ini);
+    // the highlighting engine
     SyntaxHighlighting hl;
     SyntaxHighlighting_Init(&hl, def);
+    // the names -> blocks mapping table
+    Table *blocks_table = build_blocks_table(def);
 
-    Stack *open_blocks_at_begin = Stack_Create();
-    Stack_Push(open_blocks_at_begin, def->root);
-    Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &str, open_blocks_at_begin);
+    // map the open_blocks_at_begin (str) list to a list of SyntaxBlockDef instances
+    SyntaxBlockDef *open_blocks_at_begin[32];
+    get_blocks(testcase.open_blocks_at_begin, testcase.open_blocks_at_begin_count, open_blocks_at_begin, blocks_table);
+
+    // create the open_blocks_at_begin_stack
+    Stack *open_blocks_at_begin_stack = Stack_Create();
+    for (size_t i=0; i<testcase.open_blocks_at_begin_count; i++) {
+        Stack_Push(open_blocks_at_begin_stack, open_blocks_at_begin[i]);
+    }
+
+    // highlight the string 
+    const Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &str, open_blocks_at_begin_stack);
+
+    SyntaxHighlightingString *shs = Table_Get(hl.strings, &str);
+    TEST_ASSERT(open_blocks == &shs->open_blocks_at_end);
 
     TEST_CHECK(!Stack_IsEmpty(open_blocks));
     TEST_MSG("Expected open_blocks to not be not empty.");
 
+    TEST_CHECK(open_blocks_count_expected == Stack_Size(open_blocks));
+    TEST_MSG("Expected %zu open blocks but got %zu.", open_blocks_count_expected, Stack_Size(open_blocks));
+
     for (size_t i=0; i<open_blocks_count_expected; i++) {
-        const SyntaxBlockDef *block = Stack_Pop(open_blocks);
+        const SyntaxBlockDef *block = open_blocks->items[open_blocks_count_expected-i-1];
         TEST_CHECK(block != NULL);
         TEST_CHECK(strcmp(open_blocks_expected[i], block->name) == 0);
         TEST_MSG("Expected open block #%zu to be '%s' but got '%s'.", i, open_blocks_expected[i], block->name);
     }
-
-    SyntaxHighlightingString *shs = Table_Get(hl.strings, &str);
     
     TEST_CHECK(shs->tags_count == tags_count);
     TEST_MSG("Expected %zu tags but got %zu.", tags_count, shs->tags_count);
@@ -83,8 +111,9 @@ static void assert_highlight_tags(
         TEST_MSG("Expected block #%zu to be '%s' but got '%s'.", i, tag_blocks[i], shs->tags[i].block->name);
     }
 
-    Stack_Destroy(open_blocks);
-    Stack_Destroy(open_blocks_at_begin);
+    Stack_Destroy(open_blocks_at_begin_stack);
+    Table_Destroy(blocks_table);
+
     String_Deinit(&str);
     SyntaxHighlighting_Deinit(&hl);
     SyntaxDefinition_Destroy(def);
@@ -111,7 +140,7 @@ void test_highlight_string_simple(void) {
     String test1 = String_Format("root 'string' root");
     Stack *open_blocks_at_begin = Stack_Create();
     Stack_Push(open_blocks_at_begin, def->root);
-    Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &test1, open_blocks_at_begin);
+    const Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &test1, open_blocks_at_begin);
 
     TEST_CHECK(open_blocks != NULL);
     TEST_CHECK(Stack_Peek(open_blocks) == def->root);
@@ -122,36 +151,34 @@ void test_highlight_string_simple(void) {
     TEST_CHECK(shs->tags[1].byte_offset == 13);  // end of 'string'
     TEST_CHECK(shs->tags[1].block == def->root);
 
-    Stack_Destroy(open_blocks);
     Stack_Destroy(open_blocks_at_begin);
     String_Deinit(&test1);
     SyntaxHighlighting_Deinit(&hl);
     SyntaxDefinition_Destroy(def);
 }
 
-const char *test_ini1 = R"(
-[meta]
-name = TEST
-
-[block:root]
-child_blocks=string, comment, keyword, brackets
-
-[block:brackets]
-start=\(
-end=\)
-child_blocks=string, keyword, brackets
-
-[block:keyword]
-start=keyword
-
-[block:string]
-start='
-end='
-
-[block:comment]
-start = //
-end = $
-)";
+const char *test_ini1 =
+"[meta]\n"
+"name = TEST\n"
+"\n"
+"[block:root]\n"
+"child_blocks=string, comment, keyword, brackets\n"
+"\n"
+"[block:brackets]\n"
+"start=\\(\n"
+"end=\\)\n"
+"child_blocks=string, keyword, brackets\n"
+"\n"
+"[block:keyword]\n"
+"start=keyword\n"
+"\n"
+"[block:string]\n"
+"start='\n"
+"end='\n"
+"\n"
+"[block:comment]\n"
+"start = //\n"
+"end = $\n";
 
 
 void test_basics(void) {
@@ -159,6 +186,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foobar // blabla ' bla",  // comment
+            1,
+            { "root" },
             2,
             {7, 22},
             {"comment", "root"},
@@ -168,6 +197,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foo 'bar' foo",  // string
+            1,
+            { "root" },
             2,
             {4, 9},
             {"string", "root"},
@@ -177,6 +208,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foo keyword foo",  // keyword
+            1,
+            { "root" },
             2,
             {4, 11},
             {"keyword", "root"},
@@ -186,6 +219,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foo '//not a comment' foo",  // string with comment inside (should be ignored)
+            1,
+            { "root" },
             2,
             {4, 21},
             {"string", "root"},
@@ -195,6 +230,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foo 'not a keyword' foo",  // keyword inside string
+            1,
+            { "root" },
             2,
             {4, 19},
             {"string", "root"},
@@ -204,6 +241,8 @@ void test_basics(void) {
         {
             test_ini1,
             "foo (no brackets) foo",
+            1,
+            { "root" },
             2,
             {4, 17},
             {"brackets", "root"},
@@ -213,6 +252,8 @@ void test_basics(void) {
         {
             test_ini1,
             "()",
+            1,
+            { "root" },
             2,
             {0, 2},
             {"brackets", "root"},
@@ -222,6 +263,8 @@ void test_basics(void) {
         {
             test_ini1,
             "(keyword)keyword",
+            1,
+            { "root" },
             6,
             {0, 1, 8, 9, 9, 16},
             {"brackets", "keyword", "brackets", "root", "keyword", "root"},
@@ -231,6 +274,8 @@ void test_basics(void) {
         {
             test_ini1,
             "",
+            1,
+            { "root" },
             0,
             {},
             {},
@@ -240,6 +285,8 @@ void test_basics(void) {
         {
             test_ini1,
             "(('not a keyword'))",
+            1,
+            { "root" },
             6,
             {0, 1, 2, 17, 18, 19},
             {"brackets", "brackets", "string", "brackets", "brackets", "root"},
@@ -256,33 +303,34 @@ void test_basics(void) {
 }
 
 
-const char *test_ini2 = R"(
-[meta]
-name = TEST2
-
-[block:root]
-child_blocks=assignment, comment
-
-[block:assignment]
-start=^[a-zA-Z_:]+=
-end=$
-child_blocks=value
-
-[block:value]
-start=.
-end=$
-ends_on=comment
-
-[block:comment]
-start = //
-end = $
-)";
+const char *test_ini2 =
+"[meta]\n"
+"name = TEST2\n"
+"\n"
+"[block:root]\n"
+"child_blocks=assignment, comment\n"
+"\n"
+"[block:assignment]\n"
+"start=^[a-zA-Z_:]+=\n"
+"end=$\n"
+"child_blocks=value\n"
+"\n"
+"[block:value]\n"
+"start=.\n"
+"end=$\n"
+"ends_on=comment\n"
+"\n"
+"[block:comment]\n"
+"start = //\n"
+"end = $\n";
 
 void test_moderate(void) {
     TagTestCase cases[] = {
         {
             test_ini2,
             "foo=blub // should end assignment",  // assignment with comment
+            1,
+            { "root" },
             5,
             {0, 4, 9, 33, 33},
             {"assignment", "value", "comment", "assignment", "root"},
@@ -304,11 +352,35 @@ void test_open_blocks(void) {
         {
             test_ini1,
             "(keyword",
+            1,
+            { "root" },
             3,
             {0, 1, 8},
             {"brackets", "keyword", "brackets"},
             2,
             {"brackets", "root"}
+        },
+        {
+            test_ini1,
+            "",
+            2,
+            { "root", "brackets" },
+            0,
+            {},
+            {},
+            2,
+            {"brackets", "root"}
+        },
+        {
+            test_ini1,
+            ")",
+            2,
+            { "root", "brackets" },
+            1,
+            {1},
+            {"root"},
+            1,
+            { "root"}
         },
 
     };
@@ -375,12 +447,11 @@ void test_stress(void) {
         TEST_CASE(str);
 
         String test = String_FromCStr(str, strlen(str));
-        Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &test, NULL);
+        const Stack *open_blocks = SyntaxHighlighting_HighlightString(&hl, &test, NULL);
 
         TEST_CHECK(open_blocks != NULL);
         TEST_CHECK(!Stack_IsEmpty(open_blocks));
 
-        Stack_Destroy(open_blocks);
         String_Deinit(&test);
         SyntaxHighlighting_Deinit(&hl);
         SyntaxDefinition_Destroy(def);

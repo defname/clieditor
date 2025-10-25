@@ -26,12 +26,14 @@ SyntaxHighlightingString *SyntaxHighlightingString_Create(const String *text) {
     shs->tags = NULL;
     shs->tags_count = 0;
     shs->tags_capacity = 0;
+    Stack_Init(&shs->open_blocks_at_begin);
     Stack_Init(&shs->open_blocks_at_end);
 
     shs->tags = malloc(sizeof(SyntaxHighlightingTag) * SHS_TAGS_INITIAL_CAPACITY);
     if (!shs->tags) {
         logFatal("Cannot allocate memory for SyntaxHighlightingString tags.");
     }
+    shs->tags_capacity = SHS_TAGS_INITIAL_CAPACITY;
 
     return shs;
 }
@@ -44,7 +46,9 @@ void SyntaxHighlightingString_Destroy(SyntaxHighlightingString *shs) {
     shs->tags_count = 0;
     shs->tags_capacity = 0;
     shs->text = NULL;
+    Stack_Deinit(&shs->open_blocks_at_begin);
     Stack_Deinit(&shs->open_blocks_at_end);
+
     free(shs);
 }
 
@@ -168,28 +172,48 @@ static void init_match_cache(SyntaxHighlighting *sh) {
     }
 }
 
-Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
+static bool stack_equal(const Stack *a, const Stack *b) {
+    if (a->size != b->size) {
+        return false;
+    }
+    for (size_t i=0; i<a->size; i++) {
+        if (a->items[i] != b->items[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
     // check if there is already old infomation about text in the table
     SyntaxHighlightingString *shs = Table_Get(sh->strings, text);
     if (shs) {
-        // clear it if so
+        // early exit if nothing changed since the last calculation
+        if (open_blocks_at_begin && stack_equal(&shs->open_blocks_at_begin, open_blocks_at_begin)) {
+        return &shs->open_blocks_at_end;
+        }
+        // if open_blocks_at_begin changed clear the old information
         SyntaxHighlightingString_Clear(shs);
     }
     else {
-        // otherwise create and store
+        // if there is no object present in sh->strings table create one and store it
         shs = SyntaxHighlightingString_Create(text);
         Table_Set(sh->strings, text, shs, (void(*)(void*))SyntaxHighlightingString_Destroy);
     }
 
     // create a working copy of the stack
-    Stack *open_blocks;
     if (open_blocks_at_begin) {
-        open_blocks = Stack_Copy(open_blocks_at_begin);
+        Stack_CopyTo(&shs->open_blocks_at_begin, open_blocks_at_begin);
+        Stack_CopyTo(&shs->open_blocks_at_end, open_blocks_at_begin);
     }
     else {
-        open_blocks = Stack_Create();
-        Stack_Push(open_blocks, sh->def->root);
+        // or create a new one if open_blocks_at_begin is NULL
+        Stack_Clear(&shs->open_blocks_at_begin);
+        Stack_Push(&shs->open_blocks_at_begin, sh->def->root);
+        Stack_CopyTo(&shs->open_blocks_at_end, &shs->open_blocks_at_begin);
     }
+    Stack *open_blocks = &shs->open_blocks_at_end;
+
 
     // initialize the cache fields of the SyntaxBlockDefs
     init_match_cache(sh);

@@ -17,21 +17,23 @@
 #include <string.h>
 #include "logging.h"
 
+static void resize_capacity(Stack *stack, size_t new_capacity) {
+    if (!stack || stack->capacity >= new_capacity) {
+        return;
+    }
+    stack->items = realloc(stack->items, new_capacity * sizeof(void *));
+    if (!stack->items) {
+        logFatal("Failed to reallocate stack items.");
+    }
+    stack->capacity = new_capacity;
+}
 
 static void increase_capacity(Stack *stack) {
     if (!stack) {
         return;
     }
-    if (stack->capacity == 0) {
-        stack->capacity = STACK_INITIAL_CAPACITY;
-    }
-    else {
-        stack->capacity *= STACK_GROW_FACTOR;
-    }
-    stack->items = realloc(stack->items, stack->capacity * sizeof(void *));
-    if (!stack->items) {
-        logFatal("Failed to reallocate stack items.");
-    }
+    size_t new_cap = stack->capacity == 0 ? STACK_INITIAL_CAPACITY : stack->capacity * STACK_GROW_FACTOR;
+    resize_capacity(stack, new_cap);
 }
 
 void Stack_Init(Stack *stack) {
@@ -72,28 +74,32 @@ Stack *Stack_Copy(const Stack *src) {
     if (!src) {
         return NULL;
     }
-    Stack *copy = malloc(sizeof(Stack));
-    if (!copy) {
-        logFatal("Failed to allocate memory for stack copy.");
-    }
-
-    size_t cap = src->capacity ? src->capacity : STACK_INITIAL_CAPACITY;  // handle capacity == 0
-
-    // allocate memory
-    copy->items = malloc(cap * sizeof(void *));
-    if (!copy->items) {
-        logFatal("Failed to allocate memory for stack copy items.");
-    }
-    // only copy items
-    memcpy(copy->items, src->items, src->size * sizeof(void *));
-    // set remainder to 0
-    if (cap > src->size) {
-        memset(copy->items + src->size, 0, (cap - src->size) * sizeof(void *));
-    }
-    copy->size = src->size;
-    copy->capacity = src->capacity;
-    
+    Stack *copy = Stack_Create();
+    Stack_CopyTo(copy, src);
     return copy;
+}
+
+void Stack_CopyTo(Stack *dst, const Stack *src) {
+    if (!dst || !src) {
+        return;
+    }
+    if (src->size == 0) {
+        // early exit if src is empty
+        Stack_Clear(dst);
+        return;
+    }
+    if (src->size > dst->capacity) {
+        // resize dst to a multiple of STACK_INITIAL_SIZE
+        size_t new_cap = ((src->size + STACK_INITIAL_CAPACITY - 1) / STACK_INITIAL_CAPACITY) * STACK_INITIAL_CAPACITY;
+        resize_capacity(dst, new_cap);
+    }
+    // copy items
+    memcpy(dst->items, src->items, src->size * sizeof(void *));
+    // set remainder to 0
+    if (dst->capacity > src->size) {
+        memset(dst->items + src->size, 0, (dst->capacity - src->size) * sizeof(void *));
+    }
+    dst->size = src->size;
 }
 
 void Stack_Push(Stack *stack, void *item) {
@@ -135,6 +141,10 @@ bool Stack_Has(const Stack *stack, const void *item) {
 
 bool Stack_IsEmpty(const Stack *stack) {
     return stack->size == 0;
+}
+
+size_t Stack_Size(const Stack *stack) {
+    return stack->size;
 }
 
 void Stack_Clear(Stack *stack) {
