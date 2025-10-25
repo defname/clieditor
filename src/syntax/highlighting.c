@@ -33,6 +33,7 @@ SyntaxHighlightingString *SyntaxHighlightingString_Create(const String *text) {
     if (!shs->tags) {
         logFatal("Cannot allocate memory for SyntaxHighlightingString tags.");
     }
+    shs->tags_capacity = SHS_TAGS_INITIAL_CAPACITY;
 
     return shs;
 }
