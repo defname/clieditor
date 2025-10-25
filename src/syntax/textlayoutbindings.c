@@ -24,6 +24,10 @@ static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, c
 }
 
 void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line) {
+    if (!binding || !binding->sh || !binding->tl || !binding->tl->tb) {
+        return;
+    }
+    
     Line *prev_line = line->prev;
     Stack *open_blocks = NULL;
     if (prev_line) {
