@@ -22,6 +22,7 @@
 #include "document/textedit.h"
 #include "document/textselection.h"
 #include "io/timer.h"
+#include "syntax/textlayoutbindings.h"
 
 typedef enum {
     EDITOR_MODE_INPUT,
@@ -49,6 +50,8 @@ typedef struct {
     
     uint8_t cursor_timer;
     bool cursor_visible;
+
+    SyntaxHighlightingBinding sh_binding;
 
     EditorConfig config;
 } Editor;

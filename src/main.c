@@ -34,6 +34,8 @@
 #include "common/logging.h"
 #include "common/iniparser.h"
 
+#include "syntax/loader.h"
+
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
 
@@ -41,6 +43,7 @@
 
 
 TextBuffer tb;
+SyntaxHighlighting *highlighting;
 
 static void print_help(const char *program_name) {
     fprintf(stderr, "Usage:\n  %s <filename>\n", program_name);
@@ -132,6 +135,31 @@ int main(int argc, char *argv[]) {
 
     TextBuffer_Init(&tb);
 
+    SyntaxHighlightingLoaderError error;
+    highlighting = SyntaxHighlighting_LoadFromFile("md", &error);
+    if (!highlighting) {
+        switch (error.code) {
+            case SYNTAX_LOADER_FILE_NOT_FOUND:
+                logFatal("Syntax file not found.");
+                break;
+            case SYNTAX_LOADER_FILE_READ_ERROR:
+                logFatal("Could not read syntax file.");
+                break;
+            case SYNTAX_LOADER_PARSE_ERROR:
+                logFatal("Could not parse syntax file.\n%s", error.parsing_error.message);
+                break;
+            case SYNTAX_LOADER_DEFINITION_ERROR:
+                logFatal("Syntax definition error.\n%s", error.def_error.message);
+                break;
+            default:
+                logFatal("Could not load Syntaxdefinition (Code: %d)", error.code);
+                break;
+        }
+        SyntaxHighlightingLoaderError_Deinit(&error);
+        exit(1);
+    }
+
+
     const char * fn = Config_GetFilename();
     bool failure_on_file_load = false;  // the failure message can only be shown after initializing the widget system
     if (strcmp(fn, "") != 0) {
@@ -162,6 +190,7 @@ int main(int argc, char *argv[]) {
  
     EditorView *editor = EditorView_Create(AS_WIDGET(&app), &tb);
     Widget_Focus(AS_WIDGET(editor));
+    editor->editor->sh_binding.sh = highlighting;
     (void)editor;
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;

@@ -36,6 +36,8 @@ static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
 static void editor_destroy(Widget *self) {
     Editor *editor = AS_EDITOR(self);
     Timer_Stop(editor->cursor_timer);
+    SyntaxHighlightingBinding_Deinit(&editor->sh_binding);
+    TextSelection_Deinit(&editor->ts);
     TextLayout_Deinit(&editor->tl);
     TextEdit_Deinit(&editor->te);
     TextSelection_Deinit(&editor->ts);
@@ -66,6 +68,8 @@ void draw_char(TextLayout *tl, Canvas *canvas, uint32_t cp, int x_pos, bool has_
 static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
     VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
     TextSelection *ts = &editor->ts;
+    SyntaxHighlighting *sh = editor->sh_binding.sh;
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, line->src);
 
     if (!line){
         return y_offset;
@@ -90,7 +94,16 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
 
     // draw the characters
     for (int i=0; i<line->length; i++) {
-        uint32_t cp = utf8_to_codepoint(VisualLine_GetChar(line, i));
+        const char *ch = VisualLine_GetChar(line, i);
+        size_t byte_offset = ch - line->src->text.bytes;
+
+        const SyntaxHighlightingTag *tag = SyntaxHighlightingString_GetTag(shs, byte_offset);
+        if (tag) {
+            canvas->current_style.fg = tag->block->color;
+            line_style.fg = tag->block->color;
+        }
+
+        uint32_t cp = utf8_to_codepoint(ch);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
         if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
             canvas->current_style = editor->config.selected;
@@ -417,6 +430,10 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     self->config.active.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
     self->config.cursor = self->base.style;
     self->config.cursor.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+
+    self->sh_binding.sh = NULL;
+    self->sh_binding.tl = &self->tl;
+    SyntaxHighlightingBinding_Update(&editor->sh_binding);
 }
 
 Editor *Editor_Create(Widget *parent, TextBuffer *tb) {

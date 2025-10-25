@@ -86,6 +86,18 @@ void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs) {
     Stack_Clear(&shs->open_blocks_at_end);
 }
 
+const SyntaxHighlightingTag *SyntaxHighlightingString_GetTag(const SyntaxHighlightingString *shs, size_t offset) {
+    // TODO: Need massive optimization
+    if (!shs || shs->tags_count == 0) {
+        return NULL;
+    }
+    for (size_t i=0; i<shs->tags_count; i++) {
+        if (shs->tags[i].byte_offset == offset) {
+            return &shs->tags[i];
+        }
+    }
+    return NULL;
+}
 
 /*****************************************************************************/
 /* SyntaxHighlighting                                                        */
