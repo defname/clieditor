@@ -103,6 +103,20 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *hl) {
     hl->def = NULL;
 }
 
+SyntaxHighlighting *SyntaxHighlighting_Create(const SyntaxDefinition *def) {
+    SyntaxHighlighting *hl = malloc(sizeof(SyntaxHighlighting));
+    if (!hl) {
+        logFatal("Cannot allocate memory for SyntaxHighlighting.");
+    }
+    SyntaxHighlighting_Init(hl, def);
+    return hl;
+}
+
+void SyntaxHighlighting_Destroy(SyntaxHighlighting *hl) {
+    SyntaxHighlighting_Deinit(hl);
+    free(hl);
+}
+
 static bool regexec_with_cache(const regex_t *regex, const char *str, size_t offset, MatchCache *cache, regmatch_t *match) {
     if (cache->done) {
         return false;

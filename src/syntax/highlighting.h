@@ -73,7 +73,7 @@ void SyntaxHighlightingString_Destroy(SyntaxHighlightingString *shs);
 void SyntaxHighlightingString_AddTag(SyntaxHighlightingString *shs, SyntaxHighlightingTag tag);
 void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs);
 
-/**match
+/**
  * @brief Holds the highlighting information for text of multiple `Strings`.
  */
 typedef struct _SyntaxHighlighting {
@@ -82,15 +82,17 @@ typedef struct _SyntaxHighlighting {
 } SyntaxHighlighting;
 
 
-/**
- * @brief Initialize syntax highlighting using def for definitions.
- */
+/** @brief Initialize syntax highlighting using def for definitions. */
 void SyntaxHighlighting_Init(SyntaxHighlighting *sh, const SyntaxDefinition *def);
 
-/**
- * @brief Deinitialize sh.
- */
+/** @brief Deinitialize `sh`. */
 void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
+
+/** @brief Instantiate `SyntaxHighlighting`. */
+SyntaxHighlighting *SyntaxHighlighting_Create(const SyntaxDefinition *def);
+
+/** @brief Destroy `sh` */
+void SyntaxHighlighting_Destroy(SyntaxHighlighting *sh);
 
 /**
  * @brief Highlight a string according to given context.
