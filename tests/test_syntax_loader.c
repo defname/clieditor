@@ -5,6 +5,14 @@ void test_deinit();
 #define TEST_FINI { test_deinit(); }
 
 #include "acutest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <limits.h>
+#include <libgen.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "io/file.h"
 #include "syntax/loader.h"
 #include "common/config.h"  // to set a custom project folder
@@ -12,24 +20,13 @@ void test_deinit();
 /*****************************************************************/
 /* Functions to create a test environment                        */
 bool concat_paths(char *dst, const char *path1, const char *path2) {
-    if (!dst || !path1 || !path2) {
-        return false;
-    }
-    int l1 = strlen(path1);
-    if (path1[l1-1] == '/') {
-        l1--;
-    }
-    int l2 = strlen(path2);
-    if (path2[l2-1] == '/') {
-        l2--;
-    }
-
-    int n = snprintf(dst, PATH_MAX, "%*s/%*s", l1-1, path1, l2-1, path2);
-    if (n >= PATH_MAX) {
-        return false;
-    }
-    dst[n] = '\0';
-    return true;
+    if (!dst || !path1 || !path2) return false;
+    size_t cap = PATH_MAX;
+    size_t l1 = strlen(path1);
+    bool need_sep = (l1 > 0 && path1[l1 - 1] != '/');
+    const char *p2 = (path2[0] == '/') ? path2 + 1 : path2;
+    int n = snprintf(dst, cap, "%s%s%s", path1, need_sep ? "/" : "", p2);
+    return n >= 0 && (size_t)n < cap;
 }
 
 bool create_syntax_folder() {
