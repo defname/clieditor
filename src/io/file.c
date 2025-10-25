@@ -20,7 +20,6 @@
 #include <string.h>
 #include <unistd.h>     // access()
 #include <libgen.h>     // dirname()
-#include <limits.h>     // PATH_MAX
 #include <errno.h>
 #include "common/config.h"
 #include "common/logging.h"
@@ -68,12 +67,13 @@ File *File_Open(const char *filename, FileAccessType access) {
 // find project file 
 char *find_project_file(const char *rel_path) {
     static char path[PATH_MAX];
-    char exe_dir[PATH_MAX];
+    char exe_abs_path[PATH_MAX];
+    char *exe_dir = NULL;
     char *home = getenv("HOME");
 
     // 1️. directory of the binary
-    if (realpath(Config_GetExePath(), exe_dir)) {
-        strcpy(exe_dir, dirname(exe_dir));
+    if (realpath(Config_GetExePath(), exe_abs_path)) {
+        exe_dir = dirname(exe_abs_path);
         int n = snprintf(path, sizeof(path), "%s/%s", exe_dir, rel_path);
         n = n >= (int)sizeof(path) ? (int)sizeof(path) - 1 : n;
         path[n] = '\0'; 

@@ -16,6 +16,7 @@
 #ifndef FILE_H
 #define FILE_H
 
+#include <limits.h>     // PATH_MAX
 #include "stdio.h"
 #include "common/string.h"
 

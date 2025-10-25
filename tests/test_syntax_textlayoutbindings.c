@@ -71,7 +71,6 @@ static void cleanup_fixture(TestFixture *fixture) {
     SyntaxHighlighting_Deinit(&fixture->sh);
     TextLayout_Deinit(&fixture->tl);
     TextBuffer_Deinit(&fixture->tb);
-    SyntaxDefinition_Destroy(fixture->def);
     free(fixture->lines);
 }
 

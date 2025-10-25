@@ -73,24 +73,35 @@ void SyntaxHighlightingString_Destroy(SyntaxHighlightingString *shs);
 void SyntaxHighlightingString_AddTag(SyntaxHighlightingString *shs, SyntaxHighlightingTag tag);
 void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs);
 
-/**match
+/**
  * @brief Holds the highlighting information for text of multiple `Strings`.
  */
 typedef struct _SyntaxHighlighting {
-    const SyntaxDefinition *def;    //< SyntaxDefinition to use for highlighting 
+    SyntaxDefinition *def;    //< SyntaxDefinition to use for highlighting 
     Table *strings;                 //< Table of (String -> SyntaxHighlightingString*) elements (holds the ownership of the SyntaxHighlightingString's)
 } SyntaxHighlighting;
 
 
 /**
  * @brief Initialize syntax highlighting using def for definitions.
+ * 
+ * Note that the ownership of `def` is taken!.
  */
-void SyntaxHighlighting_Init(SyntaxHighlighting *sh, const SyntaxDefinition *def);
+void SyntaxHighlighting_Init(SyntaxHighlighting *sh, SyntaxDefinition *def);
 
-/**
- * @brief Deinitialize sh.
- */
+/** @brief Deinitialize `sh`. */
 void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
+
+/** 
+ * @brief Instantiate `SyntaxHighlighting`.
+ * 
+ * @param def The ownership of `def` is taken!
+ * @returns The newly created `SyntaxHighlighting` instance.
+*/
+SyntaxHighlighting *SyntaxHighlighting_Create(SyntaxDefinition *def);
+
+/** @brief Destroy `sh` */
+void SyntaxHighlighting_Destroy(SyntaxHighlighting *sh);
 
 /**
  * @brief Highlight a string according to given context.

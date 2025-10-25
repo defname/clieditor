@@ -116,7 +116,6 @@ static void assert_highlight_tags(
 
     String_Deinit(&str);
     SyntaxHighlighting_Deinit(&hl);
-    SyntaxDefinition_Destroy(def);
 }
 
 const char *test_ini0 = 
@@ -154,7 +153,6 @@ void test_highlight_string_simple(void) {
     Stack_Destroy(open_blocks_at_begin);
     String_Deinit(&test1);
     SyntaxHighlighting_Deinit(&hl);
-    SyntaxDefinition_Destroy(def);
 }
 
 const char *test_ini1 =
@@ -454,7 +452,6 @@ void test_stress(void) {
 
         String_Deinit(&test);
         SyntaxHighlighting_Deinit(&hl);
-        SyntaxDefinition_Destroy(def);
     }
 
 }
