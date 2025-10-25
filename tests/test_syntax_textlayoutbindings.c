@@ -144,13 +144,15 @@ void test_binding_basic2(void) {
     SyntaxHighlightingBinding_Update(binding, fixture.lines[1], fixture.lines[1]);
 
     // 3. Check
-    SyntaxHighlightingString *shs = Table_Get(sh->strings, &fixture.lines[0]->text);
-    TEST_CHECK(shs != NULL);
-    TEST_CHECK(shs->text == &fixture.lines[0]->text);
-    TEST_CHECK(shs->tags_count == 1);
-    TEST_CHECK(shs->tags[0].byte_offset == 6);
-    TEST_CHECK(shs->open_blocks_at_end.size == 2);
-    TEST_MSG("%zu", shs->open_blocks_at_end.size);
+    SyntaxHighlightingString *shs0 = Table_Get(sh->strings, &fixture.lines[0]->text);
+    SyntaxHighlightingString *shs1 = Table_Get(sh->strings, &fixture.lines[1]->text);
+    TEST_CHECK(shs0 != NULL);
+    TEST_CHECK(shs0->text == &fixture.lines[0]->text);
+    TEST_CHECK(shs0->tags_count == 1);
+    TEST_CHECK(shs0->tags[0].byte_offset == 6);
+    TEST_CHECK(shs0->open_blocks_at_end.size == 2);
+    TEST_MSG("%zu", shs0->open_blocks_at_end.size);
+    TEST_CHECK(shs0->open_blocks_at_end.size == shs1->open_blocks_at_begin.size);
     TEST_CHECK(Table_Get(sh->strings, &fixture.lines[1]->text) != NULL);
 
     // 4. Cleanup
