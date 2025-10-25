@@ -135,7 +135,7 @@ void test_binding_basic2(void) {
     // 1. Setup
     TestFixture fixture;
     setup_fixture(&fixture, test_ini, lines, lines_count);
-    TextBuffer *tb = &fixture.tb;
+    //TextBuffer *tb = &fixture.tb;
     SyntaxHighlighting *sh = &fixture.sh;
     SyntaxHighlightingBinding *binding = &fixture.binding;
 
