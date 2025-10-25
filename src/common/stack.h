@@ -45,6 +45,7 @@ void *Stack_Peek(const Stack *stack);
 bool Stack_Has(const Stack *stack, const void *item);
 
 bool Stack_IsEmpty(const Stack *stack);
+size_t Stack_Size(const Stack *stack);
 
 void Stack_Clear(Stack *stack);
 

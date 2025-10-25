@@ -96,13 +96,16 @@ void SyntaxHighlighting_Deinit(SyntaxHighlighting *sh);
  * @brief Highlight a string according to given context.
  * 
  * Add a `SyntaxHighlightingString`to `hl->strings` or update an existing one.
+ * The table uses the pointer address of text as key, so make sure it does not change.
+ * open_blocks should only be NULL for the first line. In any other case if should be set to
+ * SyntaxHighlighlightingString->open_blocks_at_end of the previous line/text.
  * 
  * @param hl The `SyntaxHighlighting` instance to use.
  * @param text The text to hightlight.
  * @param open_blocks An pointer to a `Stack` instance that holds the open blocks at the beginning of string. If NULL it's assumed that the root block is current.
  * 
  * @returns
- * A new created `Stack` containing all open blocks at the end of `text`. 
+ * A reference to the `Stack` containing all open blocks at the end of `text`. 
  */
 const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks);
 
