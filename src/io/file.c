@@ -75,7 +75,7 @@ char *find_project_file(const char *rel_path) {
     if (realpath(Config_GetExePath(), exe_dir)) {
         strcpy(exe_dir, dirname(exe_dir));
         snprintf(path, sizeof(path), "%s/%s", exe_dir, rel_path);
-        if (file_exists(path)) {
+        if (File_Exists(path)) {
             return path;
         }
     }
@@ -83,7 +83,7 @@ char *find_project_file(const char *rel_path) {
     // 2️. user config (~/.config/clieditor/config)
     if (home) {
         snprintf(path, sizeof(path), "%s/.config/clieditor/%s", home, rel_path);
-        if (file_exists(path)) {
+        if (File_Exists(path)) {
             return path;
         }
     }
@@ -96,7 +96,7 @@ char *find_project_file(const char *rel_path) {
     };
     for (int i = 0; system_paths[i]; ++i) {
         snprintf(path, sizeof(path), "%s/%s", system_paths[i], rel_path);
-        if (file_exists(path)) {
+        if (File_Exists(path)) {
             return path;
         }
     }
