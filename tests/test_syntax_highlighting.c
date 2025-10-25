@@ -157,29 +157,28 @@ void test_highlight_string_simple(void) {
     SyntaxDefinition_Destroy(def);
 }
 
-const char *test_ini1 = R"(
-[meta]
-name = TEST
-
-[block:root]
-child_blocks=string, comment, keyword, brackets
-
-[block:brackets]
-start=\(
-end=\)
-child_blocks=string, keyword, brackets
-
-[block:keyword]
-start=keyword
-
-[block:string]
-start='
-end='
-
-[block:comment]
-start = //
-end = $
-)";
+const char *test_ini1 =
+"[meta]\n"
+"name = TEST\n"
+"\n"
+"[block:root]\n"
+"child_blocks=string, comment, keyword, brackets\n"
+"\n"
+"[block:brackets]\n"
+"start=\\(\n"
+"end=\\)\n"
+"child_blocks=string, keyword, brackets\n"
+"\n"
+"[block:keyword]\n"
+"start=keyword\n"
+"\n"
+"[block:string]\n"
+"start='\n"
+"end='\n"
+"\n"
+"[block:comment]\n"
+"start = //\n"
+"end = $\n";
 
 
 void test_basics(void) {
@@ -304,27 +303,26 @@ void test_basics(void) {
 }
 
 
-const char *test_ini2 = R"(
-[meta]
-name = TEST2
-
-[block:root]
-child_blocks=assignment, comment
-
-[block:assignment]
-start=^[a-zA-Z_:]+=
-end=$
-child_blocks=value
-
-[block:value]
-start=.
-end=$
-ends_on=comment
-
-[block:comment]
-start = //
-end = $
-)";
+const char *test_ini2 =
+"[meta]\n"
+"name = TEST2\n"
+"\n"
+"[block:root]\n"
+"child_blocks=assignment, comment\n"
+"\n"
+"[block:assignment]\n"
+"start=^[a-zA-Z_:]+=\n"
+"end=$\n"
+"child_blocks=value\n"
+"\n"
+"[block:value]\n"
+"start=.\n"
+"end=$\n"
+"ends_on=comment\n"
+"\n"
+"[block:comment]\n"
+"start = //\n"
+"end = $\n";
 
 void test_moderate(void) {
     TagTestCase cases[] = {
