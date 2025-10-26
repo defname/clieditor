@@ -40,7 +40,6 @@ static void editor_destroy(Widget *self) {
     TextSelection_Deinit(&editor->ts);
     TextLayout_Deinit(&editor->tl);
     TextEdit_Deinit(&editor->te);
-    TextSelection_Deinit(&editor->ts);
 }
 
 
