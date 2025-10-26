@@ -11,6 +11,7 @@ void SyntaxHighlightingTag_Init(SyntaxHighlightingTag *tag) {
 }
 
 void SyntaxHighlightingTag_Deinit(SyntaxHighlightingTag *tag) {
+    // This function exists mainly for potential future use
     SyntaxHighlightingTag_Init(tag);
 }
 
