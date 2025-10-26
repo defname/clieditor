@@ -83,7 +83,7 @@ size_t Buffer_Capacity(const Buffer *buffer) {
 }
 
 bool Buffer_HasSpace(const Buffer *buffer) {
-    return buffer->count < buffer->capacity - 1;
+    return buffer->count < buffer->capacity;
 }
 
 bool Buffer_Peek(const Buffer *buffer, size_t lookahead, void *out_element) {
