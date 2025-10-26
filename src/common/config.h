@@ -34,6 +34,10 @@ const char *Config_GetExePath();
 void Config_SetFilename(const char *filename);
 const char* Config_GetFilename();
 
+void Config_SetSyntax(const char *type);
+const char *Config_GetSyntax();
+
+
 Table *Config_GetModuleConfig(const char *section);
 int Config_GetNumber(Table *table, const char *key, int fallback);
 const char *Config_GetStr(Table *table, const char *key, const char *fallback);

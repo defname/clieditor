@@ -30,6 +30,8 @@ typedef struct _Config {
 
     const char *exe_path;
 
+    const char *syntax;
+
     int indent_size;
     bool use_spaces_for_indent;
     char filename[PATH_MAX];
@@ -45,6 +47,7 @@ void Config_Init(const char *argv0) {
     config.table = NULL;
     config.editor = NULL;
     config.colors = NULL;
+    config.syntax = NULL;
     config.dirty = false;
 }
 
@@ -55,6 +58,7 @@ void Config_Deinit() {
     config.table = NULL;
     config.editor = NULL;
     config.colors = NULL;
+    config.syntax = NULL;
 }
 
 
@@ -102,6 +106,17 @@ void Config_SetFilename(const char *filename) {
 const char *Config_GetFilename() {
     return config.filename;
 }
+
+
+void Config_SetSyntax(const char *type) {
+    config.syntax = type;
+    config.dirty = true;
+}
+
+const char *Config_GetSyntax() {
+    return config.syntax;
+}
+
 
 Table *Config_GetModuleConfig(const char *section) {
     if (!config.table || TypedTable_GetType(config.table, section) != VALUE_TYPE_TABLE) {
