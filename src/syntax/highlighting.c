@@ -131,6 +131,9 @@ SyntaxHighlighting *SyntaxHighlighting_Create(SyntaxDefinition *def) {
 }
 
 void SyntaxHighlighting_Destroy(SyntaxHighlighting *hl) {
+    if (!hl) {
+        return;
+    }
     SyntaxHighlighting_Deinit(hl);
     free(hl);
 }

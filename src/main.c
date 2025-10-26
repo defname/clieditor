@@ -109,7 +109,7 @@ static void finish() {  // called automatically (set with atexit())
     Timer_Deinit();
     App_Deinit();
     Config_Deinit();
-    SyntaxHighlighting_Deinit(highlighting);
+    SyntaxHighlighting_Destroy(highlighting);
     TextBuffer_Deinit(&tb);
     Input_Deinit();
     Screen_Deinit();
@@ -163,6 +163,7 @@ int main(int argc, char *argv[]) {
                 break;
         }
         SyntaxHighlightingLoaderError_Deinit(&error);
+        highlighting = NULL;
         exit(1);
     }
 
