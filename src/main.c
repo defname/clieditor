@@ -45,20 +45,15 @@ SyntaxHighlighting *highlighting;
 
 
 static void print_help(const char *program_name) {
-    fprintf(stderr, "Usage:\n  %s <filename>\n", program_name);
+    fprintf(stderr, "Usage:  %s [options] <filename>\n\n", program_name);
+    puts("  -h            Show this help");
+    puts("  -s <format>   Specify a format for syntax highlighting.");
+    puts("                The syntax definition file <format>.ini need to");
+    puts("                present in data/syntax.");
     exit(0);
 }
 
 static void parse_arguments(int argc, char *argv[]) {
-    // For now, we only handle a single filename argument.
-    if (argc >= 2) {
-        Config_SetFilename(argv[1]);
-    } else {
-        print_help(argv[0]);
-        // No file provided, could set a default or leave it empty.
-        Config_SetFilename(NULL);
-    }
-
     int opt;
     while ((opt = getopt(argc, argv, "hs:")) != -1) {
         switch (opt) {
