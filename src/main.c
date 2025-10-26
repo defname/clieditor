@@ -163,24 +163,23 @@ int main(int argc, char *argv[]) {
     if (!highlighting) {
         switch (error.code) {
             case SYNTAX_LOADER_FILE_NOT_FOUND:
-                logFatal("Syntax file not found.");
+                logError("Syntax file not found.");
                 break;
             case SYNTAX_LOADER_FILE_READ_ERROR:
-                logFatal("Could not read syntax file.");
+                logError("Could not read syntax file.");
                 break;
             case SYNTAX_LOADER_PARSE_ERROR:
-                logFatal("Could not parse syntax file.\n%s", error.parsing_error.message);
+                logError("Could not parse syntax file.\n%s", error.parsing_error.message);
                 break;
             case SYNTAX_LOADER_DEFINITION_ERROR:
-                logFatal("Syntax definition error.\n%s", error.def_error.message);
+                logError("Syntax definition error.\n%s", error.def_error.message);
                 break;
             default:
-                logFatal("Could not load Syntaxdefinition (Code: %d)", error.code);
+                logError("Could not load Syntaxdefinition (Code: %d)", error.code);
                 break;
         }
         SyntaxHighlightingLoaderError_Deinit(&error);
         highlighting = NULL;
-        exit(1);
     }
 
 
