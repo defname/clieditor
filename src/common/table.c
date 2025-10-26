@@ -61,7 +61,7 @@ static int cmp_ptr(const void *a, const void *b) {
 }
 
 static void *cpy_ptr(const void *p) {
-    return (void*)p;
+    return (void*)(uintptr_t)p;
 }
 
 static TableSlot *find_slot(const Table *table, const void *key) {
