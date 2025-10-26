@@ -1,6 +1,6 @@
 #include "textlayoutbindings.h"
 
-void SyntaxHighlightingBinding_Init(SyntaxHighlightingBinding *binding, const TextLayout *tl, SyntaxHighlighting *sh) {
+void SyntaxHighlightingBinding_Init(SyntaxHighlightingBinding *binding, TextLayout *tl, SyntaxHighlighting *sh) {
     binding->tl = tl;
     binding->sh = sh;
 }
@@ -10,12 +10,32 @@ void SyntaxHighlightingBinding_Deinit(SyntaxHighlightingBinding *binding) {
     binding->sh = NULL;
 }
 
-static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line, const Stack *open_blocks) {
+static bool stack_equal(const Stack *a, const Stack *b) {
+    if (a->size != b->size) {
+        return false;
+    }
+    for (size_t i=0; i<a->size; i++) {
+        if (a->items[i] != b->items[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void update_following_lines(SyntaxHighlightingBinding *binding, const Line *first_line, const Line *last_line, Stack *open_blocks) {
     const Stack *open_blocks_begin = open_blocks;
+    const Line *line = first_line;
     while (line) {
+        if (line != first_line) {
+            SyntaxHighlightingString *shs = Table_Get(binding->sh->strings, &line->text);
+            if (shs && stack_equal(&shs->open_blocks_at_begin, open_blocks_begin)) {
+                break;
+            }
+        }
         // open_blocks == NULL is also handled by the function
         const Stack *open_blocks_end = SyntaxHighlighting_HighlightString(binding->sh, &line->text, open_blocks_begin);
         open_blocks_begin = open_blocks_end;
+        //Stack_Destroy(open_blocks_end);
         if (line == last_line) {
             break;
         }
@@ -23,7 +43,7 @@ static void update_lines(SyntaxHighlightingBinding *binding, const Line *line, c
     }
 }
 
-void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line) {
+void SyntaxHighlightingBinding_UpdateLine(SyntaxHighlightingBinding *binding, const Line *line, const Line *last_line) {
     if (!binding || !binding->sh || !binding->tl || !binding->tl->tb || !line) {
         return;
     }
@@ -44,7 +64,7 @@ void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const 
         else {
             // highlighting for the line is not calculated so far
             // so run this function for thr previous line
-            SyntaxHighlightingBinding_Update(binding, prev_line, last_line);
+            SyntaxHighlightingBinding_UpdateLine(binding, prev_line, last_line);
             return;
         }
     }
@@ -55,5 +75,22 @@ void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding, const 
     }
 
     // update all lines until last_line (including)
-    update_lines(binding, line, last_line, open_blocks);
+    update_following_lines(binding, line, last_line, open_blocks);
+    if (open_blocks) {
+        //Stack_Destroy(open_blocks);
+    }
+}
+
+void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding) {
+    if (!binding || !binding->sh || !binding->tl || !binding->tl->tb) {
+        return;
+    }
+    const TextBuffer *tb = binding->tl->tb;
+    Line *current = tb->current_line;
+    VisualLine *last_vl = TextLayout_GetVisualLine(binding->tl, binding->tl->height - 1);
+    Line *last = last_vl ? last_vl->src : TextBuffer_GetLastLine(tb);
+    if (!current || !last) {
+        return;
+    }
+    SyntaxHighlightingBinding_UpdateLine(binding, current, last);
 }

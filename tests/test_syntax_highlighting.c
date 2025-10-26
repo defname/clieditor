@@ -65,6 +65,7 @@ static void assert_highlight_tags(
 
     // the syntax definition
     SyntaxDefinition *def = create_definition(ini);
+    TEST_ASSERT(def);
     // the highlighting engine
     SyntaxHighlighting hl;
     SyntaxHighlighting_Init(&hl, def);
@@ -322,6 +323,23 @@ const char *test_ini2 =
 "start = //\n"
 "end = $\n";
 
+
+const char *test_ini3 =
+"[meta]\n"
+"name = Markdown\n"
+"file_extensions = md\n"
+"\n"
+"[block:root]\n"
+"child_blocks = title\n"
+"\n"
+"[block:title]\n"
+"# comments start with \";\" or \"#\"\n"
+"start = \"^# \"\n"
+"end = \"$\"\n"
+"color = 33        # gray\n"
+"child_blocks =\n";
+
+
 void test_moderate(void) {
     TagTestCase cases[] = {
         {
@@ -332,6 +350,17 @@ void test_moderate(void) {
             5,
             {0, 4, 9, 33, 33},
             {"assignment", "value", "comment", "assignment", "root"},
+            1,
+            {"root"}
+        },
+        {
+            test_ini3,
+            "# Title",
+            1,
+            { "root" },
+            2,
+            {0, 7},
+            {"title", "root"},
             1,
             {"root"}
         },

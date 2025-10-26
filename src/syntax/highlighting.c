@@ -91,7 +91,7 @@ const SyntaxHighlightingTag *SyntaxHighlightingString_GetTag(const SyntaxHighlig
     if (!shs || shs->tags_count == 0) {
         return NULL;
     }
-    for (size_t i=0; i<shs->tags_count; i++) {
+    for (int i=(int)shs->tags_count-1; i>=0; i--) {
         if (shs->tags[i].byte_offset == offset) {
             return &shs->tags[i];
         }
@@ -108,6 +108,9 @@ void SyntaxHighlighting_Init(SyntaxHighlighting *hl, SyntaxDefinition *def) {
 }
 
 void SyntaxHighlighting_Deinit(SyntaxHighlighting *hl) {
+    if (!hl) {
+        return;
+    }
     if (hl->strings) {
         Table_Destroy(hl->strings);
     }
@@ -201,32 +204,18 @@ static void init_match_cache(SyntaxHighlighting *sh) {
     }
 }
 
-static bool stack_equal(const Stack *a, const Stack *b) {
-    if (a->size != b->size) {
-        return false;
-    }
-    for (size_t i=0; i<a->size; i++) {
-        if (a->items[i] != b->items[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const String *text, const Stack *open_blocks_at_begin) {
     // check if there is already old infomation about text in the table
     SyntaxHighlightingString *shs = Table_Get(sh->strings, text);
     if (shs) {
-        // early exit if nothing changed since the last calculation
-        if (open_blocks_at_begin && stack_equal(&shs->open_blocks_at_begin, open_blocks_at_begin)) {
-        return &shs->open_blocks_at_end;
-        }
-        // if open_blocks_at_begin changed clear the old information
+        // if open_blocks_at_begin changed, clear the old information and reuse the existing shs
         SyntaxHighlightingString_Clear(shs);
     }
     else {
         // if there is no object present in sh->strings table create one and store it
         shs = SyntaxHighlightingString_Create(text);
+        // Only set it in the table if it's new. If it existed, we just cleared it
+        // and will now re-populate it.
         Table_Set(sh->strings, text, shs, (void(*)(void*))SyntaxHighlightingString_Destroy);
     }
 
@@ -241,8 +230,6 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
         Stack_Push(&shs->open_blocks_at_begin, sh->def->root);
         Stack_CopyTo(&shs->open_blocks_at_end, &shs->open_blocks_at_begin);
     }
-    Stack *open_blocks = &shs->open_blocks_at_end;
-
 
     // initialize the cache fields of the SyntaxBlockDefs
     init_match_cache(sh);
@@ -251,7 +238,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
     size_t offset = 0;
     for (;;) {
         // take the current block from the stack (but keep it there)
-        SyntaxBlockDef *current_block = (SyntaxBlockDef*)Stack_Peek(open_blocks);
+        SyntaxBlockDef *current_block = (SyntaxBlockDef*)Stack_Peek(&shs->open_blocks_at_end);
 
         // find the first child block
         regmatch_t child_match;
@@ -283,7 +270,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
             offset += child_match.rm_eo;
 
             // push the child to the stack to continue with it in the next iteration
-            Stack_Push(open_blocks, (void*)child);
+            Stack_Push(&shs->open_blocks_at_end, (void*)child);
             continue;
         }
         // check if ends_on is the first match
@@ -291,7 +278,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
             && (!end_found || ends_on_match.rm_so < end_match.rm_so))
         {
             // the current block ends by the occurence of the ends_on block
-            Stack_Pop(open_blocks);  // removes current (which was just peeked before)
+            Stack_Pop(&shs->open_blocks_at_end);  // removes current (which was just peeked before)
 
             // add a tag for the beginning of the ends_on block
             SyntaxHighlightingTag tag;
@@ -301,7 +288,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
             SyntaxHighlightingString_AddTag(shs, tag);
 
             // add the ends_on block to the stack
-            Stack_Push(open_blocks, (void*)ends_on);
+            Stack_Push(&shs->open_blocks_at_end, (void*)ends_on);
 
             // increase the offset to the end of the match
             offset += ends_on_match.rm_eo;
@@ -310,13 +297,13 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
         // last case.... if end_found it's the first match automatically
         if (end_found) {
             // end of block found so remove it from stack
-            Stack_Pop(open_blocks);  // removes current (which was just peeked before)
+            Stack_Pop(&shs->open_blocks_at_end);  // removes current (which was just peeked before)
 
             // and add a tag for the (new) begin of the surrounding block
             SyntaxHighlightingTag tag;
             tag.text = text;
             tag.byte_offset = offset + end_match.rm_eo;  // the current block goes behind the match of its end
-            tag.block = Stack_Peek(open_blocks);  // new current block
+            tag.block = Stack_Peek(&shs->open_blocks_at_end);  // new current block
             SyntaxHighlightingString_AddTag(shs, tag);
 
             // increase offset
@@ -324,7 +311,7 @@ const Stack *SyntaxHighlighting_HighlightString(SyntaxHighlighting *sh, const St
             continue;
         }
         // neither the beginning of a new block nor the end of the current block found
-        return open_blocks;
+        return &shs->open_blocks_at_end;
     }
 
     // if this happens there is an error in the SyntaxDefinition.

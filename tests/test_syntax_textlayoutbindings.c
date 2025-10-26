@@ -113,7 +113,7 @@ void test_binding_basic(void) {
 
     
     // 2. Calculate
-    SyntaxHighlightingBinding_Update(binding, tb->current_line->next, tb->current_line->next);
+    SyntaxHighlightingBinding_UpdateLine(binding, tb->current_line->next, tb->current_line->next);
 
     // 3. Check
     TEST_CHECK(Table_Get(sh->strings, &fixture.lines[0]->text) != NULL);
@@ -140,7 +140,7 @@ void test_binding_basic2(void) {
 
     
     // 2. Calculate
-    SyntaxHighlightingBinding_Update(binding, fixture.lines[1], fixture.lines[1]);
+    SyntaxHighlightingBinding_UpdateLine(binding, fixture.lines[1], fixture.lines[1]);
 
     // 3. Check
     SyntaxHighlightingString *shs0 = Table_Get(sh->strings, &fixture.lines[0]->text);

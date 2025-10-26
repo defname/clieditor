@@ -68,12 +68,13 @@ void draw_char(TextLayout *tl, Canvas *canvas, uint32_t cp, int x_pos, bool has_
 static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
     VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
     TextSelection *ts = &editor->ts;
-    SyntaxHighlighting *sh = editor->sh_binding.sh;
-    SyntaxHighlightingString *shs = Table_Get(sh->strings, line->src);
 
     if (!line){
         return y_offset;
     }
+
+    SyntaxHighlighting *sh = editor->sh_binding.sh;
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, line->src);
 
     // Move cursor to the start position
     Canvas_MoveCursor(canvas, 0, y + y_offset);
@@ -82,26 +83,30 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
 
+    
     // change the style if it's the current line
+    if (shs && Stack_Peek(&shs->open_blocks_at_begin)) {
+        SyntaxBlockDef *first_block = Stack_Peek(&shs->open_blocks_at_begin);
+        canvas->current_style.fg = first_block->color;
+    }
     Style orig_style = canvas->current_style;
-    Style line_style;
+    Style line_style = orig_style;
     if (line->src == editor->tb->current_line) {
-        line_style = editor->config.active;
+        line_style.bg = editor->config.active.bg;
     }
-    else {
-        line_style = orig_style;
-    }
+    
 
     // draw the characters
     for (int i=0; i<line->length; i++) {
         const char *ch = VisualLine_GetChar(line, i);
         size_t byte_offset = ch - line->src->text.bytes;
-
+        
         const SyntaxHighlightingTag *tag = SyntaxHighlightingString_GetTag(shs, byte_offset);
         if (tag) {
             canvas->current_style.fg = tag->block->color;
             line_style.fg = tag->block->color;
         }
+        
 
         uint32_t cp = utf8_to_codepoint(ch);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
@@ -332,6 +337,7 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
         input_handled = input_handled || handle_input_scrolling(editor, input);
         input_handled = input_handled || handle_input_text_editing(editor, input, cursor);
         if (input_handled) {
+            SyntaxHighlightingBinding_Update(&editor->sh_binding);
             return true;
         }
     }
@@ -433,7 +439,7 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
 
     self->sh_binding.sh = NULL;
     self->sh_binding.tl = &self->tl;
-    SyntaxHighlightingBinding_Update(&editor->sh_binding);
+    SyntaxHighlightingBinding_Update(&self->sh_binding);
 }
 
 Editor *Editor_Create(Widget *parent, TextBuffer *tb) {
