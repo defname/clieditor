@@ -3,6 +3,7 @@
 void SyntaxHighlightingBinding_Init(SyntaxHighlightingBinding *binding, TextLayout *tl, SyntaxHighlighting *sh) {
     binding->tl = tl;
     binding->sh = sh;
+    binding->need_full_update = true;
 }
 
 void SyntaxHighlightingBinding_Deinit(SyntaxHighlightingBinding *binding) {
@@ -93,4 +94,17 @@ void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding) {
         return;
     }
     SyntaxHighlightingBinding_UpdateLine(binding, current, last);
+}
+
+void SyntaxHighlightingBinding_UpdateAll(SyntaxHighlightingBinding *binding, bool force) {
+    if (!force && !binding->need_full_update) {
+        return;
+    }
+    binding->need_full_update = false;
+    SyntaxHighlightingBinding_UpdateLine(
+        binding,
+        TextBuffer_GetFirstLine(binding->tl->tb),
+        TextBuffer_GetLastLine(binding->tl->tb)
+    );
+
 }
