@@ -5,6 +5,8 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME} C)
 set(CMAKE_C_STANDARD 99)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Debug' as none was specified.")
@@ -52,7 +54,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_OBJECTS})
 
 add_compile_definitions(_XOPEN_SOURCE=700)
 
+# --- symlink zum data Ordner erstellen
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/data
+        ${CMAKE_BINARY_DIR}/data
+)
 
+# CTest-Unterstützung aktivieren
+enable_testing()
 
 # --- Add tools ---
 add_subdirectory(tools)

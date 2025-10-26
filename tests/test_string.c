@@ -251,6 +251,7 @@ void test_edgecases(void) {
     str = String_FromCStr("│", strlen("│"));
     TEST_CHECK(strcmp(String_AsCStr(&str), "│") == 0);
     String_Deinit(&str);
+
 }
 
 

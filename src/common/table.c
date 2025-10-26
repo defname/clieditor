@@ -27,12 +27,12 @@ void TableSlot_Init(TableSlot *slot) {
     slot->state = TABLE_SLOT_EMPTY;
 }
 
-void TableSlot_Deinit(TableSlot *slot) {
+void TableSlot_Deinit(TableSlot *slot, void (*free_key_func)(void *key)) {
     if (!slot) {
         return;
     }
-    if (slot->key) {
-        free(slot->key);
+    if (slot->key && free_key_func) {
+        free_key_func(slot->key);
     }
     if (slot->destructor) {
         slot->destructor(slot->value);
@@ -51,7 +51,20 @@ static uint32_t hash_string(const char *str) {
     return hash;
 }
 
-static TableSlot *find_slot(const Table *table, const char *key) {
+static uint32_t hash_ptr(const void *p) {
+    uintptr_t x = (uintptr_t)p;
+    return (uint32_t)(x ^ (x >> 32));
+}
+
+static int cmp_ptr(const void *a, const void *b) {
+    return a != b;
+}
+
+static void *cpy_ptr(const void *p) {
+    return (void*)(uintptr_t)p;
+}
+
+static TableSlot *find_slot(const Table *table, const void *key) {
     if (!table || !key) {
         logFatal("Invalid table or key in find_slot()");
     }
@@ -59,7 +72,7 @@ static TableSlot *find_slot(const Table *table, const char *key) {
     if (table->used >= table->capacity * TABLE_MAX_LOAD_FACTOR + 1) {
         logFatal("Table too loaded.");  // this can only happen there is an error in the code
     }
-    uint32_t hash = hash_string(key);
+    uint32_t hash = table->hash_func(key);
     size_t index = hash % table->capacity;
     TableSlot *tombstone = NULL;
     for (;;) {
@@ -73,7 +86,7 @@ static TableSlot *find_slot(const Table *table, const char *key) {
         else if (slot->state == TABLE_SLOT_TOMBSTONE && tombstone == NULL) {
             tombstone = slot;
         }
-        else if (slot->state == TABLE_SLOT_USED && strcmp(slot->key, key) == 0) {
+        else if (slot->state == TABLE_SLOT_USED && table->key_cmp_func(slot->key, key) == 0) {
             return slot;
         }
 
@@ -110,7 +123,12 @@ static void increase_capacity(Table *table) {
         return;
     }
     // allocate memory for the increased table
-    Table *new_table = Table_Create();
+    Table *new_table = Table_CreateCustom(
+        table->hash_func,
+        table->key_cmp_func,
+        table->key_copy_func,
+        table->key_free_func
+    );
     new_table->capacity = table->capacity == 0 ? TABLE_INITIAL_CAPACITY : table->capacity * TABLE_GROWTH_FACTOR;
     new_table->slots = malloc(new_table->capacity * sizeof(TableSlot));
     if (!new_table->slots) {
@@ -130,8 +148,8 @@ static void increase_capacity(Table *table) {
     // free old table keys
     for (size_t i=0; i<table->capacity; i++) {
         TableSlot *slot = &table->slots[i];
-        if (slot->state == TABLE_SLOT_USED) {
-            free(slot->key);
+        if (slot->state == TABLE_SLOT_USED && table->key_free_func) {
+            table->key_free_func(slot->key);
         }
     }
     // free old table slots
@@ -164,7 +182,7 @@ void Table_Deinit(Table *table) {
     if (table->slots) {
         for (size_t i=0; i<table->capacity; i++) {
             TableSlot *entry = &table->slots[i];
-            TableSlot_Deinit(entry);
+            TableSlot_Deinit(entry, table->key_free_func);
         }
         free(table->slots);
     }
@@ -174,8 +192,36 @@ void Table_Deinit(Table *table) {
 }
 
 Table *Table_Create() {
+    return Table_CreateCustom(
+        (uint32_t(*)(const void*))hash_string,
+        (int(*)(const void*, const void*))strcmp,
+        (void*(*)(const void*))strdup, 
+        (void(*)(void*))free);
+}
+
+Table *Table_CreatePtr() {
+    return Table_CreateCustom(
+        hash_ptr,
+        cmp_ptr,
+        cpy_ptr,
+        NULL);
+}
+
+Table *Table_CreateCustom(
+    uint32_t (*hash_func)(const void *p),
+    int (*key_cmp_func)(const void*, const void *),
+    void *(*key_copy_func)(const void *p),
+    void (*key_free_func)(void *p)
+) {
     Table *table = malloc(sizeof(Table));
+    if (!table) {
+        logFatal("Failed to allocate memory for table.");
+    }
     Table_Init(table);
+    table->hash_func = hash_func;
+    table->key_cmp_func = key_cmp_func;
+    table->key_copy_func = key_copy_func;
+    table->key_free_func = key_free_func;
     return table;
 }
 
@@ -188,7 +234,7 @@ void Table_Destroy(Table *table) {
 }
 
 
-void Table_Set(Table *table, const char*key, void *value, void (*destructor)(void *value)) {
+void Table_Set(Table *table, const void *key, void *value, void (*destructor)(void *value)) {
     if (!table || !key) {
         return;
     }
@@ -200,10 +246,10 @@ void Table_Set(Table *table, const char*key, void *value, void (*destructor)(voi
         logFatal("No slot found in Table_Set().");
     }
 
-    if (slot->state == TABLE_SLOT_EMPTY) {
+    if (slot->state != TABLE_SLOT_USED) {
         slot->state = TABLE_SLOT_USED;
-        slot->key = strdup(key);
-        if (slot->key == NULL) {
+        slot->key = table->key_copy_func(key);
+        if (!slot->key) {
             logFatal("No memory for string copy in Table_Set().");
         }
         table->used++;
@@ -216,7 +262,7 @@ void Table_Set(Table *table, const char*key, void *value, void (*destructor)(voi
     slot->value = value;  // potential pointers in value are copied and ownership is taken
 }
 
-void *Table_Get(const Table *table, const char *key) {
+void *Table_Get(const Table *table, const void *key) {
     if (!table) {
         logFatal("Invalid table in Table_Get().");
     }
@@ -229,13 +275,13 @@ void *Table_Get(const Table *table, const char *key) {
     }
 
     TableSlot *slot = find_slot(table, key);
-    if (slot->state == TABLE_SLOT_EMPTY) {
+    if (slot->state != TABLE_SLOT_USED) {
         return NULL;
     }
     return slot->value;
 }
 
-void Table_Delete(Table *table, const char *key) {
+void Table_Delete(Table *table, const void *key) {
     if (!table) {
         logFatal("Invalid table in Table_Delete().");
     }
@@ -250,14 +296,14 @@ void Table_Delete(Table *table, const char *key) {
     if (slot->state != TABLE_SLOT_USED) {
         return;
     }
-    TableSlot_Deinit(slot);
+    TableSlot_Deinit(slot, table->key_free_func);
     slot->state = TABLE_SLOT_TOMBSTONE;
 
     // used is not decremented intentionally!
     // tombstones are counted to trigger rehash earlier and decrease probing
 }
 
-bool Table_Has(const Table *table, const char *key) {
+bool Table_Has(const Table *table, const void *key) {
     if (!table) {
         logFatal("Invalid table in Table_Has().");
     }
@@ -272,7 +318,7 @@ bool Table_Has(const Table *table, const char *key) {
     return (slot->state == TABLE_SLOT_USED);
 }
 
-bool Table_HasOwnership(const Table *table, const char *key) {
+bool Table_HasOwnership(const Table *table, const void *key) {
     if (!table) {
         logFatal("Invalid table in Table_HasOwnership().");
     }
@@ -285,4 +331,11 @@ bool Table_HasOwnership(const Table *table, const char *key) {
     }
     TableSlot *slot = find_slot(table, key);
     return (slot->state == TABLE_SLOT_USED && slot->destructor != NULL);
+}
+
+size_t Table_GetUsage(const Table *table) {
+    if (!table) {
+        return 0;
+    }
+    return table->used;
 }

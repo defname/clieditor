@@ -29,10 +29,14 @@ void Config_LoadIni(const char *content);
 bool Config_IsDirty();
 void Config_Loaded();
 
-#define FILENAME_MAX_LENGTH 256
+const char *Config_GetExePath();
 
 void Config_SetFilename(const char *filename);
 const char* Config_GetFilename();
+
+void Config_SetSyntax(const char *type);
+const char *Config_GetSyntax();
+
 
 Table *Config_GetModuleConfig(const char *section);
 int Config_GetNumber(Table *table, const char *key, int fallback);

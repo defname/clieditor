@@ -18,6 +18,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>     // access()
+#include <libgen.h>     // dirname()
+#include <errno.h>
+#include "common/config.h"
 #include "common/logging.h"
 
 static File *create_file_object() {
@@ -29,6 +33,13 @@ static File *create_file_object() {
     file->fp   = NULL;
     file->access = FILE_ACCESS_READ;
     return file;
+}
+
+bool File_Exists(const char *path) {
+    if (!path) {
+        return false;
+    }
+    return (access(path, R_OK) == 0);
 }
 
 File *File_Open(const char *filename, FileAccessType access) {
@@ -51,6 +62,69 @@ File *File_Open(const char *filename, FileAccessType access) {
     file->access = access;
 
     return file;
+}
+
+// find project file 
+char *find_project_file(const char *rel_path) {
+    static char path[PATH_MAX];
+    char exe_abs_path[PATH_MAX];
+    char *exe_dir = NULL;
+    char *home = getenv("HOME");
+
+    // 1️. directory of the binary
+    if (realpath(Config_GetExePath(), exe_abs_path)) {
+        exe_dir = dirname(exe_abs_path);
+        int n = snprintf(path, sizeof(path), "%s/%s", exe_dir, rel_path);
+        n = n >= (int)sizeof(path) ? (int)sizeof(path) - 1 : n;
+        path[n] = '\0'; 
+        if (File_Exists(path)) {
+            return path;
+        }
+    }
+
+    // 2️. user config (~/.config/clieditor/config)
+    if (home) {
+        int n = snprintf(path, sizeof(path), "%s/.config/clieditor/%s", home, rel_path);
+        n = n >= (int)sizeof(path) ? (int)sizeof(path) - 1 : n;
+        path[n] = '\0'; 
+        if (File_Exists(path)) {
+            return path;
+        }
+    }
+
+    // 3️ system config (/usr/share/clieditor/config)
+    const char *system_paths[] = {
+        "/etc/clieditor/",
+        "/usr/share/clieditor/",
+        NULL
+    };
+    for (int i = 0; system_paths[i]; ++i) {
+        int n = snprintf(path, sizeof(path), "%s/%s", system_paths[i], rel_path);
+        n = n >= (int)sizeof(path) ? (int)sizeof(path) - 1 : n;
+        path[n] = '\0'; 
+        if (File_Exists(path)) {
+            return path;
+        }
+    }
+
+    // nothing found
+    return NULL;
+}
+
+File *File_OpenConfig(FileAccessType access) {
+    char *path = find_project_file("config.ini");
+    if (!path) {
+        return NULL;
+    }
+    return File_Open(path, access);
+}
+
+File *File_OpenProjectFile(const char *rel_path, FileAccessType access) {
+    char *path = find_project_file(rel_path);
+    if (!path) {
+        return NULL;
+    }
+    return File_Open(path, access);
 }
 
 void File_Close(File *file) {

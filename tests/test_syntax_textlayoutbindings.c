@@ -1,0 +1,165 @@
+#include "acutest.h"
+#include "syntax/textlayoutbindings.h"
+#include "syntax/definition.h"
+#include "common/iniparser.h"
+#include "common/string.h"
+#include "document/textlayout.h"
+
+typedef struct {
+    SyntaxDefinition *def;
+    const Line **lines;
+    size_t line_count;
+    SyntaxHighlighting sh;
+    TextBuffer tb;
+    TextLayout tl;
+    SyntaxHighlightingBinding binding;
+} TestFixture;
+
+static void init_textbuffer(TextBuffer *tb, const char *lines[], size_t line_count) {
+    TextBuffer_Init(tb);
+    TEST_ASSERT(line_count > 0);
+    String s = String_FromCStr(lines[0], strlen(lines[0]));
+    String_Take(&tb->current_line->text, &s);
+    for (size_t i=1; i<line_count; i++) {
+        Line *new_line = Line_Create();
+        String s = String_FromCStr(lines[i], strlen(lines[i]));
+        String_Take(&new_line->text, &s);
+        TextBuffer_InsertLineAtBottom(tb, new_line);
+    }
+    TEST_CHECK(tb->line_count == line_count);
+    TEST_MSG("%zu", tb->line_count);
+}
+
+
+static SyntaxDefinition *create_syntax_definition(const char *ini) {
+    IniParser parser;
+    IniParser_Init(&parser);
+    IniParser_SetText(&parser, ini);
+    Table *table = IniParser_Parse(&parser);
+    TEST_ASSERT(table != NULL);
+    SyntaxDefinitionError error;
+    SyntaxDefinition *def = SyntaxDefinition_FromTable(table, &error);
+    TEST_ASSERT(def != NULL);
+    IniParser_Deinit(&parser);
+    Table_Destroy(table);
+    return def;
+}
+
+static void setup_lines(TestFixture *fixture) {
+    fixture->line_count = fixture->tb.line_count;
+    fixture->lines = malloc(sizeof(Line*) * fixture->line_count);
+    TEST_ASSERT(fixture->lines);
+    Line *line = TextBuffer_GetFirstLine(&fixture->tb);
+    size_t i = 0;
+    while (line) {
+        fixture->lines[i++] = line;
+        line = line->next;
+    }
+}
+
+static void setup_fixture(TestFixture *fixture, const char *ini, const char *lines[], size_t line_count) {
+    init_textbuffer(&fixture->tb, lines, line_count);
+    TextLayout_Init(&fixture->tl, &fixture->tb, 10, 4);
+    fixture->def = create_syntax_definition(ini);
+    SyntaxHighlighting_Init(&fixture->sh, fixture->def);
+    SyntaxHighlightingBinding_Init(&fixture->binding, &fixture->tl, &fixture->sh);
+    setup_lines(fixture);
+}
+
+static void cleanup_fixture(TestFixture *fixture) {
+    SyntaxHighlightingBinding_Deinit(&fixture->binding);
+    SyntaxHighlighting_Deinit(&fixture->sh);
+    TextLayout_Deinit(&fixture->tl);
+    TextBuffer_Deinit(&fixture->tb);
+    free(fixture->lines);
+}
+
+
+
+
+const char *test_ini =
+"[meta]\n"
+"name = TEST\n"
+"\n"
+"[block:root]\n"
+"child_blocks=keyword, comment, string\n"
+"\n"
+"[block:keyword]\n"
+"start = keyword\n"
+"\n"
+"[block:comment]\n"
+"start = \"#\"\n"
+"end = $\n"
+"\n"
+"[block:string]\n"
+"start = \"'\"\n"
+"end = \"'\"\n"
+;
+
+void test_binding_basic(void) {
+    // data
+    const char *lines[] = {
+        "First line",
+        "Second line",
+    };
+    size_t lines_count = sizeof(lines) / sizeof(char*);
+    
+    // 1. Setup
+    TestFixture fixture;
+    setup_fixture(&fixture, test_ini, lines, lines_count);
+    TextBuffer *tb = &fixture.tb;
+    SyntaxHighlighting *sh = &fixture.sh;
+    SyntaxHighlightingBinding *binding = &fixture.binding;
+
+    
+    // 2. Calculate
+    SyntaxHighlightingBinding_UpdateLine(binding, tb->current_line->next, tb->current_line->next);
+
+    // 3. Check
+    TEST_CHECK(Table_Get(sh->strings, &fixture.lines[0]->text) != NULL);
+    TEST_CHECK(Table_Get(sh->strings, &fixture.lines[1]->text) != NULL);
+
+    // 4. Cleanup
+    cleanup_fixture(&fixture);
+}
+
+void test_binding_basic2(void) {
+    // data
+    const char *lines[] = {
+        "First 'line",
+        "Second' // line",
+    };
+    size_t lines_count = sizeof(lines) / sizeof(char*);
+    
+    // 1. Setup
+    TestFixture fixture;
+    setup_fixture(&fixture, test_ini, lines, lines_count);
+    //TextBuffer *tb = &fixture.tb;
+    SyntaxHighlighting *sh = &fixture.sh;
+    SyntaxHighlightingBinding *binding = &fixture.binding;
+
+    
+    // 2. Calculate
+    SyntaxHighlightingBinding_UpdateLine(binding, fixture.lines[1], fixture.lines[1]);
+
+    // 3. Check
+    SyntaxHighlightingString *shs0 = Table_Get(sh->strings, &fixture.lines[0]->text);
+    SyntaxHighlightingString *shs1 = Table_Get(sh->strings, &fixture.lines[1]->text);
+    TEST_CHECK(shs0 != NULL);
+    TEST_CHECK(shs0->text == &fixture.lines[0]->text);
+    TEST_CHECK(shs0->tags_count == 1);
+    TEST_CHECK(shs0->tags[0].byte_offset == 6);
+    TEST_CHECK(shs0->open_blocks_at_end.size == 2);
+    TEST_MSG("%zu", shs0->open_blocks_at_end.size);
+    TEST_CHECK(shs0->open_blocks_at_end.size == shs1->open_blocks_at_begin.size);
+    TEST_CHECK(Table_Get(sh->strings, &fixture.lines[1]->text) != NULL);
+
+    // 4. Cleanup
+    cleanup_fixture(&fixture);
+}
+
+TEST_LIST = {
+    { "TextLayoutBindings: No Styling", test_binding_basic },
+    { "TextLayoutBindings: String over two lines", test_binding_basic2 },
+    { NULL, NULL }
+};

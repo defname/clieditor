@@ -16,6 +16,7 @@
 #ifndef FILE_H
 #define FILE_H
 
+#include <limits.h>     // PATH_MAX
 #include "stdio.h"
 #include "common/string.h"
 
@@ -34,6 +35,11 @@ typedef struct _File {
 } File;
 
 /**
+ * @brief Check if a file exists.
+ */
+bool File_Exists(const char *path);
+
+/**
  * @brief Open a file for read/write access.
  * 
  * This function *creates* a new File instance, that needs to be closed to free it.
@@ -41,6 +47,20 @@ typedef struct _File {
  * @returns the created File instance
  */
 File *File_Open(const char *path, FileAccessType access);
+
+/**
+ * @brief Open the config file.
+ */
+File *File_OpenConfig(FileAccessType access);
+
+/**
+ * @brief Open a file that is located relative to a project's folder.
+ * 
+ * Look in the binaries directory, ~/.config/APP_NAME/, /etc/APP_NAME/, /usr/share/APP_NAME/.
+ * @param rel_path  Filepath relative to one of those locations
+ * @param access Type of access needed
+ */
+File *File_OpenProjectFile(const char *rel_path, FileAccessType access);
 
 /**
  * @brief Close a file

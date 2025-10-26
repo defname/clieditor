@@ -316,6 +316,9 @@ void String_Set(String *str, String src) {
 }
 
 void String_Take(String *dst, String *src) {
+    if (!dst || ! src) {
+        return;
+    }
     String_Deinit(dst);
     *dst = String_TakeCStr(src->bytes);
 
@@ -532,7 +535,7 @@ void String_AppendView(String *str, const StringView *view) {
         String_Deinit(&tmp);
         return;
     }
-    if (new_byte_size > str->bytes_capacity) {
+    if (new_byte_size + 1 > str->bytes_capacity) {
         resize_bytes_capacity(str, new_byte_size + 1);
     }
     // use memove to handle overlapping memory areas

@@ -34,28 +34,48 @@
 #include "common/logging.h"
 #include "common/iniparser.h"
 
+#include "syntax/loader.h"
+
 #include "widgets/primitives/frame.h"
 #include "widgets/primitives/menu.h"
 
-//const char *TESTFILE =  "/home/cypher/projekte/clieditor/README.md";
-
 
 TextBuffer tb;
+SyntaxHighlighting *highlighting;
+
 
 static void print_help(const char *program_name) {
-    fprintf(stderr, "Usage:\n  %s <filename>\n", program_name);
+    fprintf(stderr, "Usage:  %s [options] <filename>\n\n", program_name);
+    puts("  -h            Show this help");
+    puts("  -s <format>   Specify a format for syntax highlighting.");
+    puts("                The syntax definition file <format>.ini need to");
+    puts("                present in data/syntax.");
     exit(0);
 }
 
 static void parse_arguments(int argc, char *argv[]) {
-    // For now, we only handle a single filename argument.
-    if (argc >= 2) {
-        Config_SetFilename(argv[1]);
-    } else {
-        print_help(argv[0]);
-        // No file provided, could set a default or leave it empty.
-        Config_SetFilename(NULL);
+    int opt;
+    while ((opt = getopt(argc, argv, "hs:")) != -1) {
+        switch (opt) {
+            case 'h':
+                print_help(argv[0]);
+                return;
+            case 's':
+                Config_SetSyntax(optarg);
+                break;
+            case '?':
+                fprintf(stderr, "Unknown option: -%c\n", optopt);
+                exit(1);
+        }
     }
+
+    // Verbleibende Argumente:
+    for (int i = optind; i < argc; i++) {
+        Config_SetFilename(argv[i]);
+        return;
+    }
+
+    print_help(argv[0]);
 }
 
 static void load_environment() {
@@ -100,6 +120,7 @@ static void finish() {  // called automatically (set with atexit())
     Timer_Deinit();
     App_Deinit();
     Config_Deinit();
+    SyntaxHighlighting_Destroy(highlighting);
     TextBuffer_Deinit(&tb);
     Input_Deinit();
     Screen_Deinit();
@@ -115,7 +136,7 @@ int main(int argc, char *argv[]) {
      ************************************/
     srand(time(NULL));
 
-    Config_Init();
+    Config_Init(argv[0]);
     parse_arguments(argc, argv);
     load_environment();
 
@@ -131,6 +152,31 @@ int main(int argc, char *argv[]) {
     Screen_HideCursor();
 
     TextBuffer_Init(&tb);
+
+    SyntaxHighlightingLoaderError error;
+    highlighting = SyntaxHighlighting_LoadFromFile(Config_GetSyntax(), &error);
+    if (!highlighting) {
+        switch (error.code) {
+            case SYNTAX_LOADER_FILE_NOT_FOUND:
+                logError("Syntax file not found.");
+                break;
+            case SYNTAX_LOADER_FILE_READ_ERROR:
+                logError("Could not read syntax file.");
+                break;
+            case SYNTAX_LOADER_PARSE_ERROR:
+                logError("Could not parse syntax file.\n%s", error.parsing_error.message);
+                break;
+            case SYNTAX_LOADER_DEFINITION_ERROR:
+                logError("Syntax definition error.\n%s", error.def_error.message);
+                break;
+            default:
+                logError("Could not load Syntaxdefinition (Code: %d)", error.code);
+                break;
+        }
+        SyntaxHighlightingLoaderError_Deinit(&error);
+        highlighting = NULL;
+    }
+
 
     const char * fn = Config_GetFilename();
     bool failure_on_file_load = false;  // the failure message can only be shown after initializing the widget system
@@ -148,7 +194,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Load config
-    File *config_file = File_Open("config.ini", FILE_ACCESS_READ);
+    File *config_file = File_OpenConfig(FILE_ACCESS_READ);
     if (config_file) {
         char *content = File_Read(config_file);
         if (content) {
@@ -162,6 +208,7 @@ int main(int argc, char *argv[]) {
  
     EditorView *editor = EditorView_Create(AS_WIDGET(&app), &tb);
     Widget_Focus(AS_WIDGET(editor));
+    editor->editor->sh_binding.sh = highlighting;
     (void)editor;
     BottomBar *bottombar = BottomBar_Create(AS_WIDGET(&app));
     (void)bottombar;

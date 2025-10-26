@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>     // PATH_MAX
 #include "common/typedtable.h"
 #include "common/iniparser.h"
 
@@ -27,20 +28,26 @@ typedef struct _Config {
 
     bool dirty;
 
+    const char *exe_path;
+
+    const char *syntax;
+
     int indent_size;
     bool use_spaces_for_indent;
-    char filename[FILENAME_MAX_LENGTH];
+    char filename[PATH_MAX];
 } Config;
 
 static Config config;
 
-void Config_Init() {
+void Config_Init(const char *argv0) {
+    config.exe_path = argv0;
     config.indent_size = 4;
     config.use_spaces_for_indent = true;
     config.filename[0] = '\0';
     config.table = NULL;
     config.editor = NULL;
     config.colors = NULL;
+    config.syntax = NULL;
     config.dirty = false;
 }
 
@@ -51,6 +58,7 @@ void Config_Deinit() {
     config.table = NULL;
     config.editor = NULL;
     config.colors = NULL;
+    config.syntax = NULL;
 }
 
 
@@ -63,6 +71,7 @@ void Config_LoadIni(const char *content) {
     IniParser_SetText(&ini, content);
     Table *c = IniParser_Parse(&ini);
     if (!c) {
+        IniParser_Deinit(&ini);
         return;
     }
     if (config.table) {
@@ -82,18 +91,33 @@ void Config_Loaded() {
     config.dirty = false;
 }
 
+const char *Config_GetExePath() {
+    return config.exe_path;
+}
+
 void Config_SetFilename(const char *filename) {
     if (filename == NULL) {
         config.filename[0] = '\0';
         return;
     }
-    strncpy(config.filename, filename, FILENAME_MAX_LENGTH);
-    config.filename[FILENAME_MAX_LENGTH - 1] = '\0';
+    strncpy(config.filename, filename, PATH_MAX - 1);
+    config.filename[PATH_MAX - 1] = '\0';
 }
 
 const char *Config_GetFilename() {
     return config.filename;
 }
+
+
+void Config_SetSyntax(const char *type) {
+    config.syntax = type;
+    config.dirty = true;
+}
+
+const char *Config_GetSyntax() {
+    return config.syntax;
+}
+
 
 Table *Config_GetModuleConfig(const char *section) {
     if (!config.table || TypedTable_GetType(config.table, section) != VALUE_TYPE_TABLE) {
