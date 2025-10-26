@@ -97,6 +97,9 @@ void SyntaxHighlightingBinding_Update(SyntaxHighlightingBinding *binding) {
 }
 
 void SyntaxHighlightingBinding_UpdateAll(SyntaxHighlightingBinding *binding, bool force) {
+    if (!binding || !binding->tl || !binding->tl->tb) {
+        return;
+    }
     if (!force && !binding->need_full_update) {
         return;
     }
