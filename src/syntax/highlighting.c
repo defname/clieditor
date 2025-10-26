@@ -72,7 +72,7 @@ void SyntaxHighlightingString_AddTag(SyntaxHighlightingString *shs, SyntaxHighli
     if (!shs) {
         return;
     }
-    if (shs->tags_count + 1 >= shs->tags_capacity) {
+    if (shs->tags_count >= shs->tags_capacity) {
         increase_tags_capacity(shs);
     }
     shs->tags[shs->tags_count++] = tag;
