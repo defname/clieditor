@@ -71,6 +71,7 @@ void Config_LoadIni(const char *content) {
     IniParser_SetText(&ini, content);
     Table *c = IniParser_Parse(&ini);
     if (!c) {
+        IniParser_Deinit(&ini);
         return;
     }
     if (config.table) {
