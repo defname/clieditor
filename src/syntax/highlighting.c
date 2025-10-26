@@ -91,9 +91,9 @@ const SyntaxHighlightingTag *SyntaxHighlightingString_GetTag(const SyntaxHighlig
     if (!shs || shs->tags_count == 0) {
         return NULL;
     }
-    for (int i=(int)shs->tags_count-1; i>=0; i--) {
-        if (shs->tags[i].byte_offset == offset) {
-            return &shs->tags[i];
+    for (size_t i=shs->tags_count; i>0; i--) {
+        if (shs->tags[i-1].byte_offset == offset) {
+            return &shs->tags[i-1];
         }
     }
     return NULL;
