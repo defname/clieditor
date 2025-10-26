@@ -65,6 +65,29 @@ static void parse_arguments(int argc, char *argv[]) {
         Config_SetFilename(NULL);
 #endif
     }
+
+    int opt;
+    while ((opt = getopt(argc, argv, "hs:")) != -1) {
+        switch (opt) {
+            case 'h':
+                print_help(argv[0]);
+                return;
+            case 's':
+                Config_SetSyntax(optarg);
+                break;
+            case '?':
+                fprintf(stderr, "Unknown option: -%c\n", optopt);
+                exit(1);
+        }
+    }
+
+    // Verbleibende Argumente:
+    for (int i = optind; i < argc; i++) {
+        Config_SetFilename(argv[i]);
+        return;
+    }
+
+    print_help(argv[0]);
 }
 
 static void load_environment() {
@@ -143,7 +166,7 @@ int main(int argc, char *argv[]) {
     TextBuffer_Init(&tb);
 
     SyntaxHighlightingLoaderError error;
-    highlighting = SyntaxHighlighting_LoadFromFile("md", &error);
+    highlighting = SyntaxHighlighting_LoadFromFile(Config_GetSyntax(), &error);
     if (!highlighting) {
         switch (error.code) {
             case SYNTAX_LOADER_FILE_NOT_FOUND:
