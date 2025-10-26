@@ -100,9 +100,9 @@ If you're new to the codebase, here's a recommended path:
 The project follows a consistent C coding style.
 
 -   **Naming Conventions**:
-    -   Types and structs are `PascalCase` (e.g., `TextBuffer`).
-    -   Public functions are `Module_Function` (e.g., `TextBuffer_Init`).
-    -   Enums and macros are `ALL_CAPS`.
+  -   Types and structs are `PascalCase` (e.g., `TextBuffer`).
+  -   Public functions are `Module_Function` (e.g., `TextBuffer_Init`).
+  -   Enums and macros are `ALL_CAPS`.
 -   **Object-Oriented C**: The code emulates object-oriented patterns. Modules are centered around a primary struct, and functions that operate on it take a pointer to that struct as their first argument (e.g., `void Widget_Draw(Widget *self, ...)`).
 -   **Memory Management**: All memory is managed manually. `_Create` functions `malloc` resources, and `_Destroy` functions `free` them. `_Init` and `_Deinit` pairs manage the contents of a struct without allocating/freeing the struct itself.
 -   **Formatting**: 4-space indentation. The opening brace `{` is always placed on the same line as the corresponding function declaration or control statement (`if`, `for`, `while`, etc.).
