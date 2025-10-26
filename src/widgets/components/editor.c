@@ -74,7 +74,7 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     }
 
     SyntaxHighlighting *sh = editor->sh_binding.sh;
-    SyntaxHighlightingString *shs = Table_Get(sh->strings, line->src);
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, &line->src->text);
 
     // Move cursor to the start position
     Canvas_MoveCursor(canvas, 0, y + y_offset);
