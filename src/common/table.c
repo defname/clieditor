@@ -246,7 +246,7 @@ void Table_Set(Table *table, const void *key, void *value, void (*destructor)(vo
         logFatal("No slot found in Table_Set().");
     }
 
-    if (slot->state == TABLE_SLOT_EMPTY) {
+    if (slot->state != TABLE_SLOT_USED) {
         slot->state = TABLE_SLOT_USED;
         slot->key = table->key_copy_func(key);
         if (!slot->key) {
@@ -275,7 +275,7 @@ void *Table_Get(const Table *table, const void *key) {
     }
 
     TableSlot *slot = find_slot(table, key);
-    if (slot->state == TABLE_SLOT_EMPTY) {
+    if (slot->state != TABLE_SLOT_USED) {
         return NULL;
     }
     return slot->value;
