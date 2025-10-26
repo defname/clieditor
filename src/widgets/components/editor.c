@@ -36,6 +36,8 @@ static void alternate_cursor_visibility(uint8_t timer_id, void *user_data) {
 static void editor_destroy(Widget *self) {
     Editor *editor = AS_EDITOR(self);
     Timer_Stop(editor->cursor_timer);
+    SyntaxHighlightingBinding_Deinit(&editor->sh_binding);
+    TextSelection_Deinit(&editor->ts);
     TextLayout_Deinit(&editor->tl);
     TextEdit_Deinit(&editor->te);
     TextSelection_Deinit(&editor->ts);
@@ -64,12 +66,23 @@ void draw_char(TextLayout *tl, Canvas *canvas, uint32_t cp, int x_pos, bool has_
 
 // draw line and return new y_offset (changes to one if the cursor wraps to the next line)
 static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset) {
+    // 1 --- Setup stuff
+
+    // get visual line
     VisualLine *line = TextLayout_GetVisualLine(&editor->tl, y);
     TextSelection *ts = &editor->ts;
 
-    if (!line){
+    if (!line){  // no visual line at this position
         return y_offset;
     }
+    // check if it's a line with a gap
+    bool is_gap_line = false;
+    if (line->src == editor->tb->current_line) {
+        is_gap_line = true;
+    }
+    // setup syntax highlighting stuff
+    SyntaxHighlighting *sh = editor->sh_binding.sh;
+    SyntaxHighlightingString *shs = Table_Get(sh->strings, &line->src->text);
 
     // Move cursor to the start position
     Canvas_MoveCursor(canvas, 0, y + y_offset);
@@ -78,19 +91,38 @@ static int draw_visual_line(Editor *editor, Canvas *canvas, int y, int y_offset)
     CursorLayoutInfo cursor;
     TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
 
+    
     // change the style if it's the current line
+    if (shs && Stack_Peek(&shs->open_blocks_at_begin)) {
+        SyntaxBlockDef *first_block = Stack_Peek(&shs->open_blocks_at_begin);
+        canvas->current_style.fg = first_block->color;
+    }
     Style orig_style = canvas->current_style;
-    Style line_style;
-    if (line->src == editor->tb->current_line) {
-        line_style = editor->config.active;
+    Style line_style = orig_style;
+    if (is_gap_line) {
+        line_style.bg = editor->config.active.bg;
     }
-    else {
-        line_style = orig_style;
-    }
+    
 
-    // draw the characters
+    // 2 --- Draw characters loop
     for (int i=0; i<line->length; i++) {
-        uint32_t cp = utf8_to_codepoint(VisualLine_GetChar(line, i));
+        // get the character to draw (might not be in line->src->text.bytes if it's in the gap in general)
+        // in the moment the gap is always merged when updateing the syntax highlighting, so it should
+        // work at the moment
+        // Pay attention in future changes!
+        const char *ch = VisualLine_GetChar(line, i);
+
+        // This will not always work if is_gap_line and the gap is not merged!!
+        size_t byte_offset = byte_offset = ch - line->src->text.bytes;
+        
+        const SyntaxHighlightingTag *tag = SyntaxHighlightingString_GetTag(shs, byte_offset);
+        if (tag) {
+            canvas->current_style.fg = tag->block->color;
+            line_style.fg = tag->block->color;
+        }
+        
+
+        uint32_t cp = utf8_to_codepoint(ch);
         bool has_cursor = (line == cursor.line && i == cursor.idx && editor->mode == EDITOR_MODE_INPUT);
         if (TextSelection_IsSelected(ts, line->src, line->offset + i)) {
             canvas->current_style = editor->config.selected;
@@ -319,6 +351,7 @@ static bool editor_handle_input(Widget *self, InputEvent input) {
         input_handled = input_handled || handle_input_scrolling(editor, input);
         input_handled = input_handled || handle_input_text_editing(editor, input, cursor);
         if (input_handled) {
+            SyntaxHighlightingBinding_Update(&editor->sh_binding);
             return true;
         }
     }
@@ -346,14 +379,19 @@ static void editor_on_blur(Widget *self) {
 // this is basically if the cursor gets lost during terminal window resize
 static void editor_update(Widget *self) {
     Editor *editor = AS_EDITOR(self);
+
+    // fix cursor
     CursorLayoutInfo cursor;
     int cursor_pos = TextLayout_GetCursorLayoutInfo(&editor->tl, &cursor);
     if (cursor_pos != 0) {
         editor->tl.first_line = editor->tb->current_line;
         editor->tl.first_visual_line_idx = 0;
         editor->tl.dirty = true;
-        return;
     }
+
+    // initialize highlighting
+    // will only be called once due to internal flags
+    SyntaxHighlightingBinding_UpdateAll(&editor->sh_binding, false);
 }
 
 static void editor_on_config_changed(Widget *self) {
@@ -417,6 +455,8 @@ void Editor_Init(Editor *self, Widget *parent, TextBuffer *tb) {
     self->config.active.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
     self->config.cursor = self->base.style;
     self->config.cursor.bg = Color_GetCodeById(COLOR_HIGHLIGHT_BG);
+
+    SyntaxHighlightingBinding_Init(&self->sh_binding, &self->tl, NULL);
 }
 
 Editor *Editor_Create(Widget *parent, TextBuffer *tb) {

@@ -103,7 +103,7 @@ void SyntaxDefinitionError_Deinit(SyntaxDefinitionError *error);
  * @brief Helper struct to cache regex match results. This information are used by the Highlight module.
  */
 typedef struct _MatchCache {
-    ssize_t offset;     // total offset from where match was calculated
+    ssize_t offset;     // total **byte offset** from where match was calculated
     regmatch_t match;   // last match
     bool done;          // if true the last match was already found   
 } MatchCache;

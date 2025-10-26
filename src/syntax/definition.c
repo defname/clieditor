@@ -217,10 +217,15 @@ static SyntaxDefinitionError build_blocks(SyntaxDefinition *def, const Table *ta
     return NO_ERROR;
 }
 
-static SyntaxDefinitionError map_block_names_to_blocks(SyntaxBlockDef *current_block, StringView *block_names, size_t count, SyntaxBlockDef **out, Table *blocks) {
+static SyntaxDefinitionError map_block_names_to_blocks(SyntaxBlockDef *current_block, StringView *block_names, size_t count, SyntaxBlockDef **out, size_t *out_count, Table *blocks) {
+    *out_count = 0;
     for (size_t i=0; i<count; i++) {
         String name = String_FromView(block_names[i]);
         String_Trim(&name);
+        if (String_Length(&name) == 0) {
+            String_Deinit(&name);
+            continue;
+        }
         table_block_mapping *mapping = Table_Get(blocks, name.bytes);
         
         if (!mapping) {
@@ -235,7 +240,7 @@ static SyntaxDefinitionError map_block_names_to_blocks(SyntaxBlockDef *current_b
             return error;
         }
         String_Deinit(&name);
-        out[i] = mapping->block;
+        out[(*out_count)++] = mapping->block;
     }
     return NO_ERROR;
 }
@@ -266,14 +271,14 @@ static SyntaxDefinitionError block_name_list_str_to_blocks(SyntaxBlockDef *curre
         logFatal("Cannot allocate memory for children of SyntaxBlockDef.");
     }
 
-    SyntaxDefinitionError error = map_block_names_to_blocks(current_block, children, count, *out, blocks);
+    SyntaxDefinitionError error = map_block_names_to_blocks(current_block, children, count, *out, out_count, blocks);
     if (error.code != SYNTAXDEFINITION_NO_ERROR) {
+        *out_count = 0;
         String_Deinit(&s);
         free(children);
         return error;
     }
 
-    *out_count = count;
     String_Deinit(&s);
     free(children);
 

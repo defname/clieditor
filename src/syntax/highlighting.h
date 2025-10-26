@@ -74,6 +74,17 @@ void SyntaxHighlightingString_AddTag(SyntaxHighlightingString *shs, SyntaxHighli
 void SyntaxHighlightingString_Clear(SyntaxHighlightingString *shs);
 
 /**
+ * @brief Return the tag for the given offset or NULL if there is no tag for the offset.
+ * 
+ * @param shs The `SyntaxHighlightingString` from the `SyntaxHighlighting->strings` table.
+ * @param offset The offset in bytes.
+ * @returns
+ * A pointer to the internal SyntaxHighlightingTag. This pointer is only valid until the
+ * next recalculation of `shs`!
+ */
+const SyntaxHighlightingTag *SyntaxHighlightingString_GetTag(const SyntaxHighlightingString *shs, size_t offset);
+
+/**
  * @brief Holds the highlighting information for text of multiple `Strings`.
  */
 typedef struct _SyntaxHighlighting {

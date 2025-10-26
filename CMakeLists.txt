@@ -54,6 +54,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_OBJECTS})
 
 add_compile_definitions(_XOPEN_SOURCE=700)
 
+# --- symlink zum data Ordner erstellen
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/data
+        ${CMAKE_BINARY_DIR}/data
+)
 
 # CTest-Unterstützung aktivieren
 enable_testing()

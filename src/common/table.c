@@ -123,7 +123,12 @@ static void increase_capacity(Table *table) {
         return;
     }
     // allocate memory for the increased table
-    Table *new_table = Table_Create();
+    Table *new_table = Table_CreateCustom(
+        table->hash_func,
+        table->key_cmp_func,
+        table->key_copy_func,
+        table->key_free_func
+    );
     new_table->capacity = table->capacity == 0 ? TABLE_INITIAL_CAPACITY : table->capacity * TABLE_GROWTH_FACTOR;
     new_table->slots = malloc(new_table->capacity * sizeof(TableSlot));
     if (!new_table->slots) {
